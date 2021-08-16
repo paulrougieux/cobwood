@@ -1,1 +1,6 @@
+# Temporary files
 *.pyc
+
+# Archive only the markdown version of notebooks, converted by Jupyttext
+*.ipynb
+*-checkpoint.md

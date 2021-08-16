@@ -73,7 +73,7 @@ class Faostat:
                 shutil.copyfileobj(response, f)
 
     def read_csv(self, file_name):
-        """Read a compressed CSV
+        """Read a compressed CSV into a pandas data frame and rename its columns to snake case.
 
         Sample use
 
@@ -90,6 +90,8 @@ class Faostat:
                                  sep=',',
                                  quotechar='"',
                                  encoding="ISO-8859-1")
+        # Rename columns to snake case
+        df = df.rename(columns=lambda x: re.sub(r' ', '_', x).lower())
         return df
 
 
