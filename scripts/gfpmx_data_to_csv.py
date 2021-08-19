@@ -1,19 +1,24 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
 A script to save all sheets of the GFPMX Excel implementation to csv files
 
-Author Paul Rougieux
+Typically you would run this file from a command line like this:
+
+     ipython -i ~/rp/gftmx/scripts/gfpmx_data_to_csv.py
+
+Source of the GFPMX spread sheet data by Joseph Buongiorno:
+    https://buongiorno.russell.wisc.edu/gfpm/
+
+Author of this script Paul Rougieux
 
 See also the notebook that reproduces GFPM simulation.
-
 """
 
 # Built-in modules #
 from pathlib import Path
-import os
+import re
 
 # Third party modules #
 import pandas
@@ -27,21 +32,23 @@ from gftmx.data_dir import gftmx_data_dir
 # Input file
 excel_file = "~/large_models/GFPMX-8-6-2021.xlsx"
 # Output folder
-gfpmx_data_dir = os.path.join(gftmx_data_dir, "gfpmx")
+gfpmx_data_dir = Path(gftmx_data_dir) / "gfpmx"
 if not Path(gfpmx_data_dir).exists():
     Path(gfpmx_data_dir).mkdir(parents=True)
 
-# Load the Excel file in a dictionary of data frames
-gfpmx_data = pandas.read_excel(excel_file, sheet_name=None)
-print(gfpmx_data.keys())
+print(f"\nLoad the Excel file {excel_file} in a dictionary of data frames")
+gfpmx_excel_file = pandas.read_excel(excel_file, sheet_name=None)
+print(gfpmx_excel_file.keys())
 
-# Industrial roundwood production
-gfpmx_data['IndroundProd'].to_csv(gfpmx_data_dir + "/" + "IndroundProd.csv")
-
-# Write all sheets to csv files
-for key in tqdm(gfpmx_data.keys()):
-    df = gfpmx_data[key]
+print("\nWrite all sheets to csv files in the output folder")
+for key in tqdm(gfpmx_excel_file.keys()):
+    df = gfpmx_excel_file[key]
     # Remove empty columns in place
     df.dropna(how='all', axis=1, inplace=True)
+    # Rename columns to snake case
+    df.rename(columns=lambda x: re.sub(r' ', '_', str(x)).lower(), inplace=True)
+    # Add "year" prefix to year columns
+    df.rename(columns=lambda x: re.sub(r'^(\d{4})$', r'year\1', x), inplace=True)
     # Write the csv file
-    df.to_csv(gfpmx_data_dir + "/" + key + ".csv", index=False)
+    csv_file_name = Path(gfpmx_data_dir) / (key + ".csv")
+    df.to_csv(csv_file_name, index=False)

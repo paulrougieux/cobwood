@@ -20,7 +20,7 @@ See also the script that moves this data from Excel to csv files under
 """
 
 # Build in modules
-import os
+from pathlib import Path
 
 # Third party modules
 import pandas
@@ -42,7 +42,7 @@ class GFPMXData:
     >>> swd_cons = gfpmx_data['SawnCons']
     >>> swd_cons
     """
-    data_dir = gftmx_data_dir + "gfpmx"
+    data_dir = Path(gftmx_data_dir) / "gfpmx"
 
     def __getitem__(self, sheet_name):
         """Return a data frame based on the GFTMX sheet name."""
@@ -50,7 +50,7 @@ class GFPMXData:
 
     def get_sheet(self, sheet_name):
         """Read a csv file into a pandas data frame"""
-        csv_file_name = os.path.join(self.data_dir, sheet_name + ".csv")
+        csv_file_name = self.data_dir / (sheet_name + ".csv")
         df = pandas.read_csv(csv_file_name)
         return df
 
