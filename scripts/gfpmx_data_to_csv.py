@@ -13,7 +13,7 @@ Source of the GFPMX spread sheet data by Joseph Buongiorno:
 
 Author of this script Paul Rougieux
 
-See also the notebook that reproduces GFPM simulation.
+See also the notebook that reproduces the GFPM simulation:
 """
 
 # Built-in modules #
