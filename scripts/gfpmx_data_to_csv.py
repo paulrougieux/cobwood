@@ -47,8 +47,8 @@ for key in tqdm(gfpmx_excel_file.keys()):
     df.dropna(how='all', axis=1, inplace=True)
     # Rename columns to snake case
     df.rename(columns=lambda x: re.sub(r' ', '_', str(x)).lower(), inplace=True)
-    # Add "year" prefix to year columns
-    df.rename(columns=lambda x: re.sub(r'^(\d{4})$', r'year\1', x), inplace=True)
+    # Add "value" prefix to year columns in preparation for a reshape from wide to long
+    df.rename(columns=lambda x: re.sub(r'^(\d{4})$', r'value\1', x), inplace=True)
     # Write the csv file
     csv_file_name = Path(gfpmx_data_dir) / (key + ".csv")
     df.to_csv(csv_file_name, index=False)

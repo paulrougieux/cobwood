@@ -15,12 +15,11 @@ jupyter:
 ```python
 # Load 
 from gftmx.gfpmx_data import gfpmx_data
-
 ```
 
 # Introduction
 
-The purpose of this notebook is to reproduce estimation from the GFPMX model, using the spreadsheet data available from https://buongiorno.russell.wisc.edu/gfpm/.
+The purpose of this notebook is to reproduce estimations from the GFPMX model, using the spreadsheet data available from https://buongiorno.russell.wisc.edu/gfpm/.
 
 
 # Consumption
