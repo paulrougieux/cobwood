@@ -22,37 +22,62 @@ from gftmx.gfpmx_data import gfpmx_data
 The purpose of this notebook is to reproduce estimations from the GFPMX model, using the spreadsheet data available from https://buongiorno.russell.wisc.edu/gfpm/.
 
 
-# Sawnwood Consumption
+# Sawnwood 
 
 ```python
 swd_cons = gfpmx_data['SawnCons']
 swd_cons.iloc[[1,-1]]  
 ```
 
-## Join GDP, prices and consumption data
+## Join Consumption, GDP and price data
 
 ```python
-gdp = gfpmx_data['GDP']
-gdp.iloc[[1,-1]]
+gfpmx_data['GDP'].iloc[[1,-1]]
 ```
 
 ```python
-swd_price = gfpmx_data['SawnPrice']
-swd_price.iloc[[1,-1]]
+gfpmx_data['SawnPrice'].iloc[[1,-1]]
 ```
 
 ```python
+index = ['id', 'year','country']
 swd_cons = gfpmx_data['SawnCons']
-swd_cons['test'] = 1
-swd_cons
+swd_cons = (swd_cons
+            .merge(gfpmx_data.get_gdp(), 'left', index)
+            .merge(gfpmx_data.get_price_lag('SawnPrice'), 'left', index)
+           )
+swd_cons.drop(columns = ['unnamed:_1', 'unnamed:_2', 'faostat_name', 'price'], inplace=True)
+
+# Compute the consumption equation
+swd_cons['value2'] = swd_cons.constant * swd_cons['price_lag'].pow(swd_cons.price_elasticity) * \
+    swd_cons.gdp.pow(swd_cons.gdp_elasticity)
+
+swd_cons['comp_prop'] = swd_cons.value2 / swd_cons.value -1
+# Don't display rows with NA values
+display(swd_cons.query("price_lag==price_lag & gdp_elasticity==gdp_elasticity"))
 ```
 
 ## Verify simulation results
 
 The spreadsheet contains both historical and simulated data. Simulation results start after the base year. Cells up until the base year contain historical data. Cells in base_year + 1 use formulas in the spreadsheet. Before we can perform the calculation, we join the price and GDP sheets to the consumption sheet.
 
+
+### After the base year
+
+Show the comparison proportion after the base year.
+
 ```python
-swd_cons['value2'] = 
+# After the base year
+swd_cons2 = swd_cons.query("year > @gfpmx_data.base_year & price_lag==price_lag & gdp_elasticity==gdp_elasticity")
+swd_cons2
+```
+
+```python
+swd_cons2.comp_prop.describe()
+```
+
+```python
+
 ```
 
 ```python
