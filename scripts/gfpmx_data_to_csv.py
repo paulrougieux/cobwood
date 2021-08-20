@@ -29,8 +29,9 @@ from tqdm import tqdm
 # Internal modules #
 from gftmx.data_dir import gftmx_data_dir
 
-# Input file
+# Input file from https://buongiorno.russell.wisc.edu/gfpm/
 excel_file = "~/large_models/GFPMX-8-6-2021.xlsx"
+
 # Output folder
 gfpmx_data_dir = Path(gftmx_data_dir) / "gfpmx"
 if not Path(gfpmx_data_dir).exists():

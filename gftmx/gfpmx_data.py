@@ -7,16 +7,10 @@ Written by Paul Rougieux.
 JRC biomass Project.
 Unit D1 Bioeconomy.
 
-Give access to the dataset from the GFPMX model by Joseph Buongiorno
-Originally released on 
+Give access to the dataset from the GFPMX model by Joseph Buongiorno.
+Originally released at
+    https://buongiorno.russell.wisc.edu/gfpm/
 
-The GFPMX dataset is useful to:
-
-1. Obtain elasticities, constants  and other coefficients that cannot be estimated easily
-1. Verify the reproducibility of results given in the spreadsheet
-
-See also the script that moves this data from Excel to csv files under
-`scripts/gfpmx_data_to_csv.py`
 """
 
 # Build in modules
@@ -41,8 +35,20 @@ class GFPMXData:
     >>> from gftmx.gfpmx_data import gfpmx_data
     >>> swd_cons = gfpmx_data['SawnCons']
     >>> swd_cons
+
+    The GFPMX dataset is useful to:
+
+    1. Obtain elasticities, constants  and other coefficients that cannot be estimated easily
+    1. Verify the reproducibility of results given in the spreadsheet
+
+    See also the script that moves data from the original Excel spreadsheet to csv files:
+    `scripts/gfpmx_data_to_csv.py`
     """
+    # Location of the csv files
     data_dir = Path(gftmx_data_dir) / "gfpmx"
+
+    # Simulation base year i.e. last year of historical data available in the spreadsheet
+    base_year = 2018
 
     def __getitem__(self, sheet_name):
         """Return a data frame based on the GFTMX sheet name."""
