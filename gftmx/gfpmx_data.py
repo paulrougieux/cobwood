@@ -69,6 +69,36 @@ class GFPMXData:
         df.reset_index(inplace=True)
         return df
 
+    def get_gdp(self, sheet_name='GDP', index=None, var_name='gdp'):
+        """ Return a data frame of cleaned GDP values
+
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> gfpmx_data.get_gdp()
+        """
+        if index is None:
+            index = ['id', 'year', 'country']
+        df = self.get_sheet_long(sheet_name)
+        df = df[index + ['value']]
+        df.rename(columns={'value': var_name}, inplace=True)
+        return df
+
+    def get_price_lag(self, sheet_name, index=None, var_name='price'):
+        """ Return a price table with prices shifted by a one year lag
+
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> gfpmx_data.get_price_lag('SawnPrice')
+        """
+        if index is None:
+            index = ['id', 'year', 'country']
+        df = self.get_sheet_long(sheet_name)
+        df = df[index + ['value']]
+        df.rename(columns={'value': var_name}, inplace=True)
+        # Shift prices by a one year lag
+        df.set_index('year', inplace=True)
+        df[var_name+"_lag"] = df.groupby(['id', 'country'])[var_name].shift()
+        df.reset_index(inplace=True)
+        return df
+
 
 # Make a singleton #
 gfpmx_data = GFPMXData()
