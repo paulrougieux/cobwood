@@ -99,6 +99,23 @@ class GFPMXData:
         df.reset_index(inplace=True)
         return df
 
+    def get_cons(self, sheet_name, price_sheet_name, index=None):
+        """
+        Get a consumption table and join prices and gdp values
+
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> gfpmx_data.get_cons('SawnCons', 'SawnPrice')
+        """
+        if index is None:
+            index = ['id', 'year', 'country']
+        df = gfpmx_data.get_sheet_long(sheet_name)
+        df = (df
+              .merge(gfpmx_data.get_gdp(), 'left', index)
+              .merge(gfpmx_data.get_price_lag(price_sheet_name), 'left', index)
+              )
+        df.drop(columns=['unnamed:_1', 'unnamed:_2', 'faostat_name', 'price'], inplace=True)
+        return df
+
 
 # Make a singleton #
 gfpmx_data = GFPMXData()
