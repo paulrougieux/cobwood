@@ -13,8 +13,6 @@ Originally released at
 
 """
 
-# Build in modules
-from pathlib import Path
 
 # Third party modules
 import pandas
@@ -45,7 +43,7 @@ class GFPMXData:
     `scripts/gfpmx_data_to_csv.py`
     """
     # Location of the csv files
-    data_dir = Path(gftmx_data_dir) / "gfpmx"
+    data_dir = gftmx_data_dir / "gfpmx"
 
     # Simulation base year i.e. last year of historical data available in the spreadsheet
     base_year = 2018
