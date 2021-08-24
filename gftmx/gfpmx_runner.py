@@ -13,17 +13,18 @@ The model was originally released as spreadsheet formulas at
 
 Usage:
     >>> from gftmx.gfpmx_runner import gfpmx_runner
-    >>> gfpmx_runner.run_next_step
+    >>> gfpmx_runner.run_next_step()
 
 """
+# Internal modules
+import logging
 
 # Third party modules
 import pandas
-import logging
 
 # Internal modules
 from gftmx.gfpmx_data import gfpmx_data
-
+import gftmx.logger
 
 class GFPMXRunner:
     """
@@ -35,16 +36,15 @@ class GFPMXRunner:
         self.swd_cons = (gfpmx_data.get_cons('SawnCons', 'SawnPrice')
                          .query("year <= @ gfpmx_data.base_year")
                          )
+        # Create logger with 'gftmx'
+        self.logger = logging.getLogger('gftmx.gfpmx_runner')
 
     def run_next_step(self):
         """Run the next year based on the last year available in the data.
         """
         last_year = self.swd_cons.year.max()
         curr_year = last_year + 1
-        # create logger with 'gftmx'
-        logger = logging.getLogger('gftmx.gfpmx_runner')
-        logger.setLevel(logging.DEBUG)
-        logger.info("Running year %s.", curr_year)
+        self.logger.info("Running year %s.", curr_year)
         # Add empty data for the given year based on the unique country names
         # and their related parameters that are not varying through time
         static_vars = ['id',  'price_elasticity', 'constant', 'gdp_elasticity', 'country']
