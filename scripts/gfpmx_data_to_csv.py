@@ -46,10 +46,35 @@ for key in tqdm(gfpmx_excel_file.keys()):
     df = gfpmx_excel_file[key]
     # Remove empty columns in place
     df.dropna(how='all', axis=1, inplace=True)
-    # Rename columns to snake case
-    df.rename(columns=lambda x: re.sub(r' ', '_', str(x)).lower(), inplace=True)
+    # Rename columns to snake case, replace all non alphanumeric characters by an underscore
+    df.rename(columns=lambda x: re.sub(r'\W+', '_', str(x)).lower(), inplace=True)
     # Add "value" prefix to year columns in preparation for a reshape from wide to long
     df.rename(columns=lambda x: re.sub(r'^(\d{4})$', r'value\1', x), inplace=True)
     # Write the csv file
-    csv_file_name = Path(gfpmx_data_dir) / (key + ".csv")
+    csv_file_name = re.sub(r'\$', r'_usd', key).lower() + ".csv"
+    csv_file_name = Path(gfpmx_data_dir) / csv_file_name
     df.to_csv(csv_file_name, index=False)
+
+# Investigate unnamed columns
+# key = "IndroundProd"
+if False:
+    for key in gfpmx_excel_file.keys():
+        print(f"\n**{key}**")
+        df = gfpmx_excel_file[key]
+        # Those operations are duplicated from above
+        # Remove empty columns in place
+        df.dropna(how='all', axis=1, inplace=True)
+        # Rename columns to snake case, replace all non alphanumeric characters by an underscore
+        df.rename(columns=lambda x: re.sub(r'\W+', '_', str(x)).lower(), inplace=True)
+        # Rename unnamed columns if they have unique values
+        unnamed = df.filter(regex='unnamed').columns.to_list()
+        for col in unnamed:
+            content = df[col].dropna()
+            new_name = col
+            if len(content.unique()) != 1 or not pandas.api.types.is_string_dtype(content):
+                break
+            if content.str.contains("m3").all():
+                new_name = "unit"
+            if content.str.contains("[^\W\d_]").all():
+                new_name = "element"
+            print(f"Old name: '{col}' content: {content.unique()}, new name: '{new_name}'")
