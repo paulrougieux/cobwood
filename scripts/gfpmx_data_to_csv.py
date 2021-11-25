@@ -19,6 +19,7 @@ See also the notebook that reproduces the GFPM simulation:
 # Built-in modules #
 from pathlib import Path
 import re
+import shutil
 
 # Third party modules #
 import pandas
@@ -50,16 +51,36 @@ for key in tqdm(gfpmx_excel_file.keys()):
     df.rename(columns=lambda x: re.sub(r'\W+', '_', str(x)).lower(), inplace=True)
     # Add "value" prefix to year columns in preparation for a reshape from wide to long
     df.rename(columns=lambda x: re.sub(r'^(\d{4})$', r'value\1', x), inplace=True)
+    # Further renaming for the purpose of libcbm usage
+    if key in ["FuelProd", "IndroundProd"]:
+        df.rename(columns={"unnamed_1": "element",
+                           "unnamed_2": "unit"}, inplace=True)
+        df.faostat_name = df.faostat_name.ffill()
+        df.element = df.element.ffill()
+        df.unit = df.unit.ffill()
     # Write the csv file
     csv_file_name = re.sub(r'\$', r'_usd', key).lower() + ".csv"
     csv_file_name = Path(gfpmx_data_dir) / csv_file_name
     df.to_csv(csv_file_name, index=False)
+
+# Paste files to libcbm_data for the forest dynamics model
+if False:
+    dest_dir = Path.home() / "repos/libcbm_data/common/gftmx"
+    dest_dir.mkdir(exist_ok=True)
+    for file_name in ["fuelprod.csv", "indroundprod.csv"]:
+        from_path = gfpmx_data_dir / file_name
+        to_path = dest_dir / file_name
+        shutil.copy(from_path, to_path)
+        print(f"Copied {from_path} to {to_path}")
+
 
 # Investigate unnamed columns
 # key = "IndroundProd"
 if False:
     for key in gfpmx_excel_file.keys():
         print(f"\n**{key}**")
+        if key in ["FuelProd$", "IndroundProd$"]:
+            print("lala")
         df = gfpmx_excel_file[key]
         # Those operations are duplicated from above
         # Remove empty columns in place
