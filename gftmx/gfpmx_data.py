@@ -60,11 +60,26 @@ class GFPMXData:
         For example show all sheets available
 
             >>> from gftmx.gfpmx_data import gfpmx_data
-            >>> gfpmx_data.list_sheets()
+            >>> from pandas.errors import EmptyDataError
+            >>> sheets = gfpmx_data.list_sheets()
+            >>> sheets
 
-        Show sheets related to sawnwood
+        As a prerequisite to merge sheets together, we can
+        show additional variables besides the value in each sheet:
 
-            >>> gfpmx_data.list_sheets().query("product=='sawn'")
+            >>> known_columns = ['id', 'year', 'constant', 'element', 'unit', 'country',
+            >>>                 'price_elasticity', 'faostat_name', 'gdp_elasticity', 'value']
+            >>> for prod in sheets["product"].unique():
+            >>>     sheets_selected = sheets.query("product==@prod")
+            >>>     print(f"Additional variables in {prod}-related sheets:")
+            >>>     for s in sheets_selected.name:
+            >>>         try:
+            >>>             df = gfpmx_data[s]
+            >>>             columns = df.columns
+            >>>         except EmptyDataError:
+            >>>             print(f"no data in file {s}")
+            >>>             columns = ["no data"]
+            >>>         print("  ", s, set(columns) - set(known_columns))
 
         """
         sheet_paths =  gfpmx_data.data_dir.glob('**/*.csv')
@@ -74,6 +89,7 @@ class GFPMXData:
         product_pattern = "fuel|indround|panel|paper|pulp|round|sawn"
         df[["product", "element"]] = df.name.str.extract(f"({product_pattern})?(.*)")
         df = df.sort_values(by=["product", "element"])
+        df["product"] = df["product"].fillna("other")
         return df[["name", "product", "element"]]
 
     def get_sheet_wide(self, sheet_name):
