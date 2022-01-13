@@ -28,15 +28,15 @@ class GFPMXData:
     The GFTMX dataset was converted to csv files one for each sheet in the
     original Excel Spreadsheet. This singleton gives access to each file.
 
-    Load sawnwood consumption data:
+    Load sawnwood consumption data in long format:
 
     >>> from gftmx.gfpmx_data import gfpmx_data
-    >>> swd_cons = gfpmx_data['SawnCons']
+    >>> swd_cons = gfpmx_data['sawncons']
     >>> swd_cons
 
     The GFPMX dataset is useful to:
 
-    1. Obtain elasticities, constants  and other coefficients that cannot be estimated easily
+    1. Obtain elasticities, constants and other coefficients that cannot be estimated easily
     1. Verify the reproducibility of results given in the spreadsheet
 
     See also the script that moves data from the original Excel spreadsheet to csv files:
@@ -49,8 +49,32 @@ class GFPMXData:
     base_year = 2018
 
     def __getitem__(self, sheet_name):
-        """Return a data frame based on the GFTMX sheet name."""
+        """Return a data frame based on the GFPMX sheet name."""
         return self.get_sheet_long(sheet_name)
+
+    def list_sheets(self):
+        """List sheets available in the GFPMX data folder
+
+        :return data frame with the sheet name, product and element
+
+        For example show all sheets available
+
+            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> gfpmx_data.list_sheets()
+
+        Show sheets related to sawnwood
+
+            >>> gfpmx_data.list_sheets().query("product=='sawn'")
+
+        """
+        sheet_paths =  gfpmx_data.data_dir.glob('**/*.csv')
+        df = pandas.DataFrame({"file_name": [x.name for x in sheet_paths]})
+        df["name"] = df.file_name.str.extract(f"(.*).csv")
+        # Place product patterns in a capture group for extraction
+        product_pattern = "fuel|indround|panel|paper|pulp|round|sawn"
+        df[["product", "element"]] = df.name.str.extract(f"({product_pattern})?(.*)")
+        df = df.sort_values(by=["product", "element"])
+        return df[["name", "product", "element"]]
 
     def get_sheet_wide(self, sheet_name):
         """Read a csv file into a pandas data frame"""
@@ -67,7 +91,7 @@ class GFPMXData:
         df.reset_index(inplace=True)
         return df
 
-    def get_gdp(self, sheet_name='GDP', index=None, var_name='gdp'):
+    def get_gdp(self, sheet_name='gdp', index=None, var_name='gdp'):
         """ Return a data frame of cleaned GDP values
 
         >>> from gftmx.gfpmx_data import gfpmx_data
@@ -84,7 +108,7 @@ class GFPMXData:
         """ Return a price table with prices shifted by a one year lag
 
         >>> from gftmx.gfpmx_data import gfpmx_data
-        >>> gfpmx_data.get_price_lag('SawnPrice')
+        >>> gfpmx_data.get_price_lag('sawnprice')
         """
         if index is None:
             index = ['id', 'year', 'country']
@@ -102,7 +126,7 @@ class GFPMXData:
         Get a consumption table and join prices and gdp values
 
         >>> from gftmx.gfpmx_data import gfpmx_data
-        >>> gfpmx_data.get_cons('SawnCons', 'SawnPrice')
+        >>> gfpmx_data.get_cons('sawncons', 'sawnprice')
         """
         if index is None:
             index = ['id', 'year', 'country']
@@ -111,7 +135,7 @@ class GFPMXData:
               .merge(gfpmx_data.get_gdp(), 'left', index)
               .merge(gfpmx_data.get_price_lag(price_sheet_name), 'left', index)
               )
-        df.drop(columns=['unnamed:_1', 'unnamed:_2', 'faostat_name', 'price'], inplace=True)
+        df.drop(columns=['unnamed_1', 'unnamed_2', 'faostat_name', 'price'], inplace=True)
         return df
 
 

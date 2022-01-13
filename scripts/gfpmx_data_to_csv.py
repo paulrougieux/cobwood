@@ -51,13 +51,17 @@ for key in tqdm(gfpmx_excel_file.keys()):
     df.rename(columns=lambda x: re.sub(r'\W+', '_', str(x)).lower(), inplace=True)
     # Add "value" prefix to year columns in preparation for a reshape from wide to long
     df.rename(columns=lambda x: re.sub(r'^(\d{4})$', r'value\1', x), inplace=True)
+    # Rename element and unit columns
+    df.rename(columns={"unnamed_1": "element",
+                       "unnamed_2": "unit"}, inplace=True)
     # Further renaming for the purpose of libcbm usage
     if key in ["FuelProd", "IndroundProd"]:
-        df.rename(columns={"unnamed_1": "element",
-                           "unnamed_2": "unit"}, inplace=True)
         df.faostat_name = df.faostat_name.ffill()
         df.element = df.element.ffill()
         df.unit = df.unit.ffill()
+        cols = df.columns
+        df["scenario"] = "reference"
+        df = df[["scenario"], cols]
     # Write the csv file
     csv_file_name = re.sub(r'\$', r'_usd', key).lower() + ".csv"
     csv_file_name = Path(gfpmx_data_dir) / csv_file_name
