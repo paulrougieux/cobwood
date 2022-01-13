@@ -59,9 +59,9 @@ for key in tqdm(gfpmx_excel_file.keys()):
         df.faostat_name = df.faostat_name.ffill()
         df.element = df.element.ffill()
         df.unit = df.unit.ffill()
-        cols = df.columns
+        cols = df.columns.tolist()
         df["scenario"] = "reference"
-        df = df[["scenario"], cols]
+        df = df[["scenario"] + cols]
     # Write the csv file
     csv_file_name = re.sub(r'\$', r'_usd', key).lower() + ".csv"
     csv_file_name = Path(gfpmx_data_dir) / csv_file_name
