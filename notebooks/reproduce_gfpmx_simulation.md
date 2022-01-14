@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.11.3
+      jupytext_version: 1.13.4
   kernelspec:
     display_name: Python 3
     language: python
@@ -25,28 +25,28 @@ The purpose of this notebook is to reproduce estimations from the GFPMX model, u
 # Sawnwood 
 
 ```python
-swd_cons = gfpmx_data['SawnCons']
+swd_cons = gfpmx_data['sawncons']
 swd_cons.iloc[[1,-1]]  
 ```
 
 ## Join Consumption, GDP and price data
 
 ```python
-gfpmx_data['GDP'].iloc[[1,-1]]
+gfpmx_data['gdp'].iloc[[1,-1]]
 ```
 
 ```python
-gfpmx_data['SawnPrice'].iloc[[1,-1]]
+gfpmx_data['sawnprice'].iloc[[1,-1]]
 ```
 
 ```python
 index = ['id', 'year','country']
-swd_cons = gfpmx_data['SawnCons']
+swd_cons = gfpmx_data['sawncons']
 swd_cons = (swd_cons
             .merge(gfpmx_data.get_gdp(), 'left', index)
-            .merge(gfpmx_data.get_price_lag('SawnPrice'), 'left', index)
+            .merge(gfpmx_data.get_price_lag('sawnprice'), 'left', index)
            )
-swd_cons.drop(columns = ['unnamed:_1', 'unnamed:_2', 'faostat_name', 'price'], inplace=True)
+swd_cons.drop(columns = ['faostat_name', 'price'], inplace=True)
 
 # Compute the consumption equation
 swd_cons['value2'] = swd_cons.constant * swd_cons['price_lag'].pow(swd_cons.price_elasticity) * \

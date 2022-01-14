@@ -52,6 +52,10 @@ class GFPMXData:
         """Return a data frame based on the GFPMX sheet name."""
         return self.get_sheet_long(sheet_name)
 
+    def __init__(self):
+        self.sheets = self.list_sheets()
+        self.index_merge = ["id", "year", "country", "faostat_name"]
+
     def list_sheets(self):
         """List sheets available in the GFPMX data folder
 
@@ -64,15 +68,15 @@ class GFPMXData:
             >>> sheets = gfpmx_data.list_sheets()
             >>> sheets
 
-        As a prerequisite to merge sheets together, we can
-        show additional variables besides the value in each sheet:
+        As a prerequisite to merge sheets together, the following code
+        shows additional variables besides the value in each sheet:
 
             >>> known_columns = ['id', 'year', 'constant', 'element', 'unit', 'country',
             >>>                 'price_elasticity', 'faostat_name', 'gdp_elasticity', 'value']
             >>> for prod in sheets["product"].unique():
             >>>     sheets_selected = sheets.query("product==@prod")
-            >>>     print(f"Additional variables in {prod}-related sheets:")
-            >>>     for s in sheets_selected.name:
+            >>>     print(f"Additional variables in '{prod}' related sheets:")
+            >>>     for s in sheets_selected.index:
             >>>         try:
             >>>             df = gfpmx_data[s]
             >>>             columns = df.columns
@@ -81,16 +85,24 @@ class GFPMXData:
             >>>             columns = ["no data"]
             >>>         print("  ", s, set(columns) - set(known_columns))
 
+        List all columns in the roundwood related sheets
+
+            >>> for s in sheets.query("product == 'round'").index:
+            >>>     print(gfpmx_data[s].columns.tolist())
+
         """
-        sheet_paths =  gfpmx_data.data_dir.glob('**/*.csv')
+        sheet_paths =  self.data_dir.glob('**/*.csv')
         df = pandas.DataFrame({"file_name": [x.name for x in sheet_paths]})
         df["name"] = df.file_name.str.extract(f"(.*).csv")
         # Place product patterns in a capture group for extraction
         product_pattern = "fuel|indround|panel|paper|pulp|round|sawn"
+        # Create a product column and an element column
         df[["product", "element"]] = df.name.str.extract(f"({product_pattern})?(.*)")
         df = df.sort_values(by=["product", "element"])
         df["product"] = df["product"].fillna("other")
-        return df[["name", "product", "element"]]
+        df = df[["name", "product", "element"]]
+        df.set_index("name", inplace=True)
+        return df
 
     def get_sheet_wide(self, sheet_name):
         """Read a csv file into a pandas data frame"""
@@ -98,20 +110,33 @@ class GFPMXData:
         df = pandas.read_csv(csv_file_name)
         return df
 
-    def get_sheet_long(self, sheet_name):
-        """Read a csv file into a pandas data frame and reshape it to long format"""
+    def get_sheet_long(self, sheet_name, keep_all_columns = True):
+        """Read a csv file into a pandas data frame and reshape it to long format
+
+        Example use
+
+            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> print(gfpmx_data.get_sheet_long("sawncons"))
+            >>> print(gfpmx_data.get_sheet_long("sawncons", keep_all_columns = False))
+
+        """
         df_wide = self.get_sheet_wide(sheet_name=sheet_name)
         # Reshape the years to long format
         df_wide["id"] = df_wide.index
         df = pandas.wide_to_long(df_wide, stubnames='value', i='id', j='year')
         df.reset_index(inplace=True)
+        # Rename the value column according to the element part of the file name
+        element = self.sheets.loc[sheet_name, "element"]
+        df.rename(columns = {"value": element}, inplace=True)
+        if not keep_all_columns:
+            df = df[self.index_merge + [element]]
         return df
 
     def get_gdp(self, sheet_name='gdp', index=None, var_name='gdp'):
         """ Return a data frame of cleaned GDP values
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
-        >>> gfpmx_data.get_gdp()
+            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> gfpmx_data.get_gdp()
         """
         if index is None:
             index = ['id', 'year', 'country']
@@ -123,8 +148,8 @@ class GFPMXData:
     def get_price_lag(self, sheet_name, index=None, var_name='price'):
         """ Return a price table with prices shifted by a one year lag
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
-        >>> gfpmx_data.get_price_lag('sawnprice')
+            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> gfpmx_data.get_price_lag('sawnprice')
         """
         if index is None:
             index = ['id', 'year', 'country']
@@ -137,23 +162,35 @@ class GFPMXData:
         df.reset_index(inplace=True)
         return df
 
-    def get_cons(self, sheet_name, price_sheet_name, index=None):
+    def join_sheets(self, product):
         """
-        Get a consumption table and join prices and gdp values
+        Merge all related data frames for a given product
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
-        >>> gfpmx_data.get_cons('sawncons', 'sawnprice')
+        :param str product: selected product
+        :return data frame
+
+        For example join all roundwood sheets in one data frame
+
+            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> rwd = gfpmx_data.join_sheets('round')
+            >>> rwd.head()
+
+        Join sheets for all available products
+
+            >>> for product in gfpmx_data.sheets["product"].unique():
+            >>>     if product == "other":
+            >>>         continue
+            >>>     print(product)
+            >>>     print(gfpmx_data.join_sheets(product).head())
+
         """
-        if index is None:
-            index = ['id', 'year', 'country']
-        df = gfpmx_data.get_sheet_long(sheet_name)
-        df = (df
-              .merge(gfpmx_data.get_gdp(), 'left', index)
-              .merge(gfpmx_data.get_price_lag(price_sheet_name), 'left', index)
-              )
-        df.drop(columns=['unnamed_1', 'unnamed_2', 'faostat_name', 'price'], inplace=True)
-        return df
-
+        sheets = self.sheets[self.sheets["product"] == product]
+        first_sheet = sheets.index[0]
+        df_all = gfpmx_data.get_sheet_long(first_sheet, keep_all_columns = False)
+        for sheet in sheets.index[1:]:
+            df = gfpmx_data.get_sheet_long(sheet, keep_all_columns = False)
+            df_all = df_all.merge(df, "left", self.index_merge)
+        return df_all
 
 # Make a singleton #
 gfpmx_data = GFPMXData()
