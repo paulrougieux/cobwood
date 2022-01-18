@@ -71,7 +71,7 @@ class GFPMXData:
         As a prerequisite to merge sheets together, the following code
         shows additional variables besides the value in each sheet:
 
-            >>> known_columns = ['id', 'year', 'constant', 'element', 'unit', 'country',
+            >>> known_columns = ['year', 'constant', 'element', 'unit', 'country',
             >>>                 'price_elasticity', 'faostat_name', 'gdp_elasticity', 'value']
             >>> for prod in sheets["product"].unique():
             >>>     sheets_selected = sheets.query("product==@prod")
@@ -124,7 +124,7 @@ class GFPMXData:
         # Reshape the years to long format
         df_wide["id"] = df_wide.index
         df = pandas.wide_to_long(df_wide, stubnames='value', i='id', j='year')
-        df.reset_index(inplace=True)
+        df.reset_index(inplace=True, drop=True)
         # Rename the value column according to the element part of the file name
         element = self.sheets.loc[sheet_name, "element"]
         df.rename(columns = {"value": element}, inplace=True)
