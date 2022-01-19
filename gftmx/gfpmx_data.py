@@ -13,6 +13,8 @@ Originally released at
 
 """
 
+# Built in modules
+import re
 
 # Third party modules
 import pandas
@@ -30,9 +32,9 @@ class GFPMXData:
 
     Load sawnwood consumption data in long format:
 
-    >>> from gftmx.gfpmx_data import gfpmx_data
-    >>> swd_cons = gfpmx_data['sawncons']
-    >>> swd_cons
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> swd_cons = gfpmx_data['sawncons']
+        >>> swd_cons
 
     The GFPMX dataset is useful to:
 
@@ -54,7 +56,8 @@ class GFPMXData:
 
     def __init__(self):
         self.sheets = self.list_sheets()
-        self.index_merge = ["id", "year", "country", "faostat_name"]
+        self.index_merge = ["year", "country", "faostat_name"]
+        self.index = ["year", "country"]
 
     def list_sheets(self):
         """List sheets available in the GFPMX data folder
@@ -71,8 +74,8 @@ class GFPMXData:
         As a prerequisite to merge sheets together, the following code
         shows additional variables besides the value in each sheet:
 
-            >>> known_columns = ['year', 'constant', 'element', 'unit', 'country',
-            >>>                 'price_elasticity', 'faostat_name', 'gdp_elasticity', 'value']
+            >>> known_columns = ['year', 'element', 'unit', 'country',
+            >>>                  'faostat_name', 'value']
             >>> for prod in sheets["product"].unique():
             >>>     sheets_selected = sheets.query("product==@prod")
             >>>     print(f"Additional variables in '{prod}' related sheets:")
@@ -81,7 +84,7 @@ class GFPMXData:
             >>>             df = gfpmx_data[s]
             >>>             columns = df.columns
             >>>         except EmptyDataError:
-            >>>             print(f"no data in file {s}")
+            >>>             print(f"   No data in the '{s}' file.")
             >>>             columns = ["no data"]
             >>>         print("  ", s, set(columns) - set(known_columns))
 
@@ -89,6 +92,14 @@ class GFPMXData:
 
             >>> for s in sheets.query("product == 'round'").index:
             >>>     print(gfpmx_data[s].columns.tolist())
+
+        Display the shape of the other sheets
+
+            >>> for s in sheets.query("product == 'other'").index:
+            >>>     try:
+            >>>         print(s, gfpmx_data[s].shape)
+            >>>     except EmptyDataError:
+            >>>         print(f"No data in the '{s}' file.")
 
         """
         sheet_paths =  self.data_dir.glob('**/*.csv')
@@ -121,15 +132,25 @@ class GFPMXData:
 
         """
         df_wide = self.get_sheet_wide(sheet_name=sheet_name)
-        # Reshape the years to long format
-        df_wide["id"] = df_wide.index
-        df = pandas.wide_to_long(df_wide, stubnames='value', i='id', j='year')
-        df.reset_index(inplace=True, drop=True)
-        # Rename the value column according to the element part of the file name
+        # Reshape year columns to long format
+        index = [x for x in df_wide.columns if not re.search("value", x)]
+        df = pandas.wide_to_long(df_wide, stubnames='value', i=index, j='year')
+        df.reset_index(inplace=True)
+        # Rename the value column according to the shorter element part of the
+        # file name. Note there is also an element column which we don't use
+        # here.
         element = self.sheets.loc[sheet_name, "element"]
         df.rename(columns = {"value": element}, inplace=True)
+
+        # Prefix any columns that are not part of the index,
+        # with the short element name
+        index = ['faostat_name', 'element', 'unit',  'country', 'year', element]
+        other_cols = list(set(df.columns) - set(index))
+        other_cols_renamed = [element + "_" + x for x in other_cols]
+        mapping = dict(zip(other_cols, other_cols_renamed))
+        df.rename(columns = mapping, inplace=True)
         if not keep_all_columns:
-            df = df[self.index_merge + [element]]
+            df = df[self.index_merge + other_cols_renamed + [element]]
         return df
 
     def get_gdp(self, sheet_name='gdp', index=None, var_name='gdp'):
@@ -190,6 +211,7 @@ class GFPMXData:
         for sheet in sheets.index[1:]:
             df = gfpmx_data.get_sheet_long(sheet, keep_all_columns = False)
             df_all = df_all.merge(df, "left", self.index_merge)
+        df_all.set_index(self.index, inplace=True)
         return df_all
 
 # Make a singleton #
