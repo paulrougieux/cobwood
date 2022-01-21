@@ -20,10 +20,16 @@ import pandas
 
 # Introduction
 
-The purpose of this document is to describe an implementation of the Global Forest Products Trade Model in a cobweb form.
-It is inspired by Joseph Buongiorno's cobweb GFPMX: "A Cobweb Model of the Global Forest Sector, 
-with an Application to the Impact of the COVID-19 Pandemic" https://doi.org/10.3390/su13105507. 
-The GFPMX input data and parameters are available as a spreadsheet at: https://buongiorno.russell.wisc.edu/gfpm/. Our first goal is to reproduce those results using the same input data. Our second goal is to update the input data from FAOSTAT and perform the computation.
+The purpose of this document is to describe an implementation of the Global Forest
+Products Trade Model in a cobweb form. It is inspired by Joseph Buongiorno's cobweb
+GFPMX: "A Cobweb Model of the Global Forest Sector, with an Application to the Impact of
+the COVID-19 Pandemic" https://doi.org/10.3390/su13105507. The GFPMX input data and
+parameters are available as a spreadsheet at: https://buongiorno.russell.wisc.edu/gfpm/.
+
+Goals:
+1. Reproduce the GFPMX results using the same input data.
+2. Update the input data from FAOSTAT and perform the computation.
+3. Re-estimate the elasticities
 
 # Data structure
 
