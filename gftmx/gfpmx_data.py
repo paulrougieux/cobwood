@@ -224,7 +224,8 @@ class GFPMXData:
             >>> for element in ["author", "names", "notes", "worldprice"]:
             >>>     other_element.remove(element)
             >>> other = gfpmx_data.join_sheets("round", other_element)
-            >>> other.columns
+            >>> print(other.columns)
+            >>> other[other.columns[other.columns.str.contains("unnamed")]]
 
         """
 
