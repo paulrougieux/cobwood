@@ -38,10 +38,12 @@ class GFPMXData:
 
     The GFPMX dataset is useful to:
 
-    1. Obtain elasticities, constants and other coefficients that cannot be estimated easily
-    1. Verify the reproducibility of results given in the spreadsheet
+        1. Verify the reproducibility of results given in the spreadsheet
 
-    See also the script that moves data from the original Excel spreadsheet to csv files:
+        2. Obtain elasticities, constants and other coefficients that cannot be
+        estimated easily
+
+    See also the script that moves data from the original Excel spreadsheet to CSV files:
     `scripts/gfpmx_data_to_csv.py`
     """
     # Location of the csv files
@@ -90,8 +92,15 @@ class GFPMXData:
 
         List all columns in the roundwood related sheets
 
-            >>> for s in sheets.query("product == 'round'").index:
-            >>>     print(gfpmx_data[s].columns.tolist())
+            >>> for name in sheets.query("product == 'round'").index:
+            >>>     print(name, "\n",  gfpmx_data[name].columns.tolist())
+
+        List all columns in the other sheets
+
+            >>> for name in sheets.query("product == 'other'").index:
+            >>>     if name in ["author", "names", "notes", "worldprice"]:
+            >>>          continue
+            >>>     print(name, "\n",  gfpmx_data[name].columns.tolist())
 
         Display the shape of the other sheets
 
@@ -100,6 +109,8 @@ class GFPMXData:
             >>>         print(s, gfpmx_data[s].shape)
             >>>     except EmptyDataError:
             >>>         print(f"No data in the '{s}' file.")
+            >>>     except ValueError as e:
+            >>>         print(f"Error in {s}: {e}")
 
         """
         sheet_paths =  self.data_dir.glob('**/*.csv')
@@ -121,7 +132,7 @@ class GFPMXData:
         df = pandas.read_csv(csv_file_name)
         return df
 
-    def get_sheet_long(self, sheet_name, keep_all_columns = True):
+    def get_sheet_long(self, sheet_name):
         """Read a csv file into a pandas data frame and reshape it to long format
 
         Example use
@@ -149,8 +160,6 @@ class GFPMXData:
         other_cols_renamed = [element + "_" + x for x in other_cols]
         mapping = dict(zip(other_cols, other_cols_renamed))
         df.rename(columns = mapping, inplace=True)
-        if not keep_all_columns:
-            df = df[self.index_merge + other_cols_renamed + [element]]
         return df
 
     def get_gdp(self, sheet_name='gdp', index=None, var_name='gdp'):
@@ -183,18 +192,21 @@ class GFPMXData:
         df.reset_index(inplace=True)
         return df
 
-    def join_sheets(self, product):
+    def join_sheets(self, product, other_element=None):
         """
         Merge all related data frames for a given product
 
         :param str product: selected product
+        :param list other_element: list of element to be added from the
+        rows where product is equal to "other"
         :return data frame
 
-        For example join all roundwood sheets in one data frame
+        For example join all roundwood sheets in one data frame and add a
+        stock column.
 
             >>> from gftmx.gfpmx_data import gfpmx_data
-            >>> rwd = gfpmx_data.join_sheets('round')
-            >>> rwd.head()
+            >>> rwd = gfpmx_data.join_sheets("round", ["stock"])
+            >>> rwd.columns
 
         Join sheets for all available products
 
@@ -204,13 +216,46 @@ class GFPMXData:
             >>>     print(product)
             >>>     print(gfpmx_data.join_sheets(product).head())
 
+        Join all other sheets
+
+            >>> sheets = gfpmx_data.list_sheets()
+            >>> other_sheets = sheets.query("product == 'other'")
+            >>> other_element = other_sheets["element"].to_list()
+            >>> for element in ["author", "names", "notes", "worldprice"]:
+            >>>     other_element.remove(element)
+            >>> other = gfpmx_data.join_sheets("round", other_element)
+            >>> other.columns
+
         """
+
+        # Join the product sheets together
         sheets = self.sheets[self.sheets["product"] == product]
         first_sheet = sheets.index[0]
-        df_all = gfpmx_data.get_sheet_long(first_sheet, keep_all_columns = False)
-        for sheet in sheets.index[1:]:
-            df = gfpmx_data.get_sheet_long(sheet, keep_all_columns = False)
+        df_all = gfpmx_data.get_sheet_long(first_sheet)
+        for name in sheets.index[1:]:
+            df = gfpmx_data.get_sheet_long(name)
+            # Keep only index columns or columns starting with element
+            element = sheets.loc[name]["element"]
+            cols = df.columns[df.columns.str.match("^" + element)].tolist()
+            df = df[self.index_merge + cols]
             df_all = df_all.merge(df, "left", self.index_merge)
+
+
+        # Join other sheets if requested
+        if other_element is not None:
+            other_sheets = self.sheets[self.sheets["product"] == "other"]
+            other_sheets = other_sheets[other_sheets["element"].isin(other_element)]
+            for name in other_sheets.index:
+                df = gfpmx_data.get_sheet_long(name)
+                element = other_sheets.loc[name]["element"]
+                cols = df.columns[df.columns.str.match("^" + element)].tolist()
+                # Remove the product name from the join index
+                index = self.index_merge.copy()
+                index.remove("faostat_name")
+                df = df[index + cols]
+                df_all = df_all.merge(df, "left", index)
+
+        # Set an index
         df_all.set_index(self.index, inplace=True)
         return df_all
 
