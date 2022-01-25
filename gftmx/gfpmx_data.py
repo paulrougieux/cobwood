@@ -160,6 +160,15 @@ class GFPMXData:
         other_cols_renamed = [element + "_" + x for x in other_cols]
         mapping = dict(zip(other_cols, other_cols_renamed))
         df.rename(columns = mapping, inplace=True)
+
+        # Check that years are complete
+        years = df["year"].unique()
+        if not years.min() + len(years) - 1 == years.max():
+            msg = f"The time series of '{sheet_name}' is not complete. "
+            msg += "The following years are missing:\n"
+            msg += str(set(range(years.min(), years.max()+1)) - set(years))
+            raise ValueError(msg)
+
         return df
 
     def get_gdp(self, sheet_name='gdp', index=None, var_name='gdp'):
