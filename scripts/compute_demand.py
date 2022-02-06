@@ -10,6 +10,10 @@ Run this file with:
 
 """
 
+# Third party modules
+import pandas
+
+# Internal modules
 from gftmx.gfpmx_data import gfpmx_data
 # Load sawnwood data
 swd = gfpmx_data.join_sheets("sawn", ["gdp"])
@@ -31,30 +35,58 @@ print("Number of years time the number of countries: ",
 # Doesn't work because the following has an NA value
 ## swd.loc[t-1, "price"].pow(swd.loc[t, "cons_price_elasticity"])
 swd = swd.copy()
-def shift_index(previous):
+
+def shift_index(x):
     """Update the index of a lagged variable
     To store last year's prices in a "price_lag" column at year t.
     We first need to update the index from year t-1 to year t.
     Otherwise assignation of .loc[[t], "price_lag"] would contain NA values.
+
+    :param x pandas series input variable indexed by year and country
+    :return pandas series
     """
-    previous = previous.reset_index()
-    previous["year"] = previous["year"] + 1
-    previous = previous.set_index(["year", "country"])["price"]
-    return previous
+    df = x.reset_index()
+    df["year"] = df["year"] + 1
+    x_lag = df.set_index(x.index.names)[x.name]
+    return x_lag
+
 def compute_demand(df):
-    """GFPMX demand equation"""
+    """GFPMX demand equation 1"""
     return (df["cons_constant"]
             * df["price_lag"].pow(df["cons_price_elasticity"])
             * df["gdp"].pow(df["cons_gdp_elasticity"])
            )
+def compute_import_demand(df):
+    """GFPMX import demand equation 4"""
+    return (df["imp_constant"]
+            # *(
+            * df["price_lag"]
+            #   * (1 + df["tariff_lag"])).pow(df["imp_price_elasticity"])
+            #* df["gdp"].pow(df["imp_gdp_elasticity"])
+           )
 # Start one year after the base year so price_{t-1} exists already
 for t in range(gfpmx_data.base_year + 1, years.max() + 1):
     swd.loc[[t], "price_lag"] = shift_index(swd.loc[[t-1], "price"])
+    swd.loc[[t], "tariff_lag"] = shift_index(swd.loc[[t-1], "tariff"])
     swd.loc[[t], "cons2"] = compute_demand(swd.loc[[t]])
-swd['comp_prop'] = swd.cons2 / swd.cons - 1
-print(swd["comp_prop"].abs().max())
+    swd.loc[[t], "imp2"] = compute_import_demand(swd.loc[[t]])
+
+raise ValueError("Cannot compute the import demand because the tariff column is empty:",
+                 swd.tariff.unique())
+
+swd['cons_prop'] = swd.cons2 / swd.cons - 1
+swd["imp_prop"] = swd.imp2 /swd.imp - 1
+print("Consumption: ", swd["cons_prop"].abs().max())
+print("Import: ", swd["imp_prop"].abs().max())
+
+print(swd.query("year >= 2019")[["price_lag", "tariff_lag", "imp_price_elasticity",
+                                 "imp_gdp_elasticity"]])
 print(swd.query("year >= 2019")[["price_lag", "gdp", "cons", "cons2"]])
 
+
+# Why is the tariff empty? 
+gfpmx_data
+swd_tariff = pandas.read_csv(gfpmx_data.data_dir / "sawntariff.csv")
 
 # # Nested loop version.
 # # This version is abandoned and kept as a comment here.
