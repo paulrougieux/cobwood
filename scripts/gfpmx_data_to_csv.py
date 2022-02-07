@@ -54,6 +54,11 @@ for key in tqdm(gfpmx_excel_file.keys()):
     # Rename element and unit columns
     df.rename(columns={"unnamed_1": "element",
                        "unnamed_2": "unit"}, inplace=True)
+    # Harmonize product names
+    if "faostat_name" in df.columns:
+        if df["faostat_name"].unique().tolist() == ["Sawnwood"]:
+            df["faostat_name"] = "Sawnwood+sleepers"
+
     # Further renaming for the purpose of libcbm usage
     if key in ["FuelProd", "IndroundProd"]:
         df.faostat_name = df.faostat_name.ffill()
