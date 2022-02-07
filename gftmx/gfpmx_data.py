@@ -112,6 +112,11 @@ class GFPMXData:
             >>>     except ValueError as e:
             >>>         print(f"Error in {s}: {e}")
 
+        Display the faostat_name of the sawnwood sheets
+
+            >>> for name in sheets.query("product == 'sawn'").index:
+            >>>     print(name, "\n",  gfpmx_data[name]["faostat_name"].unique())
+
         """
         sheet_paths =  self.data_dir.glob('**/*.csv')
         df = pandas.DataFrame({"file_name": [x.name for x in sheet_paths]})
@@ -249,6 +254,10 @@ class GFPMXData:
             cols = df.columns[df.columns.str.match("^" + element)].tolist()
             df = df[self.index_merge + cols]
             df_all = df_all.merge(df, "left", self.index_merge)
+            if df_all[cols].sum().sum() == 0:
+                raise ValueError("No data in %s \n %s \n %s" %
+                                 (cols, df.head(), df_all.head()))
+
 
 
         # Join other sheets if requested

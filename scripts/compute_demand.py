@@ -8,6 +8,14 @@ Run this file with:
 
      ipython -i ~/rp/gftmx/scripts/compute_demand.py
 
+Equation numbers in this script refer to the paper:
+
+    Buongiorno, J. (2021). GFPMX: A Cobweb Model of the Global Forest Sector, with
+    an Application to the Impact of the COVID-19 Pandemic. Sustainability, 13(10),
+    5507.
+
+    https://www.mdpi.com/2071-1050/13/10/5507
+
 """
 
 # Third party modules
@@ -29,12 +37,6 @@ print("Number of years time the number of countries: ",
       len(years), "*", len(countries), "=", len(years) * len(countries))
 
 # swd.to_csv("/tmp/swd.csv") # Open with gx
-
-
-# Use both indexes again
-# Doesn't work because the following has an NA value
-## swd.loc[t-1, "price"].pow(swd.loc[t, "cons_price_elasticity"])
-swd = swd.copy()
 
 def shift_index(x):
     """Update the index of a lagged variable
@@ -59,10 +61,9 @@ def compute_demand(df):
 def compute_import_demand(df):
     """GFPMX import demand equation 4"""
     return (df["imp_constant"]
-            # *(
-            * df["price_lag"]
-            #   * (1 + df["tariff_lag"])).pow(df["imp_price_elasticity"])
-            #* df["gdp"].pow(df["imp_gdp_elasticity"])
+            *(df["price_lag"]
+              * (1 + df["tariff_lag"])).pow(df["imp_price_elasticity"])
+            * df["gdp"].pow(df["imp_gdp_elasticity"])
            )
 # Start one year after the base year so price_{t-1} exists already
 for t in range(gfpmx_data.base_year + 1, years.max() + 1):
@@ -70,9 +71,6 @@ for t in range(gfpmx_data.base_year + 1, years.max() + 1):
     swd.loc[[t], "tariff_lag"] = shift_index(swd.loc[[t-1], "tariff"])
     swd.loc[[t], "cons2"] = compute_demand(swd.loc[[t]])
     swd.loc[[t], "imp2"] = compute_import_demand(swd.loc[[t]])
-
-raise ValueError("Cannot compute the import demand because the tariff column is empty:",
-                 swd.tariff.unique())
 
 swd['cons_prop'] = swd.cons2 / swd.cons - 1
 swd["imp_prop"] = swd.imp2 /swd.imp - 1
@@ -84,21 +82,3 @@ print(swd.query("year >= 2019")[["price_lag", "tariff_lag", "imp_price_elasticit
 print(swd.query("year >= 2019")[["price_lag", "gdp", "cons", "cons2"]])
 
 
-# Why is the tariff empty? 
-gfpmx_data
-swd_tariff = pandas.read_csv(gfpmx_data.data_dir / "sawntariff.csv")
-
-# # Nested loop version.
-# # This version is abandoned and kept as a comment here.
-# swd2 = swd.copy()
-# for t in range(gfpmx_data.base_year + 1, years.max()+1):
-#     for c in countries:
-#         # Consumption
-#         swd2.loc[(t,c), "cons2"] = (swd2.loc[(t, c), "cons_constant"]
-#                                    * pow(swd2.loc[(t-1, c), "price"],
-#                                          swd2.loc[(t, c), "cons_price_elasticity"])
-#                                    * pow(swd2.loc[(t, c), "gdp"],
-#                                          swd2.loc[(t, c), "cons_gdp_elasticity"])
-#                                   )
-# swd2['comp_prop'] = swd2.cons2 / swd2.cons -1
-# print(swd2["comp_prop"].abs().max())
