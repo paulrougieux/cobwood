@@ -19,7 +19,7 @@ Equation numbers in this script refer to the paper:
 """
 
 # Third party modules
-import pandas
+import numpy
 
 # Internal modules
 from gftmx.gfpmx_data import gfpmx_data
@@ -65,20 +65,36 @@ def compute_import_demand(df):
               * (1 + df["tariff_lag"])).pow(df["imp_price_elasticity"])
             * df["gdp"].pow(df["imp_gdp_elasticity"])
            )
+def compute_export_supply(df):
+    """GFPMX export supply equation 8"""
+    t = df.index.to_frame()["year"].unique()[0]
+    world_imp = df.loc[(t, "WORLD"), "imp"]
+    exp = (df["exp_marginal_propensity_to_export"]
+           * world_imp
+           + df["exp_constant"])
+    # Use numpy.maximum to propagate NA values
+    return numpy.maximum(exp, 0)
 # Start one year after the base year so price_{t-1} exists already
 for t in range(gfpmx_data.base_year + 1, years.max() + 1):
     swd.loc[[t], "price_lag"] = shift_index(swd.loc[[t-1], "price"])
     swd.loc[[t], "tariff_lag"] = shift_index(swd.loc[[t-1], "tariff"])
     swd.loc[[t], "cons2"] = compute_demand(swd.loc[[t]])
     swd.loc[[t], "imp2"] = compute_import_demand(swd.loc[[t]])
+    swd.loc[[t], "exp2"] = compute_export_supply(swd.loc[[t]])
 
+# Compare only on the world countries
+# World and continents aggregates have NA values at this stage
 swd['cons_prop'] = swd.cons2 / swd.cons - 1
 swd["imp_prop"] = swd.imp2 /swd.imp - 1
+swd["exp_prop"] = swd.exp2 /swd.exp - 1
 print("Consumption: ", swd["cons_prop"].abs().max())
 print("Import: ", swd["imp_prop"].abs().max())
+print("Export: ", swd["exp_prop"].abs().max())
 
-print(swd.query("year >= 2019")[["price_lag", "tariff_lag", "imp_price_elasticity",
-                                 "imp_gdp_elasticity"]])
-print(swd.query("year >= 2019")[["price_lag", "gdp", "cons", "cons2"]])
+# print(swd.query("year >= 2019")[["price_lag", "tariff_lag", "imp_price_elasticity",
+#                                  "imp_gdp_elasticity"]])
+# print(swd.query("year >= 2019")[["price_lag", "gdp", "cons", "cons2"]])
+#
+# print(swd.query("year >= 2019")[["exp", "exp2", "exp_prop"]])
 
 
