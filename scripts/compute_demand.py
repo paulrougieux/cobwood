@@ -6,7 +6,7 @@ A script to compute GFPMX demand recursively in a time loop
 
 Run this file with:
 
-     ipython -i ~/rp/gftmx/scripts/compute_demand.py
+     ipython -i ~/repos/gftmx/scripts/compute_demand.py
 
 Equation numbers in this script refer to the paper:
 
@@ -25,7 +25,20 @@ import numpy
 from gftmx.gfpmx_data import gfpmx_data
 
 # Load sawnwood data
-swd = gfpmx_data.join_sheets("sawn", ["gdp"])
+swd_all = gfpmx_data.join_sheets("sawn", ["gdp"])
+
+# Remove aggregates
+country_aggregates = [
+    "WORLD",
+    "AFRICA",
+    "NORTH AMERICA",
+    "SOUTH AMERICA",
+    "ASIA",
+    "OCEANIA",
+    "EUROPE",
+]
+swd_agg = swd_all.loc[(slice(None), country_aggregates), :]
+swd = swd_all.query("country not in @country_aggregates")
 swd.head()
 
 # Number of years and number of countries
