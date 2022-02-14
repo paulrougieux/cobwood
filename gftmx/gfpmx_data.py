@@ -46,6 +46,7 @@ class GFPMXData:
     See also the script that moves data from the original Excel spreadsheet to CSV files:
     `scripts/gfpmx_data_to_csv.py`
     """
+
     # Location of the csv files
     data_dir = gftmx_data_dir / "gfpmx"
 
@@ -60,6 +61,16 @@ class GFPMXData:
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
         self.index = ["year", "country"]
+        # TODO: add a mapping table between countries and groups
+        self.country_groups = [
+            "WORLD",
+            "AFRICA",
+            "NORTH AMERICA",
+            "SOUTH AMERICA",
+            "ASIA",
+            "OCEANIA",
+            "EUROPE",
+        ]
 
     def list_sheets(self):
         """List sheets available in the GFPMX data folder
@@ -118,9 +129,9 @@ class GFPMXData:
             >>>     print(name, "\n",  gfpmx_data[name]["faostat_name"].unique())
 
         """
-        sheet_paths =  self.data_dir.glob('**/*.csv')
+        sheet_paths = self.data_dir.glob("**/*.csv")
         df = pandas.DataFrame({"file_name": [x.name for x in sheet_paths]})
-        df["name"] = df.file_name.str.extract(f"(.*).csv")
+        df["name"] = df.file_name.str.extract("(.*).csv")
         # Place product patterns in a capture group for extraction
         product_pattern = "fuel|indround|panel|paper|pulp|round|sawn"
         # Create a product column and an element column
@@ -150,59 +161,59 @@ class GFPMXData:
         df_wide = self.get_sheet_wide(sheet_name=sheet_name)
         # Reshape year columns to long format
         index = [x for x in df_wide.columns if not re.search("value", x)]
-        df = pandas.wide_to_long(df_wide, stubnames='value', i=index, j='year')
+        df = pandas.wide_to_long(df_wide, stubnames="value", i=index, j="year")
         df.reset_index(inplace=True)
         # Rename the value column according to the shorter element part of the
         # file name. Note there is also an element column which we don't use
         # here.
         element = self.sheets.loc[sheet_name, "element"]
-        df.rename(columns = {"value": element}, inplace=True)
+        df.rename(columns={"value": element}, inplace=True)
 
         # Prefix any columns that are not part of the index,
         # with the short element name
-        index = ['faostat_name', 'element', 'unit',  'country', 'year', element]
+        index = ["faostat_name", "element", "unit", "country", "year", element]
         other_cols = list(set(df.columns) - set(index))
         other_cols_renamed = [element + "_" + x for x in other_cols]
         mapping = dict(zip(other_cols, other_cols_renamed))
-        df.rename(columns = mapping, inplace=True)
+        df.rename(columns=mapping, inplace=True)
 
         # Check that years are complete
         years = df["year"].unique()
         if not years.min() + len(years) - 1 == years.max():
             msg = f"The time series of '{sheet_name}' is not complete. "
             msg += "The following years are missing:\n"
-            msg += str(set(range(years.min(), years.max()+1)) - set(years))
+            msg += str(set(range(years.min(), years.max() + 1)) - set(years))
             raise ValueError(msg)
 
         return df
 
-    def get_gdp(self, sheet_name='gdp', index=None, var_name='gdp'):
-        """ Return a data frame of cleaned GDP values
+    def get_gdp(self, sheet_name="gdp", index=None, var_name="gdp"):
+        """Return a data frame of cleaned GDP values
 
-            >>> from gftmx.gfpmx_data import gfpmx_data
-            >>> gfpmx_data.get_gdp()
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> gfpmx_data.get_gdp()
         """
         if index is None:
-            index = ['id', 'year', 'country']
+            index = ["id", "year", "country"]
         df = self.get_sheet_long(sheet_name)
-        df = df[index + ['value']]
-        df.rename(columns={'value': var_name}, inplace=True)
+        df = df[index + ["value"]]
+        df.rename(columns={"value": var_name}, inplace=True)
         return df
 
-    def get_price_lag(self, sheet_name, index=None, var_name='price'):
-        """ Return a price table with prices shifted by a one year lag
+    def get_price_lag(self, sheet_name, index=None, var_name="price"):
+        """Return a price table with prices shifted by a one year lag
 
-            >>> from gftmx.gfpmx_data import gfpmx_data
-            >>> gfpmx_data.get_price_lag('sawnprice')
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> gfpmx_data.get_price_lag('sawnprice')
         """
         if index is None:
-            index = ['id', 'year', 'country']
+            index = ["id", "year", "country"]
         df = self.get_sheet_long(sheet_name)
-        df = df[index + ['value']]
-        df.rename(columns={'value': var_name}, inplace=True)
+        df = df[index + ["value"]]
+        df.rename(columns={"value": var_name}, inplace=True)
         # Shift prices by a one year lag
-        df.set_index('year', inplace=True)
-        df[var_name+"_lag"] = df.groupby(['id', 'country'])[var_name].shift()
+        df.set_index("year", inplace=True)
+        df[var_name + "_lag"] = df.groupby(["id", "country"])[var_name].shift()
         df.reset_index(inplace=True)
         return df
 
@@ -254,11 +265,10 @@ class GFPMXData:
             cols = df.columns[df.columns.str.match("^" + element)].tolist()
             df = df[self.index_merge + cols]
             df_all = df_all.merge(df, "left", self.index_merge)
-            if df_all[cols].sum().sum() == 0:
-                raise ValueError("No data in %s \n %s \n %s" %
-                                 (cols, df.head(), df_all.head()))
-
-
+            if df_all[cols].sum(numeric_only=True).sum() == 0:
+                raise ValueError(
+                    "No data in %s \n %s \n %s" % (cols, df.head(), df_all.head())
+                )
 
         # Join other sheets if requested
         if other_element is not None:
@@ -277,6 +287,7 @@ class GFPMXData:
         # Set an index
         df_all.set_index(self.index, inplace=True)
         return df_all
+
 
 # Make a singleton #
 gfpmx_data = GFPMXData()

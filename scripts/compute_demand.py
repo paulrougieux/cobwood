@@ -20,6 +20,7 @@ Equation numbers in this script refer to the paper:
 
 # Third party modules
 import numpy
+import pandas
 
 # Internal modules
 from gftmx.gfpmx_data import gfpmx_data
@@ -27,19 +28,28 @@ from gftmx.gfpmx_data import gfpmx_data
 # Load sawnwood data
 swd_all = gfpmx_data.join_sheets("sawn", ["gdp"])
 
-# Remove aggregates
-country_aggregates = [
-    "WORLD",
-    "AFRICA",
-    "NORTH AMERICA",
-    "SOUTH AMERICA",
-    "ASIA",
-    "OCEANIA",
-    "EUROPE",
+# Separate aggregates from individual countries
+selector = swd_all.index.isin(gfpmx_data.country_groups, level="country")
+swd_agg = swd_all[selector]
+swd = swd_all[~selector]
+
+# Check that the aggregates correspond to the sum of constituents
+# Compare only columns where the sum makes sense
+cols_compare = [
+    "cons",
+    "cons_usd",
+    "exp",
+    "exp_usd",
+    "imp",
+    "imp_usd",
+    "prod",
+    "prod_usd",
+    "gdp",
 ]
-swd_agg = swd_all.loc[(slice(None), country_aggregates), :]
-swd = swd_all.query("country not in @country_aggregates")
-swd.head()
+idx = pandas.IndexSlice
+world_sum_1 = swd_agg.loc[idx[:, "WORLD"], cols_compare]
+world_sum_2 = swd.groupby(["year"]).agg("sum")[cols_compare]
+numpy.testing.assert_allclose(world_sum_1, world_sum_2)
 
 # Number of years and number of countries
 years = swd.index.to_frame()["year"].unique()
