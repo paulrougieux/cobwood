@@ -6,7 +6,7 @@ A script to compute GFPMX demand recursively in a time loop
 
 Run this file with:
 
-     ipython -i ~/repos/gftmx/scripts/compute_demand.py
+     ipython -i ~/repos/gftmx/scripts/compute_swd_equations.py
 
 Equation numbers in this script refer to the paper:
 
@@ -143,7 +143,8 @@ swd["prod_prop"] = swd.prod2 / swd["prod"] - 1
 print("Consumption: ", swd["cons_prop"].abs().max())
 print("Import: ", swd["imp_prop"].abs().max())
 print("Export: ", swd["exp_prop"].abs().max())
-print("Production: ", swd["prod_prop"].abs().max())
+print("Production max: ", swd["prod_prop"].max())
+print("Production min: ", swd["prod_prop"].min())
 
 # Post processing quality checks #
 # Check that the world imports match the sum of country rows

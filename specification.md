@@ -33,13 +33,33 @@ Goals:
 
 # Data structure
 
-The variables production $P$, import $I$, export $E$ and demand $D$ are distributed accross commodity $c$, reporter $r$, and time $t$. In each country $r$, the variables are related through the following equation accross all values of $c$, and $t$:
+The variables production $P$, import $I$, export $E$ and demand $D$ are distributed 
+across commodity $c$, reporter $r$, and time $t$. In each country $r$, the variables are 
+related through the following equation across all values of $c$, and $t$:
 
 $$P_{crt} + I_{crt} - E_{crt} = D_{crt}$$ 
 
 
-# Sample data from GFTMX
+## Pandas, Numpy or Xarray
 
+[Data Formats for Panel Data 
+Analysis](https://bashtage.github.io/linearmodels/panel/examples/data-formats.html)
+
+> There are two primary methods to express data:
+> 
+> - MultiIndex DataFrames where the outer index is the entity and the inner is the time 
+>   index. This requires using pandas.
+> 
+> - 3D structures were dimension 0 (outer) is variable, dimension 1 is time index and 
+>   dimension 2 is the entity index. It is also possible to use a 2D data structure with 
+>   dimensions (t, n) which is treated as a 3D data structure having dimensions (1, t, n). 
+>   These 3D data structures can be pandas, NumPy or xarray.
+
+[Pandas for panel data](https://python.quantecon.org/pandas_panel.html)
+
+Explains multi index with stacking and unstacking.
+
+# Sample data from GFTMX
 
 ## Sawnwood
 
