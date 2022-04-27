@@ -119,10 +119,11 @@ def compute_export_supply(df):
 
 
 def compute_domestic_production(df):
-    """GFPMX domestic production equation 8"""
-    # TODO: replace minus values by zero
+    """GFPMX domestic production equation 8
+
+    Replace negative values by zero"""
     prod = df["cons"] + df["exp"] - df["imp"]
-    # prod.loc[prod <0 ] = 0
+    prod.loc[prod < 0] = 0
     return prod
 
 
@@ -145,6 +146,9 @@ print("Import: ", swd["imp_prop"].abs().max())
 print("Export: ", swd["exp_prop"].abs().max())
 print("Production max: ", swd["prod_prop"].max())
 print("Production min: ", swd["prod_prop"].min())
+swd["prod_prop"].describe()
+swd["prod"].describe()
+swd["prod2"].describe()
 
 # Post processing quality checks #
 # Check that the world imports match the sum of country rows
