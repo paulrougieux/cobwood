@@ -155,7 +155,6 @@ class GFPMXData:
 
             >>> from gftmx.gfpmx_data import gfpmx_data
             >>> print(gfpmx_data.get_sheet_long("sawncons"))
-            >>> print(gfpmx_data.get_sheet_long("sawncons", keep_all_columns = False))
 
         """
         df_wide = self.get_sheet_wide(sheet_name=sheet_name)
