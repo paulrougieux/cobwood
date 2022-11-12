@@ -61,7 +61,7 @@ for key in tqdm(gfpmx_excel_file.keys()):
     if key in products_equation_10:
         selector = df["unnamed_4"].astype(str).str.contains("ound")
         if any(selector):
-            df = df.rename(columns={"unnamed_4": "rwdelast"})
+            df = df.rename(columns={"unnamed_4": "indround_elast"})
     # Harmonize product names
     if "faostat_name" in df.columns:
         if df["faostat_name"].unique().tolist() == ["Sawnwood"]:
