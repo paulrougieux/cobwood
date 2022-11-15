@@ -283,9 +283,32 @@ class GFPMXData:
                 df = df[index + cols]
                 df_all = df_all.merge(df, "left", index)
 
+        # Force variable type to numeric
+        var = "price_indround_elast"
+        if var in df_all.columns:
+            df_all[var] = pandas.to_numeric(df_all[var], errors="coerce")
+
         # Set an index
         df_all.set_index(self.index, inplace=True)
         return df_all
+
+    def get_country_rows(self, *args, **kwargs):
+        """Get only the country rows from the joint_sheets method"""
+        df = self.join_sheets(*args, **kwargs)
+        selector = df.index.isin(self.country_groups, level="country")
+        # Copy the slices to new data frames to avoid the warning:
+        #   "A value is trying to be set on a copy of a slice from a DataFrame.
+        #   Try using .loc[row_indexer,col_indexer] = value instead"
+        return df[~selector].copy()
+
+    def get_agg_rows(self, *args, **kwargs):
+        """Get only the aggregated rows from the join_sheets method
+
+        Aggregates are world and continents.
+        """
+        df = self.join_sheets(*args, **kwargs)
+        selector = df.index.isin(self.country_groups, level="country")
+        return df[selector].copy()
 
 
 # Make a singleton #
