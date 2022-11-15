@@ -24,19 +24,28 @@ Excel file "~/large_models/GFPMX-8-6-2021.xlsx"
 """
 
 # Third party modules
-import numpy
+from numpy.testing import assert_allclose
 import pandas
 
 # Internal modules
 from gftmx.gfpmx_data import gfpmx_data
+from gftmx.gfpmx_functions import (
+    shift_index,
+    compute_demand,
+    compute_import_demand,
+    compute_export_supply,
+    compute_domestic_production,
+    compute_world_price,
+    compute_local_price,
+)
 
 # Load sawnwood data
 sawn_all = gfpmx_data.join_sheets("sawn", ["gdp"])
 indround_all = gfpmx_data.join_sheets("indround")
 
 # TODO place this in gfpmx_data
-sawn_all["price_indround_elast"] = sawn_all["price_indround_elast"].astype(
-    float, errors="ignore"
+sawn_all["price_indround_elast"] = pandas.to_numeric(
+    sawn_all["price_indround_elast"], errors="coerce"
 )
 
 # Separate aggregates from individual countries
@@ -66,7 +75,7 @@ cols_compare = [
 idx = pandas.IndexSlice
 world_sum_1 = sawn_agg.loc[idx[:, "WORLD"], cols_compare]
 world_sum_2 = sawn.groupby(["year"]).agg("sum")[cols_compare]
-numpy.testing.assert_allclose(world_sum_1, world_sum_2)
+assert_allclose(world_sum_1, world_sum_2)
 
 # TODO check that the continent aggregates match with the sum of their constituents.
 
@@ -85,81 +94,6 @@ print(
     len(years) * len(countries),
 )
 
-
-def shift_index(x):
-    """Update the index of a lagged variable
-    To store last year's prices in a "price_lag" column at year t.
-    We first need to update the index from year t-1 to year t.
-    Otherwise assignation of .loc[[t], "price_lag"] would contain NA values.
-
-    :param x pandas series input variable indexed by year and country
-    :return pandas series
-    """
-    df = x.reset_index()
-    df["year"] = df["year"] + 1
-    x_lag = df.set_index(x.index.names)[x.name]
-    return x_lag
-
-
-def compute_demand(df):
-    """GFPMX demand equation 1"""
-    return (
-        df["cons_constant"]
-        * df["price_lag"].pow(df["cons_price_elasticity"])
-        * df["gdp"].pow(df["cons_gdp_elasticity"])
-    )
-
-
-def compute_import_demand(df):
-    """GFPMX import demand equation 4"""
-    return (
-        df["imp_constant"]
-        * (df["price_lag"] * (1 + df["tariff_lag"])).pow(df["imp_price_elasticity"])
-        * df["gdp"].pow(df["imp_gdp_elasticity"])
-    )
-
-
-def compute_export_supply(df):
-    """GFPMX export supply equation 7"""
-    world_imp = df["imp"].sum()
-    exp = df["exp_marginal_propensity_to_export"] * world_imp + df["exp_constant"]
-    # Use numpy.maximum to propagate NA values
-    return numpy.maximum(exp, 0)
-
-
-def compute_domestic_production(df):
-    """GFPMX domestic production equation 8
-
-    Replace negative values by zero"""
-    prod = df["cons"] + df["exp"] - df["imp"]
-    prod.loc[prod < 0] = 0
-    return prod
-
-
-# TODO compute the world price of sawnwood based on the industrial roundwood price.
-# TODO change the name of df_world, df_primary_world these are not data frames but series
-# s_world, s_primary_world)
-def compute_world_price(df_world, df_primary_world):
-    """GFPMX world price as a function of the roundwood price equation 10"""
-    # irw_const = df_agg.xs("WORLD", level="country")["price_constant"]
-    # irw_elast = df_agg.xs("WORLD", level="country")["price_indround_elast"]
-    # irw_price = df_primary_agg.xs("WORLD", level="country")["price"]
-    # const =     elast =
-    # irw_price =
-    return df_world["price_constant"] * pow(
-        df_primary_world["price"], df_world["price_indround_elast"]
-    )
-
-
-def compute_local_price(df, df_agg):
-    """GFPMX local price as a function of the world price equation 12"""
-    # world_price = df_agg.xs("WORLD", level="country")["price"].iat[0]
-    price = df["price_constant"] * pow(
-        df_agg.loc[(t, "WORLD"), "price2"], df["price_world_price_elasticity"]
-    )
-    return price
-
-
 # Start one year after the base year so price_{t-1} exists already
 for t in range(gfpmx_data.base_year + 1, years.max() + 1):
     # Keep `[t]` in square braquets so that years is kept in the index on both sides
@@ -172,9 +106,25 @@ for t in range(gfpmx_data.base_year + 1, years.max() + 1):
     sawn_agg.loc[(t, "WORLD"), "price2"] = compute_world_price(
         sawn_agg.loc[(t, "WORLD")], indround_agg.loc[(t, "WORLD")]
     )
-    sawn.loc[[t], "price2"] = compute_local_price(sawn.loc[[t]], sawn_agg.loc[[t]])
+    sawn.loc[[t], "price2"] = compute_local_price(
+        sawn.loc[[t]], sawn_agg.loc[(t, "WORLD")]
+    )
 
 
+##################################
+# Post processing quality checks #
+##################################
+# TODO use np.testing.assert_allclose()
+# Check that the computed values correspond to the original GFPMx values
+# Compare only values after the base year
+sawn_comp = sawn.query("year > @gfpmx_data.base_year + 1")
+for var in ["cons", "imp", "exp", "prod", "price"]:
+    try:
+        assert_allclose(sawn_comp[var + "2"], sawn_comp[var], rtol=1e-6)
+    except AssertionError as e:
+        print("The", var, "variable does not match with original GFPMx data:\n", str(e))
+
+# Old checks with a proportion
 # Compare only on the country rows
 sawn["cons_prop"] = sawn.cons2 / sawn.cons - 1
 sawn["imp_prop"] = sawn.imp2 / sawn.imp - 1
@@ -193,12 +143,10 @@ print("Price: ", sawn["price_prop"].abs().max())
 # for col in sawn.columns[sawn.columns.str.contains("_prop$")]:
 #     print(sawn[col].describe())
 
-
-# Post processing quality checks #
 # Check that the world imports match the sum of country rows
 world_sum_1 = sawn_agg.loc[idx[:, "WORLD"], cols_compare]
 world_sum_2 = sawn.groupby(["year"]).agg("sum")[cols_compare]
-numpy.testing.assert_allclose(world_sum_1["imp"], world_sum_2["imp"])
+assert_allclose(world_sum_1["imp"], world_sum_2["imp"])
 
 # print(sawn.query("year >= 2019")[["price_lag", "tariff_lag", "imp_price_elasticity",
 #                                  "imp_gdp_elasticity"]])
