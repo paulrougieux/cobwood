@@ -40,7 +40,7 @@ def check_nrows_years_countries(df, dataset_name):
     years = df.index.to_frame()["year"].unique()
     countries = df.index.to_frame()["country"].unique()
     assert len(years) * len(countries) == len(df)
-    msg = "Number of years time the number of countries"
+    msg = "Number of years times the number of countries"
     msg += f" in the {dataset_name} data frame: "
     msg += f"{len(years)} * {len(countries)} = {len(years) * len(countries)}"
     return msg

@@ -52,35 +52,39 @@ check_world_aggregates(fuel, fuel_agg)
 print(check_nrows_years_countries(sawn, "sawn"))
 print(check_nrows_years_countries(fuel, "fuel"))
 
+
+def compute_end_product_time_step(t, df, df_agg, df_prim_agg):
+    """Compute a time step for the given product
+
+    Attention! This will edit the input data frame by reference.
+
+    :param df data frame: end product data at time step t
+    :param df_agg data frame: end product data aggregated
+    :param df data frame: end product data at time step t
+    :return computed variables at time step t
+
+    Usage:
+
+        >>> compute_end_product_time_step(2019, sawn, sawn_agg, indround_agg)
+    """
+    # Keep `[t]` in square braquets so that years is kept in the index on both sides
+    df.loc[[t], "price_lag"] = shift_index(df.loc[[t - 1], "price"])
+    df.loc[[t], "tariff_lag"] = shift_index(df.loc[[t - 1], "tariff"])
+    df.loc[[t], "cons2"] = compute_demand(df.loc[[t]])
+    df.loc[[t], "imp2"] = compute_import_demand(df.loc[[t]])
+    df.loc[[t], "exp2"] = compute_export_supply(df.loc[[t]])
+    df.loc[[t], "prod2"] = compute_domestic_production(df.loc[[t]])
+    df_agg.loc[(t, "WORLD"), "price2"] = compute_world_price(
+        df_agg.loc[(t, "WORLD")], df_prim_agg.loc[(t, "WORLD")]
+    )
+    df.loc[[t], "price2"] = compute_local_price(df.loc[[t]], df_agg.loc[(t, "WORLD")])
+
+
 years = sawn.index.to_frame()["year"].unique()
 # Start one year after the base year so price_{t-1} exists already
 for t in range(gfpmx_data.base_year + 1, years.max() + 1):
-    # Keep `[t]` in square braquets so that years is kept in the index on both sides
-    fuel.loc[[t], "price_lag"] = shift_index(fuel.loc[[t - 1], "price"])
-    fuel.loc[[t], "tariff_lag"] = shift_index(fuel.loc[[t - 1], "tariff"])
-    fuel.loc[[t], "cons2"] = compute_demand(fuel.loc[[t]])
-    fuel.loc[[t], "imp2"] = compute_import_demand(fuel.loc[[t]])
-    fuel.loc[[t], "exp2"] = compute_export_supply(fuel.loc[[t]])
-    fuel.loc[[t], "prod2"] = compute_domestic_production(fuel.loc[[t]])
-    fuel_agg.loc[(t, "WORLD"), "price2"] = compute_world_price(
-        fuel_agg.loc[(t, "WORLD")], indround_agg.loc[(t, "WORLD")]
-    )
-    fuel.loc[[t], "price2"] = compute_local_price(
-        fuel.loc[[t]], fuel_agg.loc[(t, "WORLD")]
-    )
-    sawn.loc[[t], "price_lag"] = shift_index(sawn.loc[[t - 1], "price"])
-    sawn.loc[[t], "tariff_lag"] = shift_index(sawn.loc[[t - 1], "tariff"])
-    sawn.loc[[t], "cons2"] = compute_demand(sawn.loc[[t]])
-    sawn.loc[[t], "imp2"] = compute_import_demand(sawn.loc[[t]])
-    sawn.loc[[t], "exp2"] = compute_export_supply(sawn.loc[[t]])
-    sawn.loc[[t], "prod2"] = compute_domestic_production(sawn.loc[[t]])
-    sawn_agg.loc[(t, "WORLD"), "price2"] = compute_world_price(
-        sawn_agg.loc[(t, "WORLD")], indround_agg.loc[(t, "WORLD")]
-    )
-    sawn.loc[[t], "price2"] = compute_local_price(
-        sawn.loc[[t]], sawn_agg.loc[(t, "WORLD")]
-    )
-
+    compute_end_product_time_step(t, sawn, sawn_agg, indround_agg)
+    compute_end_product_time_step(t, fuel, fuel_agg, indround_agg)
 
 compare_to_original_gftmx(sawn)
 compare_to_original_gftmx(fuel)
