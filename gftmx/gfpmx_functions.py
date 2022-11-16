@@ -68,9 +68,12 @@ def compute_domestic_production(df):
 
 
 def compute_world_price(s_world, s_primary_world):
-    """GFPMX world price as a function of the roundwood price equation 10"""
+    """GFPMX world price as a function of the input price
+    - World price of f, s, u, l as a function of the roundwood price equation 10
+    - World price of paper as a function of the pulp price equation 11
+    """
     return s_world["price_constant"] * pow(
-        s_primary_world["price"], s_world["price_indround_elast"]
+        s_primary_world["price"], s_world["price_input_elast"]
     )
 
 

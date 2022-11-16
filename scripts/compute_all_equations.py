@@ -40,23 +40,40 @@ from gftmx.gfpmx_qaqc import (
 )
 
 # Load data
+indround_agg = gfpmx_data.get_agg_rows("indround")
+pulp_agg = gfpmx_data.get_agg_rows("pulp")
 sawn = gfpmx_data.get_country_rows("sawn", ["gdp"])
 sawn_agg = gfpmx_data.get_agg_rows("sawn", ["gdp"])
 fuel = gfpmx_data.get_country_rows("fuel", ["gdp"])
 fuel_agg = gfpmx_data.get_agg_rows("fuel", ["gdp"])
-indround_agg = gfpmx_data.get_agg_rows("indround")
+# TODO: remove rows containing "World prod/cons" or simply that don't have a FAOSTAT name from
+# the input data pre-processed in "~/rp/gftmx/scripts/gfpmx_data_to_csv.py"
+panel = gfpmx_data.get_country_rows("panel", ["gdp"])
+panel_agg = gfpmx_data.get_agg_rows("panel", ["gdp"])
+paper = gfpmx_data.get_country_rows("paper", ["gdp"])
+paper_agg = gfpmx_data.get_agg_rows("paper", ["gdp"])
 
 # Check that world aggregates correspond to the sum of countries
-check_world_aggregates(sawn, sawn_agg)
 check_world_aggregates(fuel, fuel_agg)
-print(check_nrows_years_countries(sawn, "sawn"))
+check_world_aggregates(sawn, sawn_agg)
+check_world_aggregates(panel, panel_agg, rtol=1e-4)
+check_world_aggregates(paper, paper_agg)
+
+# Display the number of countries and years
 print(check_nrows_years_countries(fuel, "fuel"))
+print(check_nrows_years_countries(sawn, "sawn"))
+print(check_nrows_years_countries(panel, "panel"))
+print(check_nrows_years_countries(paper, "paper"))
 
 
 def compute_end_product_time_step(t, df, df_agg, df_prim_agg):
     """Compute a time step for the given product
 
     Attention! This will edit the input data frame by reference.
+    It will edit the following new columns:
+
+        ['price_lag', 'tariff_lag', 'cons2', 'imp2',
+        'exp2', 'prod2', 'price2']
 
     :param df data frame: end product data at time step t
     :param df_agg data frame: end product data aggregated
@@ -83,8 +100,13 @@ def compute_end_product_time_step(t, df, df_agg, df_prim_agg):
 years = sawn.index.to_frame()["year"].unique()
 # Start one year after the base year so price_{t-1} exists already
 for t in range(gfpmx_data.base_year + 1, years.max() + 1):
-    compute_end_product_time_step(t, sawn, sawn_agg, indround_agg)
     compute_end_product_time_step(t, fuel, fuel_agg, indround_agg)
+    compute_end_product_time_step(t, sawn, sawn_agg, indround_agg)
+    compute_end_product_time_step(t, panel, panel_agg, indround_agg)
+    # The world price of paper and paper board is based on the price of wood pulp
+    compute_end_product_time_step(t, paper, paper_agg, pulp_agg)
 
-compare_to_original_gftmx(sawn)
 compare_to_original_gftmx(fuel)
+compare_to_original_gftmx(sawn)
+compare_to_original_gftmx(panel)
+compare_to_original_gftmx(paper)

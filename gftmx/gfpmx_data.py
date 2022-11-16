@@ -283,11 +283,6 @@ class GFPMXData:
                 df = df[index + cols]
                 df_all = df_all.merge(df, "left", index)
 
-        # Force variable type to numeric
-        var = "price_indround_elast"
-        if var in df_all.columns:
-            df_all[var] = pandas.to_numeric(df_all[var], errors="coerce")
-
         # Set an index
         df_all.set_index(self.index, inplace=True)
         return df_all

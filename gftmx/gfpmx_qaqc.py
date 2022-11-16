@@ -2,16 +2,24 @@
 
 For example the sum of country values should be equal to the world value.
 """
+# TODO: compute world export/imports
+# TODO: compute world production/consumption
 
 import pandas
 from numpy.testing import assert_allclose
 from gftmx.gfpmx_data import gfpmx_data
 
 
-def check_world_aggregates(df, df_agg):
+def check_world_aggregates(df, df_agg, rtol=None):
     """Check that the world aggregate correspond to the sum of constituents
     Compare only columns where the sum makes sense
+
+    :param df data frame: country data
+    :param df_agg data frame: world and continent data
+    :param rtol float: relative tolerance
     """
+    if rtol is None:
+        rtol = 1e-7
     # TODO: check that the continent aggregates match with
     # the sum of their constituents.
     cols_compare = [
@@ -30,7 +38,7 @@ def check_world_aggregates(df, df_agg):
     # cols_compare = df[set(cols_compare) & set(df.columns)]
     world_sum_1 = df_agg.loc[idx[:, "WORLD"], cols_compare]
     world_sum_2 = df.groupby(["year"]).agg("sum")[cols_compare]
-    assert_allclose(world_sum_1, world_sum_2)
+    assert_allclose(world_sum_1, world_sum_2, rtol=rtol)
 
 
 def check_nrows_years_countries(df, dataset_name):

@@ -16,6 +16,7 @@ Author of this script Paul Rougieux
 See also the scripts that reproduces the GFPM simulation:
 
     ~/rp/gftmx/scripts/compute_swd_equations.py
+    ~/rp/gftmx/scripts/compute_all_equations.py
 
 """
 
@@ -56,16 +57,33 @@ for key in tqdm(gfpmx_excel_file.keys()):
     df.rename(columns=lambda x: re.sub(r"^(\d{4})$", r"value\1", x), inplace=True)
     # Rename element and unit columns
     df.rename(columns={"unnamed_1": "element", "unnamed_2": "unit"}, inplace=True)
-    # Rename the column that contains the industrial roundwood world price elasticity
-    products_equation_10 = ["FuelPrice", "SawnPrice", "PanelPrice", "PulpPrice"]
-    if key in products_equation_10:
-        selector = df["unnamed_4"].astype(str).str.contains("ound")
+    # Rename the column that contains the world price elasticity of the input
+    # Equation 10 industrial roundwood world price elasticity
+    # Equation 11 pulp world price elasticity
+    products_equations_10_11 = [
+        "FuelPrice",
+        "SawnPrice",
+        "PanelPrice",
+        "PulpPrice",
+        "PaperPrice",
+    ]
+    if key in products_equations_10_11:
+        selector = df["unnamed_4"].astype(str).str.contains("ound|ulp")
         if any(selector):
-            df = df.rename(columns={"unnamed_4": "indround_elast"})
-    # Harmonize product names
+            var = "input_elast"
+            df = df.rename(columns={"unnamed_4": var})
+            # Force variable type to numeric
+            df[var] = pandas.to_numeric(df[var], errors="coerce")
+
+    # This applies to product sheets, which have a "faostat_name" column
     if "faostat_name" in df.columns:
+        # Harmonize product names
         if df["faostat_name"].unique().tolist() == ["Sawnwood"]:
             df["faostat_name"] = "Sawnwood+sleepers"
+        # Remove rows that don't have a faostat_name
+        # They usually contain quality checks such as
+        # World prod/cons or Worldexp/Worldimp
+        df = df[~df["faostat_name"].isna()]
 
     # Further renaming for the purpose of libcbm usage
     if key in ["FuelProd", "IndroundProd"]:
