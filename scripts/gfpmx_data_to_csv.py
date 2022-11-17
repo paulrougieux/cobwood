@@ -83,7 +83,7 @@ for key in tqdm(gfpmx_excel_file.keys()):
         # Remove rows that don't have a faostat_name
         # They usually contain quality checks such as
         # World prod/cons or Worldexp/Worldimp
-        df = df[~df["faostat_name"].isna()]
+        df = df[~df["faostat_name"].isna()].copy()
 
     # Further renaming for the purpose of libcbm usage
     if key in ["FuelProd", "IndroundProd"]:
@@ -100,13 +100,11 @@ for key in tqdm(gfpmx_excel_file.keys()):
 
 # Paste files to libcbm_data for the forest dynamics model
 if False:
-    dest_dir = Path.home() / "repos/libcbm_data/common/gftmx"
+    dest_dir = Path.home() / "repos/eu_cbm/eu_cbm_data/domestic_harvest/gftmx"
     dest_dir.mkdir(exist_ok=True)
-    for file_name in ["fuelprod.csv", "indroundprod.csv"]:
-        from_path = gfpmx_data_dir / file_name
-        to_path = dest_dir / file_name
-        shutil.copy(from_path, to_path)
-        print(f"Copied {from_path} to {to_path}")
+    shutil.copy(gfpmx_data_dir / "fuelprod.csv", dest_dir / "fw_harvest.csv")
+    shutil.copy(gfpmx_data_dir / "indroundprod.csv", dest_dir / "irw_harvest.csv")
+    print(f"Copied from {gfpmx_data_dir} to {dest_dir}")
 
 
 # Investigate unnamed columns
