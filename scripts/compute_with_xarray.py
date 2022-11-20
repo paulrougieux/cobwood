@@ -8,59 +8,115 @@ Run this file with:
 
      ipython -i ~/repos/gftmx/scripts/compute_with_xarray.py
 
+
+[transitioning from pandas panel to
+xarray](https://docs.xarray.dev/en/stable/user-guide/pandas.html#transitioning-
+from-pandas-panel-to-xarray)
+
+    > "As discussed elsewhere in the docs, there are two primary data structures
+    > in xarray: DataArray and Dataset. You can imagine a DataArray as a
+    > n-dimensional pandas Series (i.e. a single typed array), and a Dataset as the
+    > DataFrame equivalent (i.e. a dict of aligned DataArray objects).
+    > So you can represent a Panel, in two ways:
+    >
+    >    As a 3-dimensional DataArray,
+    >
+    >    Or as a Dataset containing a number of 2-dimensional DataArray objects.
+
 """
 
 # Third party modules
-import numpy
-import pandas
+import xarray
 
-# import xarray
 
-# Internal modules
 from gftmx.gfpmx_data import gfpmx_data
 
-# Load sawnwood data
-swd_all = gfpmx_data.join_sheets("sawn", ["gdp"])
+# Load data
+indround_agg = gfpmx_data.get_agg_rows("indround")
+pulp_agg = gfpmx_data.get_agg_rows("pulp")
+pulp = gfpmx_data.get_country_rows("pulp", ["gdp"])
+sawn = gfpmx_data.get_country_rows("sawn", ["gdp"])
+sawn_agg = gfpmx_data.get_agg_rows("sawn", ["gdp"])
+fuel = gfpmx_data.get_country_rows("fuel", ["gdp"])
+fuel_agg = gfpmx_data.get_agg_rows("fuel", ["gdp"])
+# TODO: remove rows containing "World prod/cons" or simply that don't have a FAOSTAT name from
+# the input data pre-processed in "~/rp/gftmx/scripts/gfpmx_data_to_csv.py"
+panel = gfpmx_data.get_country_rows("panel", ["gdp"])
+panel_agg = gfpmx_data.get_agg_rows("panel", ["gdp"])
+paper = gfpmx_data.get_country_rows("paper", ["gdp"])
+paper_agg = gfpmx_data.get_agg_rows("paper", ["gdp"])
 
-# Separate aggregates from individual countries
-selector = swd_all.index.isin(gfpmx_data.country_groups, level="country")
-# Copy the slices to new data frames to avoid the warning:
-#   "A value is trying to be set on a copy of a slice from a DataFrame.
-#   Try using .loc[row_indexer,col_indexer] = value instead"
-swd_agg = swd_all[selector].copy()
-swd = swd_all[~selector].copy()
+##################################################################
+# First attempt convert data frames into datasets or data arrays #
+##################################################################
 
-# Check that the world aggregate correspond to the sum of constituents
-# Compare only columns where the sum makes sense
-cols_compare = [
-    "cons",
-    "cons_usd",
-    "exp",
-    "exp_usd",
-    "imp",
-    "imp_usd",
-    "prod",
-    "prod_usd",
-    "gdp",
+# "Convert a pandas.DataFrame into an xarray.Dataset
+#
+#    Each column will be converted into an independent variable in the
+#    Dataset. If the dataframe's index is a MultiIndex, it will be expanded
+#    into a tensor product of one-dimensional indices (filling in missing
+#    values with NaN). This method will produce a Dataset very similar to
+#    that on which the 'to_dataframe' method was called, except with
+#    possibly redundant dimensions (since all dataset variables will have
+#    the same dimensionality)
+sawn_ds = xarray.Dataset.from_dataframe(sawn)
+sawn_ds
+
+# class DataArray
+# to_pandas(self) -> 'DataArray | pd.Series | pd.DataFrame'
+#     Convert this array into a pandas object with the same shape.
+#     The type of the returned object depends on the number of DataArray
+#     dimensions:
+#     * 0D -> `xarray.DataArray`
+#     * 1D -> `pandas.Series`
+#     * 2D -> `pandas.DataFrame`
+#     Only works for arrays with 2 or fewer dimensions.
+#     The DataArray constructor performs the inverse transformation.
+sawn_da_dumb = xarray.DataArray(sawn)
+sawn_da_dumb
+
+# Convert
+# See help(sawn_ds.to_stacked_array)
+
+# I don't manage to use to_stacked_array
+# sawn_ds[["price", "prod", "faostat_name"]].to_stacked_array("variable","faostat_name")
+# ValueError: All variables in the dataset must contain the dimensions ('year', 'country').
+
+# Convert data set to array
+sawn_da = sawn_ds[["price", "prod"]].to_array("variable")
+
+index = ["year", "country", "faostat_name"]
+sawn_ds2 = xarray.Dataset.from_dataframe(sawn.reset_index().set_index(index))
+sawn_da2 = sawn_ds2[["price", "prod"]].to_array("variable")
+
+# Display index values
+sawn_ds2.indexes["year"]
+sawn_ds2.indexes["country"]
+
+index = ["year", "country", "faostat_name"]
+fuel_ds2 = xarray.Dataset.from_dataframe(fuel.reset_index().set_index(index))
+fuel_da2 = fuel_ds2[["price", "prod"]].to_array("variable")
+
+
+########################################################
+# Second attempt build data array from the wide format #
+########################################################
+sawn_price_wide = gfpmx_data.get_sheet_wide("sawnprice")
+index = [
+    "faostat_name",
+    "element",
+    "unit",
+    "input_elast",
+    "world_price_elasticity",
+    "constant",
+    "country",
 ]
-idx = pandas.IndexSlice
-world_sum_1 = swd_agg.loc[idx[:, "WORLD"], cols_compare]
-world_sum_2 = swd.groupby(["year"]).agg("sum")[cols_compare]
-numpy.testing.assert_allclose(world_sum_1, world_sum_2)
-
-# TODO check that the continent aggregates match with the sum of their constituents.
-
-# Number of years and number of countries
-years = swd.index.to_frame()["year"].unique()
-countries = swd.index.to_frame()["country"].unique()
-print("Years:", years)
-print("Countries:", countries)
-print("Number of lines in the swd data frame:", len(swd))
-print(
-    "Number of years time the number of countries: ",
-    len(years),
-    "*",
-    len(countries),
-    "=",
-    len(years) * len(countries),
+sawn_price_da = xarray.DataArray(
+    sawn_price_wide.set_index(index), dims=["dim_0", "year"]
 )
+
+# Data for the first year
+sawn_price_da[:, 0]
+sawn_price_da.loc[:, "value1992"]
+# N'importe quoi
+# sawn_price_da.to_dataset(dim="dim_0").to_dataframe()

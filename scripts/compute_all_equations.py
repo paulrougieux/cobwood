@@ -42,6 +42,7 @@ from gftmx.gfpmx_qaqc import (
 # Load data
 indround_agg = gfpmx_data.get_agg_rows("indround")
 pulp_agg = gfpmx_data.get_agg_rows("pulp")
+pulp = gfpmx_data.get_country_rows("pulp", ["gdp"])
 sawn = gfpmx_data.get_country_rows("sawn", ["gdp"])
 sawn_agg = gfpmx_data.get_agg_rows("sawn", ["gdp"])
 fuel = gfpmx_data.get_country_rows("fuel", ["gdp"])
@@ -100,11 +101,14 @@ def compute_end_product_time_step(t, df, df_agg, df_prim_agg):
 years = sawn.index.to_frame()["year"].unique()
 # Start one year after the base year so price_{t-1} exists already
 for t in range(gfpmx_data.base_year + 1, years.max() + 1):
+    # The world price of secondary products are based in the price of industrial roundwood
     compute_end_product_time_step(t, fuel, fuel_agg, indround_agg)
     compute_end_product_time_step(t, sawn, sawn_agg, indround_agg)
     compute_end_product_time_step(t, panel, panel_agg, indround_agg)
     # The world price of paper and paper board is based on the price of wood pulp
     compute_end_product_time_step(t, paper, paper_agg, pulp_agg)
+    # Compute domestic demand for wood pulp
+
 
 compare_to_original_gftmx(fuel)
 compare_to_original_gftmx(sawn)

@@ -143,7 +143,14 @@ class GFPMXData:
         return df
 
     def get_sheet_wide(self, sheet_name):
-        """Read a csv file into a pandas data frame"""
+        """Read a csv file into a pandas data frame
+
+        Example use
+
+            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> print(gfpmx_data.get_sheet_wide("sawnprice"))
+
+        """
         csv_file_name = self.data_dir / (sheet_name + ".csv")
         df = pandas.read_csv(csv_file_name)
         return df
