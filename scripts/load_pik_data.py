@@ -21,14 +21,35 @@ Run this script at the command line with
 
 # Draft mail to Bodirsky
 
-Dear
-I am implementing a forest sector model and would like to test it on your scenarios.
+Dear Benjamin Bodirsky,
 
-I tried looking at DegrowthMAgPIE/figures/incomes
-but I have trouble understanding the content of the files
-The readme says "unit: population: Mio people, gdp: Million USD,"
-and the files have
+I enjoyed reading your paper "Integrating degrowth and efficiency perspectives
+enables an emission-neutral food system by 2100". I am implementing a forest
+sector model which has wood consumption driven by a revenue elasticity of
+demand (where revenue is proxied by the GDP). The GFPMx model was published as
+"GFPMX: A Cobweb Model of the Global Forest Sector, with an Application to the
+Impact of the COVID-19 Pandemic"
 
+
+I would like to use the GDP projections from your BAU and FAIR GDP scenarios.
+Based on the data at https://zenodo.org/record/5543427#.Y3eYOkjMKcM , I
+compared the value in DegrowthMAgPIE/figures/incomes/bau_gdp_ppp_iso.csv to
+historical GDP values from the World Bank
+https://data.worldbank.org/indicator/NY.GDP.MKTP.PP.KD and to values from the
+forest sector model GFPMx (also based on the SSP2 storyline). Both other
+sources are expressed in constant USD of 2017. See comparison plot attached for
+EU countries only. I am wondering why the BAU SSP2 GDP values are almost always
+below the world bank values for the historical period. I am also wondering
+about the future projection period with the GFPMx model, but I guess I would
+have to check
+
+I was trying to look at the FAIR scenario, but it seems that the values in
+fair_gdp_ppp_iso.csv do not change much. Do I need to look at the SSP2 column
+in that file or at another column?  Where can I look for the GDP projections
+used in the FAIR scenario?
+
+Kind regards,
+Paul Rougieux
 
 """
 
@@ -62,6 +83,11 @@ bau_gdp = pandas.read_csv(incomes_path / "bau_gdp_ppp_iso.csv")
 bau_gdp.rename(columns=lambda x: re.sub(r" ", "_", str(x)).lower(), inplace=True)
 bau_gdp.rename(columns={"region": "country_iso"}, inplace=True)
 bau_gdp["year"] = pandas.to_numeric(bau_gdp["year"].str.replace("y", ""))
+
+fair_gdp = pandas.read_csv(incomes_path / "fair_gdp_ppp_iso.csv")
+fair_gdp.rename(columns=lambda x: re.sub(r" ", "_", str(x)).lower(), inplace=True)
+fair_gdp.rename(columns={"region": "country_iso"}, inplace=True)
+fair_gdp["year"] = pandas.to_numeric(fair_gdp["year"].str.replace("y", ""))
 
 # Load GFPMX GDP data
 # Expressed in 1000 USD of 2017
