@@ -31,8 +31,12 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
     Example use:
 
         >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> from gftmx.gfpmx_data import convert_to_2d_array
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
+        >>> gdp_df = gfpmx_data.get_sheet_wide("gdp")
+        >>> gdp_da = convert_to_2d_array(gdp_df)
+
     """
     cols = df.columns
     value_cols = cols[df.columns.str.contains("value")]
@@ -51,8 +55,10 @@ def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
     Example use:
 
         >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> from gftmx.gfpmx_data import convert_to_1d_array
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
+
     """
     return xarray.DataArray(df.set_index("country")[var], dims=["country"])
 
