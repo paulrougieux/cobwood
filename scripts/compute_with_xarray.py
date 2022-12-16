@@ -8,7 +8,6 @@ Run this file with:
 
      ipython -i ~/repos/gftmx/scripts/compute_with_xarray.py
 
-
 The first attempt is the easiest one based on the long format. But since it is based on the long
 format, we loose the units. It would be nice to have the units as dataset
 attribute to each data array
@@ -31,19 +30,8 @@ from gftmx.gfpmx_data import gfpmx_data
 
 # Load data
 indround_agg = gfpmx_data.get_agg_rows("indround")
-pulp_agg = gfpmx_data.get_agg_rows("pulp")
-pulp = gfpmx_data.get_country_rows("pulp", ["gdp"])
 sawn = gfpmx_data.get_country_rows("sawn", ["gdp"])
-sawn_agg = gfpmx_data.get_agg_rows("sawn", ["gdp"])
 fuel = gfpmx_data.get_country_rows("fuel", ["gdp"])
-fuel_agg = gfpmx_data.get_agg_rows("fuel", ["gdp"])
-# TODO: remove rows containing "World prod/cons" or simply that don't have a
-# FAOSTAT name from the input data pre-processed in
-# "~/rp/gftmx/scripts/gfpmx_data_to_csv.py"
-panel = gfpmx_data.get_country_rows("panel", ["gdp"])
-panel_agg = gfpmx_data.get_agg_rows("panel", ["gdp"])
-paper = gfpmx_data.get_country_rows("paper", ["gdp"])
-paper_agg = gfpmx_data.get_agg_rows("paper", ["gdp"])
 
 ##################################################################
 # First attempt convert data frames into datasets or data arrays #
@@ -124,42 +112,70 @@ sawn_price_da.loc[:, "value1992"]
 ####################################################################################
 # Third attempt panel 2 dimensions, elasticities 1 dimension and unit as attribute #
 ####################################################################################
-sawn_price_wide = gfpmx_data.get_sheet_wide("sawnprice")
+# TODO: place conversion functions in a module
+# Rename this script to experiment_with_xarray.py
+# Move the computation to compute_with_xarray.py
 
 
 def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
     """Convert the year columns of a data frame to a two dimensional data array
     In wide format the values are in one column for each year.
+
+    Example use:
+
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
+        >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
     """
     cols = df.columns
     value_cols = cols[df.columns.str.contains("value")]
     da = xarray.DataArray(df.set_index("country")[value_cols], dims=["country", "year"])
     # Change year to an integer
     da["year"] = da["year"].str.replace("value", "").astype(int)
-    # Store the unit as an attribute
-    da.attrs["unit"] = df["unit"].unique()[0]
+    if "unit" in df.columns:
+        # Store the unit as an attribute
+        da.attrs["unit"] = df["unit"].unique()[0]
     return da
 
 
-spda = convert_to_2d_array(sawn_price_wide)
-
-
 def convert_to_1_dim_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
-    """Convert one column of a data frame to a one dimensional data array"""
-    return xarray.DataArray(df.set_index(index)[var], dims=["country"])
+    """Convert one column of a data frame to a one dimensional data array
+
+    Example use:
+
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
+        >>> sawnprice_elast_da = convert_to_1_dim_array(sawnprice_df, "world_price_elasticity")
+    """
+    return xarray.DataArray(df.set_index("country")[var], dims=["country"])
 
 
-convert_to_1_dim_array(sawn_price_wide, "world_price_elasticity")
-convert_to_1_dim_array(sawn_price_wide, "constant")
+def convert_sheets_to_dataset(product: str) -> xarray.Dataset:
+    """Combine 2D and 1D arrays from all sheet sheet corresponding to the given
+    product into an xarray dataset
+    Example use:
+        >>> sawn = convert_sheets_to_dataset("sawn")
+        >>> sawn.data_vars
+    """
+    sheets = gfpmx_data.sheets[gfpmx_data.sheets["product"] == "sawn"]
+    ds = xarray.Dataset()
+    for this_sheet in sheets.index:
+        df = gfpmx_data.get_sheet_wide(this_sheet)
+        element = sheets.loc[this_sheet]["element"]
+        # Add the 2D array to the dataset
+        ds[element] = convert_to_2d_array(df)
+        # If "elast" or "const" are in the column names then add them as a 1D arrays
+        coefficients = df.columns[df.columns.str.contains("elast|const")]
+        for col in coefficients:
+            ds[element + "_" + col] = convert_to_1_dim_array(df, col)
+    return ds
 
-# Combine into a dataset
-spds = xarray.Dataset(
-    dict(
-        price=spda,
-        elast=convert_to_1_dim_array(sawn_price_wide, "world_price_elasticity"),
-        constant=convert_to_1_dim_array(sawn_price_wide, "constant"),
-    )
-)
+
+sawn = convert_sheets_to_dataset("sawn")
+
+
+gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
+sawn["gdp"] = gdp
 
 # Plot
 continents = [
@@ -176,10 +192,17 @@ continents = [
 # plt.show()
 
 
-# Compute demand
-t = 2019
-spds.constant * spds.price.loc[dict(year=t)]
-# .loc[dict(lon=260, lat=30)]
+# # Compute demand
+# t = 2019
+#
+# # pow(gdp.loc[:,t],)
+#
+# # Compute world price
+#
+# # Compute local price
+# price_t = (spds["constant"]
+#            * pow(spds["price"].loc[:,t-1], spds["elast"])
+#           ) # TODO: add gdp elasticity
 
 
 #############
@@ -191,4 +214,4 @@ spds.constant * spds.price.loc[dict(year=t)]
 # https://docs.xarray.dev/en/stable/generated/xarray.DataArray.assign_coords.html#xarray.DataArray.assign_coords
 # The fact that country is first, is because country are in rows and years in columns in the input data.
 # Maybe this is better this way?
-spda.loc["Algeria", "value1992"]
+sawn.price.loc["Algeria", 1992]
