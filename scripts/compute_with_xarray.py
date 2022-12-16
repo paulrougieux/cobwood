@@ -9,25 +9,23 @@ Run this file with:
      ipython -i ~/repos/gftmx/scripts/compute_with_xarray.py
 
 
-[transitioning from pandas panel to
-xarray](https://docs.xarray.dev/en/stable/user-guide/pandas.html#transitioning-
-from-pandas-panel-to-xarray)
+The first attempt is the easiest one based on the long format. But since it is based on the long
+format, we loose the units. It would be nice to have the units as dataset
+attribute to each data array
 
-    > "As discussed elsewhere in the docs, there are two primary data structures
-    > in xarray: DataArray and Dataset. You can imagine a DataArray as a
-    > n-dimensional pandas Series (i.e. a single typed array), and a Dataset as the
-    > DataFrame equivalent (i.e. a dict of aligned DataArray objects).
-    > So you can represent a Panel, in two ways:
-    >
-    >    As a 3-dimensional DataArray,
-    >
-    >    Or as a Dataset containing a number of 2-dimensional DataArray objects.
+    sawn_ds.attrs["units"] = "test"
+    sawn_ds.price.attrs["units"] = "$/m3"
+
+The third attempt distinguishes:
+- two dimensional data such as production, consumption or prices
+- one dimensional data such as price elasticities which are defined by country
+- attributes such as units
 
 """
 
 # Third party modules
 import xarray
-
+import pandas
 
 from gftmx.gfpmx_data import gfpmx_data
 
@@ -39,8 +37,9 @@ sawn = gfpmx_data.get_country_rows("sawn", ["gdp"])
 sawn_agg = gfpmx_data.get_agg_rows("sawn", ["gdp"])
 fuel = gfpmx_data.get_country_rows("fuel", ["gdp"])
 fuel_agg = gfpmx_data.get_agg_rows("fuel", ["gdp"])
-# TODO: remove rows containing "World prod/cons" or simply that don't have a FAOSTAT name from
-# the input data pre-processed in "~/rp/gftmx/scripts/gfpmx_data_to_csv.py"
+# TODO: remove rows containing "World prod/cons" or simply that don't have a
+# FAOSTAT name from the input data pre-processed in
+# "~/rp/gftmx/scripts/gfpmx_data_to_csv.py"
 panel = gfpmx_data.get_country_rows("panel", ["gdp"])
 panel_agg = gfpmx_data.get_agg_rows("panel", ["gdp"])
 paper = gfpmx_data.get_country_rows("paper", ["gdp"])
@@ -120,3 +119,61 @@ sawn_price_da[:, 0]
 sawn_price_da.loc[:, "value1992"]
 # N'importe quoi
 # sawn_price_da.to_dataset(dim="dim_0").to_dataframe()
+
+
+####################################################################################
+# Third attempt panel 2 dimensions, elasticities 1 dimension and unit as attribute #
+####################################################################################
+sawn_price_wide = gfpmx_data.get_sheet_wide("sawnprice")
+
+
+def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
+    """Convert the year columns of a data frame to a two dimensional data array
+    In wide format the values are in one column for each year.
+    """
+    cols = df.columns
+    value_cols = cols[df.columns.str.contains("value")]
+    da = xarray.DataArray(df.set_index("country")[value_cols], dims=["country", "year"])
+    # Change year to an integer
+    da["year"] = da["year"].str.replace("value", "").astype(int)
+    # Store the unit as an attribute
+    da.attrs["unit"] = sawn_price_wide["unit"].unique()
+    return da
+
+
+spda = convert_to_2d_array(sawn_price_wide)
+
+
+def convert_to_1_dim_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
+    """Convert one column of a data frame to a one dimensional data array"""
+    return xarray.DataArray(df.set_index(index)[var], dims=["country"])
+
+
+convert_to_1_dim_array(sawn_price_wide, "world_price_elasticity")
+convert_to_1_dim_array(sawn_price_wide, "constant")
+
+# Combine into a dataset
+spds = xarray.Dataset(
+    dict(
+        price=spda,
+        elast=convert_to_1_dim_array(sawn_price_wide, "world_price_elasticity"),
+        constant=convert_to_1_dim_array(sawn_price_wide, "constant"),
+    )
+)
+
+# Compute demand
+t = 2019
+spds.constant * spds.price.loc[dict(year=t)]
+# .loc[dict(lon=260, lat=30)]
+
+
+#############
+# Questions #
+#############
+# How to put the year first, before the country?
+# So it's compatible with compute_all_equations.py
+# Maybe using assign_coords?
+# https://docs.xarray.dev/en/stable/generated/xarray.DataArray.assign_coords.html#xarray.DataArray.assign_coords
+# The fact that country is first, is because country are in rows and years in columns in the input data.
+# Maybe this is better this way?
+spda.loc["Algeria", "value1992"]
