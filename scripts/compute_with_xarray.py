@@ -137,7 +137,7 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
     # Change year to an integer
     da["year"] = da["year"].str.replace("value", "").astype(int)
     # Store the unit as an attribute
-    da.attrs["unit"] = sawn_price_wide["unit"].unique()
+    da.attrs["unit"] = df["unit"].unique()[0]
     return da
 
 
@@ -160,6 +160,21 @@ spds = xarray.Dataset(
         constant=convert_to_1_dim_array(sawn_price_wide, "constant"),
     )
 )
+
+# Plot
+continents = [
+    "WORLD",
+    "AFRICA",
+    "NORTH AMERICA",
+    "SOUTH AMERICA",
+    "ASIA",
+    "OCEANIA",
+    "EUROPE",
+]
+# spda.loc[dict(country=continents)].plot(col="country", col_wrap=4)
+# from matplotlib import pyplot as plt
+# plt.show()
+
 
 # Compute demand
 t = 2019
