@@ -351,11 +351,16 @@ class GFPMXData:
     ) -> xarray.Dataset:
         """Combine 2D and 1D arrays from all sheet sheet corresponding to the given
         product into an xarray dataset
-        Example use:
-            >>> sawn = convert_sheets_to_dataset("sawn")
-            >>> sawn.data_vars
+
+        Example load sawnwood data, add GDP to the panel data:
+
+            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> sawn = gfpmx_data.convert_sheets_to_dataset("sawn")
+            >>> print(sawn.data_vars)
+            >>> panel = gfpmx_data.convert_sheets_to_dataset("panel", ["gdp"])
+
         """
-        sheets = self.sheets[self.sheets["product"] == "sawn"]
+        sheets = self.sheets[self.sheets["product"] == product]
         # Join other sheets if requested
         if other_element is not None:
             other_sheets = self.sheets[self.sheets["product"] == "other"]
