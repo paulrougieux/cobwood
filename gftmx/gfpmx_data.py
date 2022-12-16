@@ -18,9 +18,43 @@ import re
 
 # Third party modules
 import pandas
+import xarray
 
 # Internal modules
 from gftmx.data_dir import gftmx_data_dir
+
+
+def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
+    """Convert the year columns of a data frame to a two dimensional data array
+    In wide format the values are in one column for each year.
+
+    Example use:
+
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
+        >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
+    """
+    cols = df.columns
+    value_cols = cols[df.columns.str.contains("value")]
+    da = xarray.DataArray(df.set_index("country")[value_cols], dims=["country", "year"])
+    # Change year to an integer
+    da["year"] = da["year"].str.replace("value", "").astype(int)
+    if "unit" in df.columns:
+        # Store the unit as an attribute
+        da.attrs["unit"] = df["unit"].unique()[0]
+    return da
+
+
+def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
+    """Convert one column of a data frame to a one dimensional data array
+
+    Example use:
+
+        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
+        >>> sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
+    """
+    return xarray.DataArray(df.set_index("country")[var], dims=["country"])
 
 
 class GFPMXData:
@@ -311,6 +345,34 @@ class GFPMXData:
         df = self.join_sheets(*args, **kwargs)
         selector = df.index.isin(self.country_groups, level="country")
         return df[selector].copy()
+
+    def convert_sheets_to_dataset(
+        self, product: str, other_element: [list, str] = None
+    ) -> xarray.Dataset:
+        """Combine 2D and 1D arrays from all sheet sheet corresponding to the given
+        product into an xarray dataset
+        Example use:
+            >>> sawn = convert_sheets_to_dataset("sawn")
+            >>> sawn.data_vars
+        """
+        sheets = self.sheets[self.sheets["product"] == "sawn"]
+        # Join other sheets if requested
+        if other_element is not None:
+            other_sheets = self.sheets[self.sheets["product"] == "other"]
+            other_sheets = other_sheets[other_sheets["element"].isin(other_element)]
+            sheets = pandas.concat([sheets, other_sheets])
+        # Create a dataset
+        ds = xarray.Dataset()
+        for this_sheet in sheets.index:
+            df = self.get_sheet_wide(this_sheet)
+            element = sheets.loc[this_sheet]["element"]
+            # Add the 2D array to the dataset
+            ds[element] = convert_to_2d_array(df)
+            # If "elast" or "const" are in the column names then add them as a 1D arrays
+            coefficients = df.columns[df.columns.str.contains("elast|const")]
+            for col in coefficients:
+                ds[element + "_" + col] = convert_to_1d_array(df, col)
+        return ds
 
 
 # Make a singleton #

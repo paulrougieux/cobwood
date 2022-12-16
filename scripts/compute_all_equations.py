@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 A script to compute GFPMX equations recursively in a time loop
+
+TODO: rename this script to compute_all_equations_with_pandas.py
 
 Run this file with:
 
