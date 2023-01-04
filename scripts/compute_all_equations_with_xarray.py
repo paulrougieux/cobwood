@@ -1,4 +1,11 @@
 """This scripts computes all GFPMx equations using xarray
+
+
+Usage:
+
+    ipython -i ~/repos/gftmx/scripts/compute_all_equations_with_xarray.py
+
+
 """
 
 import numpy as np
@@ -23,6 +30,7 @@ base_year = 2018
 # # returns KeyError: 2018
 # # But selecting the original data works fine
 # sawn_ref["price"].loc[:,t-1]
+# --> Make a reproducible example and ask on Stackoverflow why this is the case.
 
 sawn = sawn_ref.copy()
 for x in sawn.data_vars:
@@ -30,7 +38,7 @@ for x in sawn.data_vars:
         sawn[x].loc[dict(year=sawn.coords["year"] > base_year)] = np.nan
 
 
-# Compute consumption equation 1
+# TODO: Compute consumption equation 1
 t = 2019
 # da[dict(space=0)] = 0
 sawn["cons"][dict(year=t)] = (

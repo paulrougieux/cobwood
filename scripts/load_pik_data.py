@@ -5,6 +5,14 @@ Load PIK-Magpie scenario data from the paper
   perspectives enables an emission-neutral food system by 2100. Nat Food 3, 341–348
   (2022). https://doi.org/10.1038/s43016-022-00500-3
 
+Run this script at the command line with:
+
+    ipython -i ~/repos/gftmx/scripts/load_pik_data.py
+
+See comparison plots in:
+
+    ../notebooks/explore_pik_gdp_scenarios.md
+
 The data is located at:
 
 - https://zenodo.org/record/5543427#.Y3eYOkjMKcM
@@ -15,11 +23,8 @@ The data in the figures/scenariogdx folder is in the form of GAMMS GDX files
 (although the model interface seems to be in R). There are also csv files in
 the figures/incomes folder.
 
-Run this script at the command line with
 
-    ipython -i ~/repos/gftmx/scripts/load_pik_data.py
-
-# Draft mail to Bodirsky
+# Mail to Bodirsky
 
 Dear Benjamin Bodirsky,
 
@@ -51,6 +56,20 @@ used in the FAIR scenario?
 Kind regards,
 Paul Rougieux
 
+
+# Reply from co author David M Chen
+
+> "Yes, our GDP units are in constant 2005 USD at market-exchange rate, which
+> should explain the consistent difference between them and the World Bank 2017
+> values. Our historic GDP values are based on a harmonized dataset (that
+> primarily also uses WB as source) documented here, for which we have an updated
+> version from 2019.
+
+> And yes for the FAIR scenario, that's a bit unclear, sorry about that, the
+> SSP2 column in fair_gdp_ppp_iso.csv has the per capita GDP projections for the
+> FAIR scenario. The other columns are the other SSP scenarios as they are (they
+> have not been subject to the FAIR redistribution)."
+
 """
 
 from pathlib import Path
@@ -79,15 +98,19 @@ country_iso_codes = faostat.country_groups.df[["fao_table_name", "iso3_code"]].r
 # Load Magpie income data
 scenario_path = Path("~/large_models/DegrowthMAgPIE/figures/scenariogdx")
 incomes_path = Path("~/large_models/DegrowthMAgPIE/figures/incomes")
-bau_gdp = pandas.read_csv(incomes_path / "bau_gdp_ppp_iso.csv")
-bau_gdp.rename(columns=lambda x: re.sub(r" ", "_", str(x)).lower(), inplace=True)
-bau_gdp.rename(columns={"region": "country_iso"}, inplace=True)
-bau_gdp["year"] = pandas.to_numeric(bau_gdp["year"].str.replace("y", ""))
 
-fair_gdp = pandas.read_csv(incomes_path / "fair_gdp_ppp_iso.csv")
-fair_gdp.rename(columns=lambda x: re.sub(r" ", "_", str(x)).lower(), inplace=True)
-fair_gdp.rename(columns={"region": "country_iso"}, inplace=True)
-fair_gdp["year"] = pandas.to_numeric(fair_gdp["year"].str.replace("y", ""))
+
+def load_pik_gdp(file_path, new_var_name):
+    """Load a pik GDP file and rename the SSP2 column to a new name"""
+    df = pandas.read_csv(file_path)
+    df.rename(columns=lambda x: re.sub(r" ", "_", str(x)).lower(), inplace=True)
+    df.rename(columns={"region": "country_iso", "ssp2": new_var_name}, inplace=True)
+    df["year"] = pandas.to_numeric(df["year"].str.replace("y", ""))
+    return df
+
+
+bau_gdp = load_pik_gdp(incomes_path / "bau_gdp_ppp_iso.csv", "pik_bau")
+fair_gdp = load_pik_gdp(incomes_path / "fair_gdp_ppp_iso.csv", "pik_fair")
 
 # Load GFPMX GDP data
 # Expressed in 1000 USD of 2017
@@ -98,16 +121,56 @@ gfpm_gdp = gfpmx_data.get_sheet_long("gdp").merge(
 gfpm_gdp["gdp"] = gfpm_gdp["gdp"] / 1e3
 gfpm_gdp.rename(columns={"gdp": "gfpm_gdp"}, inplace=True)
 
-# Load World bank GDP data in PPP constant USD of 2017
+# Load World Bank GDP, PPP (constant 2017 international $)
 # https://data.worldbank.org/indicator/NY.GDP.MKTP.PP.KD
-wb_gdp = world_bank.db.select("indicator", indicator_code="NY.GDP.MKTP.PP.KD")
-wb_gdp.rename(columns={"reporter_code": "country_iso", "value": "wb_gdp"}, inplace=True)
+wb_gdp_cst = world_bank.db.select("indicator", indicator_code="NY.GDP.MKTP.PP.KD")
+wb_gdp_cst.rename(
+    columns={"reporter_code": "country_iso", "value": "wb_gdp_cst"}, inplace=True
+)
 # Convert from USD to million USD
-wb_gdp["wb_gdp"] = wb_gdp["wb_gdp"] / 1e6
+wb_gdp_cst["wb_gdp_cst"] = wb_gdp_cst["wb_gdp_cst"] / 1e6
 
+# Load World Bank GDP, PPP (current international $)
+wb_gdp_cur = world_bank.db.select("indicator", indicator_code="NY.GDP.MKTP.PP.CD")
+wb_gdp_cur.rename(
+    columns={"reporter_code": "country_iso", "value": "wb_gdp_cur"}, inplace=True
+)
+# Convert from USD to million USD
+wb_gdp_cur["wb_gdp_cur"] = wb_gdp_cur["wb_gdp_cur"] / 1e6
+
+index = ["country_iso", "reporter", "year"]
+wb = wb_gdp_cst[index + ["wb_gdp_cst"]].merge(wb_gdp_cur[index + ["wb_gdp_cur"]])
+
+# Check that the constant 2017 USD values correspond to the current value in 2017
+# wb["i"] = wb["wb_gdp_cst"]
+wb.query("year == 2017 and reporter in @faostat.country_groups.eu_country_names")
+# Keep non empty values
+wb2017 = wb.query("year == 2017 and wb_gdp_cst == wb_gdp_cst").copy()
+# np.testing.assert_allclose(wb2017["wb_gdp_cst"], wb2017["wb_gdp_cur"])
+wb2017["diff"] = wb2017["wb_gdp_cst"] - wb2017["wb_gdp_cur"]
+wb2017.query("abs(diff) > 1")
+# Values are mostly equals except in some special groupings
+
+
+# Divide
+# wb["i"] = wb["wb_gdp_cst"] /
+# df['normal'] = df.Value / df['VALUE'].where(df.TIME.str[5:] =='Q1').groupby(df['LOCATION']).transform('first')
+
+
+# Rescale PIK to a 2017 base year
+#
+# https://datahelpdesk.worldbank.org/knowledgebase/articles/114946-how-can-i-rescale-a-series-to-a-different-base-yea
+#
+# > "For example, you can rescale the 2010 data to 2005 by first creating an index
+# > dividing each year of the constant 2010 series by its 2005 value (thus, 2005 will
+# > equal 1). Then multiply each year's index result by the corresponding 2005 current
+# > U.S. dollar price value."
+#
+# PIK GDP values are in constant 2005 USD
+# Create an index based on the 2005 value
 
 # Max GDP per region
-bau_gdp.loc[bau_gdp.groupby("country_iso")["ssp2"].idxmax()]
+bau_gdp.loc[bau_gdp.groupby("country_iso")["pik_bau"].idxmax()]
 bau_gdp.query("country_iso=='FRA'")
 
 # Check that there are no NA values for EU country ISO codes
@@ -118,35 +181,53 @@ assert not any(gfpm_gdp[selector]["country_iso"].isna())
 index = ["country_iso", "year"]
 comp = (
     gfpm_gdp[index + ["country", "gfpm_gdp"]]
-    .merge(bau_gdp[index + ["ssp2"]], on=index, how="left")
-    .merge(wb_gdp[index + ["wb_gdp"]], on=index, how="left")
+    .merge(bau_gdp[index + ["pik_bau"]], on=index, how="left")
+    .merge(fair_gdp[index + ["pik_fair"]], on=index, how="left")
+    .merge(wb[index + ["wb_gdp_cst", "wb_gdp_cur"]], on=index, how="left")
 )
-selector = comp["country"].isin(faostat.country_groups.eu_country_names)
-compeu = comp[selector].copy()
 
 # Reshape to long format
-compeu_long = compeu.melt(
+comp_long = comp.melt(
     id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
 )
+
+# Create data frames for EU countries only
+selector = comp["country"].isin(faostat.country_groups.eu_country_names)
+comp_eu = comp[selector].copy()
+selector = comp_long["country"].isin(faostat.country_groups.eu_country_names)
+comp_eu_long = comp_long[selector].copy()
+
+# Check that the PIK constant 2005 USD values correspond to WB current value in 2005
+comp2005 = comp.query("year == 2005 and pik_bau == pik_bau")
+
 
 # Plot
 # index = ["country_iso", "year", "country"]
 # comp.set_index("year").plot(title="Compare MagPie do World Bank")
 # plt.show()
 
+# Write to parquet files
+
+
+# See comparison plots in ../notebooks/explore_pik_gdp_scenarios.md
+# TODO: move these plots to the notebook
+# TODO: update to 2017 constant usd
+# Search "world bank change constant usd reference year"
+
 
 #######################
 # XY comparison plots #
 #######################
-compeu["country"] = compeu["country"].astype("category")
+# Compare PIK BAU to GFTMx GDP scenario
+comp_eu["country"] = comp_eu["country"].astype("category")
 g = seaborn.FacetGrid(
-    compeu.query("not ssp2.isna()"),
+    comp_eu.query("not pik_bau.isna()"),
     col="country",
     col_wrap=6,
     sharex=False,
     sharey=False,
 )  # , height=6)
-g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp", y="ssp2", hue="country")
+g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp", y="pik_bau", hue="country")
 # From https://stackoverflow.com/questions/54390054/how-to-add-a-comparison-line-to-all-plots-when-using-seaborns-facetgrid
 
 
@@ -163,9 +244,9 @@ plt.show()
 # X along time comparison plots #
 #################################
 # GDP in billion USD
-compeu_long["gdp_b"] = compeu_long["gdp"] / 1e3
+comp_eu_long["gdp_b"] = comp_eu_long["gdp"] / 1e3
 g = seaborn.relplot(
-    data=compeu_long,
+    data=comp_eu_long,
     x="year",
     y="gdp_b",
     col="country",
