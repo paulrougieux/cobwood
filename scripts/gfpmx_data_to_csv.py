@@ -99,8 +99,20 @@ for key in tqdm(gfpmx_excel_file.keys()):
 if False:
     dest_dir = Path.home() / "repos/eu_cbm/eu_cbm_data/domestic_harvest/gftmx"
     dest_dir.mkdir(exist_ok=True)
+    # Renames those primary product files to "harvest"
     shutil.copy(gfpmx_data_dir / "fuelprod.csv", dest_dir / "fw_harvest.csv")
     shutil.copy(gfpmx_data_dir / "indroundprod.csv", dest_dir / "irw_harvest.csv")
+    # Copy secondary product files
+    production_files = [
+        "panelprod.csv",
+        "paperprod.csv",
+        "pulpprod.csv",
+        "roundprod.csv",
+        "sawnprod.csv",
+    ]
+    for prod_file in production_files:
+        shutil.copy(gfpmx_data_dir / prod_file, dest_dir / prod_file)
+
     print(f"Copied from {gfpmx_data_dir} to {dest_dir}")
 
 
