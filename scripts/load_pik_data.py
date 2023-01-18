@@ -261,6 +261,7 @@ g.fig.supylabel("GDP in billion USD")
 g.fig.subplots_adjust(left=0.05)
 g.set(ylim=(0, None))
 plt.savefig("/tmp/comp_gdp_by_country.pdf")
+# plt.savefig("/tmp/comp_gdp_by_country.png")
 
 
 # Compute yearly increase by variable

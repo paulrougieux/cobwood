@@ -1,4 +1,6 @@
-""" Functions to implement equations in the paper
+""" This script is deprecated, see the xarray version.
+
+Functions to implement equations in the paper
 
     Buongiorno, J. (2021). GFPMX: A Cobweb Model of the Global Forest Sector, with
     an Application to the Impact of the COVID-19 Pandemic. Sustainability, 13(10),

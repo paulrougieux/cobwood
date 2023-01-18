@@ -12,7 +12,7 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 
 - The source data is located at: https://zenodo.org/record/5543427#.Y3eYOkjMKcM
 
-- We compare those GDP series to the World bank historical GDP data and with GDP projections
+- We compare those GDP series to the World bank historical GDP data and to GDP projections of the SSP2 scenario
   used in the GFPMx model.
 
 - The data is prepared in a script which can be run at the command line with:
