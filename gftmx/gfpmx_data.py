@@ -379,8 +379,9 @@ class GFPMXData:
             element = sheets.loc[this_sheet]["element"]
             # Add the 2D array to the dataset
             ds[element] = convert_to_2d_array(df)
-            # If "elast" or "const" are in the column names then add them as a 1D arrays
-            coefficients = df.columns[df.columns.str.contains("elast|const")]
+            # If "elast", "const" or "marginal" are in the column names then
+            # add them as a 1D arrays
+            coefficients = df.columns[df.columns.str.contains("elast|const|marginal")]
             for col in coefficients:
                 ds[element + "_" + col] = convert_to_1d_array(df, col)
         return ds
