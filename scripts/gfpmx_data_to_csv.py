@@ -46,6 +46,21 @@ print(f"\nLoad the Excel file {excel_file} in a dictionary of data frames")
 gfpmx_excel_file = pandas.read_excel(excel_file, sheet_name=None)
 print(gfpmx_excel_file.keys())
 
+
+def extract_world_price_parameter(df, col_name, contains, var_name):
+    """Extract world price parameters such as input elasticity,
+    stock elasticity and trend.
+    """
+    # if contains == "trend":
+    #     breakpoint()
+    selector = df[col_name].astype(str).str.contains(contains)
+    if any(selector):
+        df = df.rename(columns={col_name: var_name})
+        # Force variable type to numeric
+        df[var_name] = pandas.to_numeric(df[var_name], errors="coerce")
+    return df
+
+
 print("\nWrite all sheets to csv files in the output folder")
 for key in tqdm(gfpmx_excel_file.keys()):
     df = gfpmx_excel_file[key]
@@ -58,22 +73,22 @@ for key in tqdm(gfpmx_excel_file.keys()):
     # Rename element and unit columns
     df.rename(columns={"unnamed_1": "element", "unnamed_2": "unit"}, inplace=True)
     # Rename the column that contains the world price elasticity of the input
+    # Equation 9 World Price of Industrial Roundwood
     # Equation 10 industrial roundwood world price elasticity
     # Equation 11 pulp world price elasticity
-    products_equations_10_11 = [
+    price_tables = [
         "FuelPrice",
         "SawnPrice",
         "PanelPrice",
         "PulpPrice",
-        "PaperPrice",
     ]
-    if key in products_equations_10_11:
-        selector = df["unnamed_4"].astype(str).str.contains("ound|ulp")
-        if any(selector):
-            var = "input_elast"
-            df = df.rename(columns={"unnamed_4": var})
-            # Force variable type to numeric
-            df[var] = pandas.to_numeric(df[var], errors="coerce")
+    if key in price_tables:
+        df = extract_world_price_parameter(df, "unnamed_4", "ound", "input_elast")
+    if key == "PaperPrice":
+        df = extract_world_price_parameter(df, "unnamed_4", "ulp", "input_elast")
+    if key == "IndroundPrice":
+        df = extract_world_price_parameter(df, "unnamed_3", "trend", "trend")
+        df = extract_world_price_parameter(df, "unnamed_4", "stock", "stock_elast")
 
     # This applies to product sheets, which have a "faostat_name" column
     if "faostat_name" in df.columns:
