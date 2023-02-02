@@ -376,6 +376,11 @@ class GFPMXData:
         ds = xarray.Dataset()
         for this_sheet in sheets.index:
             df = self.get_sheet_wide(this_sheet)
+            print(this_sheet)
+            print(df.columns)
+            if "country" not in df.columns:
+                print(f"The '{this_sheet}' sheet doesn't have a country column")
+                next
             element = sheets.loc[this_sheet]["element"]
             # Add the 2D array to the dataset
             ds[element] = convert_to_2d_array(df)

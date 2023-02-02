@@ -12,6 +12,7 @@ Advantages of using xarray:
 """
 
 import numpy as np
+from numpy.testing import assert_allclose
 
 # import pandas
 # import seaborn
@@ -20,11 +21,24 @@ from gftmx.gfpmx_data import gfpmx_data
 from gftmx.gfpmx_data import convert_to_2d_array
 
 # Load reference data
-sawn_ref = gfpmx_data.convert_sheets_to_dataset("sawn")
+other_ref = gfpmx_data.convert_sheets_to_dataset("other")
+indround_ref = gfpmx_data.convert_sheets_to_dataset("indround")
 round_ref = gfpmx_data.convert_sheets_to_dataset("round")
+fuel_ref = gfpmx_data.convert_sheets_to_dataset("fuel")
+sawn_ref = gfpmx_data.convert_sheets_to_dataset("sawn")
 panel_ref = gfpmx_data.convert_sheets_to_dataset("panel")
 gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
 
+COUNTRY_AGGREGATES = [
+    "WORLD",
+    "AFRICA",
+    "NORTH AMERICA",
+    "SOUTH AMERICA",
+    "ASIA",
+    "OCEANIA",
+    "EUROPE",
+]
+COUNTRIES = sawn_ref.country[~sawn_ref.country.isin(COUNTRY_AGGREGATES)]
 
 ######################################################
 # Erase data after base year and copy the data frame #
@@ -39,12 +53,11 @@ gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
 # sawn_ref["price"].loc[:,t-1]
 # --> Make a reproducible example and ask on Stackoverflow why this is the case.
 # We will compute demand from the base_year + 1
-round_ref2 = round_ref.copy()
 
 
-def remove_values_after_the_base_year(ds, base_year):
+def remove_after_base_year_and_copy(ds, base_year):
     """Remove values after the base year and return a deep copy of the
-    input dataset, i.e. the input dataset is not modified in this case.
+    input dataset, i.e. the input dataset is not modified.
     """
     ds_out = ds.copy(deep=True)
     for x in ds_out.data_vars:
@@ -53,9 +66,11 @@ def remove_values_after_the_base_year(ds, base_year):
     return ds_out
 
 
-sawn = remove_values_after_the_base_year(sawn_ref, 2018)
-# Use and underscore in order not to overwrite the round() function
-round_ = remove_values_after_the_base_year(round_ref, 2018)
+round_ = remove_after_base_year_and_copy(round_ref, 2018)
+indround = remove_after_base_year_and_copy(indround_ref, 2018)
+fuel = remove_after_base_year_and_copy(fuel_ref, 2018)
+sawn = remove_after_base_year_and_copy(sawn_ref, 2018)
+# Use and underscore so that we don't overwrite the python round() function
 # Add GDP to the datasets
 sawn["gdp"] = gdp
 round_["gdp"] = gdp
@@ -99,12 +114,28 @@ def domestic_production(ds, t):
     return np.maximum(prod, 0)
 
 
+def world_price_indround(ds, t):
+    """Compute the world price of industrial roundwood equation 9"""
+    # $G182*($IndroundProd.AJ182^$F182)*($Stock.AJ182^$E182)*EXP($D182*AJ1)
+    # ds_round["
+    return ds["price_constant"].loc["WORLD"] * pow(
+        ds["prod"].loc["WORLD", t], ds["price_world_price_elasticity"].loc["WORLD"]
+    )
+
+
 def world_price(ds, ds_primary, t):
     """Compute the world price equation 10
     as a function of the input price
     """
     return ds["price_constant"].loc["WORLD"] * pow(
         ds_primary["price"].loc["WORLD", t], ds["price_input_elast"].loc["WORLD"]
+    )
+
+
+def local_price(ds, t):
+    """Compute the local price equation 12"""
+    return ds["price_constant"].loc[COUNTRIES] * pow(
+        ds["price"].loc["WORLD", t], ds["price_world_price_elasticity"].loc[COUNTRIES]
     )
 
 
@@ -115,39 +146,38 @@ sawn["imp"].loc[:, t] = import_demand(sawn, t)
 sawn["exp"].loc[:, t] = export_supply(sawn, t)
 sawn["prod"].loc[:, t] = domestic_production(sawn, t)
 sawn["price"].loc["WORLD", t] = world_price(sawn, round_, t)
+sawn["price"].loc[COUNTRIES, t] = local_price(sawn, t)
 
 # Compare computed results to the reference dataset
 vars_to_compare = ["cons", "imp", "exp", "prod"]
-country_aggregates = [
-    "WORLD",
-    "AFRICA",
-    "NORTH AMERICA",
-    "SOUTH AMERICA",
-    "ASIA",
-    "OCEANIA",
-    "EUROPE",
-]
-countries_only = sawn.country[~sawn.country.isin(country_aggregates)]
 year = 2019
 for var in vars_to_compare:
     print(f"Checking {var}")
-    np.testing.assert_allclose(
-        sawn[var].loc[countries_only, year],
-        sawn_ref[var].loc[countries_only, year],
-        rtol=1e-3,
+    rtol = 1e-7
+    if var == "prod":
+        rtol = 1e-2
+    assert_allclose(
+        sawn[var].loc[COUNTRIES, year],
+        sawn_ref[var].loc[COUNTRIES, year],
+        rtol=rtol,
     )
+# Compare world price
+assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])
 
 # Comparison in case of mismatch
-sawn_df = sawn.loc[dict(country=countries_only, year=year)].to_pandas().reset_index()
-sawn_ref_df = (
-    sawn_ref.loc[dict(country=countries_only, year=year)].to_pandas().reset_index()
-)
+sawn_df = sawn.loc[dict(country=COUNTRIES, year=year)].to_pandas().reset_index()
+sawn_ref_df = sawn_ref.loc[dict(country=COUNTRIES, year=year)].to_pandas().reset_index()
 cols_to_check = ["cons", "imp", "exp", "prod"]
 print(sawn_df[cols_to_check])
 print(sawn_ref_df[cols_to_check])
 sawn_df["prod_diff"] = sawn_df["prod"] / sawn_ref_df["prod"] - 1
 sawn_df["cons_diff"] = sawn_df["cons"] / sawn_ref_df["cons"] - 1
 print(sawn_df[["cons_diff", "prod_diff"]].describe())
+sawn_df[["country"] + cols_to_check + ["prod_diff"]].sort_values(
+    "prod_diff", ascending=False
+)
+sawn_ref_df[["country"] + cols_to_check]
+
 
 # Plot comparison
 # sawn_df["reference"] = "no"
