@@ -4,9 +4,9 @@ Usage:
 
     ipython -i ~/repos/gftmx/scripts/compute_all_equations_with_xarray.py
 
-Advantages of using xarray:
+Advantages of using xarray over pandas:
 
-- the shift_index function is not needed any more, we can call
+- The shift_index() function is not needed any more, we can call
   sawn["price"].loc[:, t - 1] directly.
 
 """
@@ -116,6 +116,7 @@ def domestic_production(ds, t):
 
 def world_price_indround(ds, t):
     """Compute the world price of industrial roundwood equation 9"""
+    # TODO
     # $G182*($IndroundProd.AJ182^$F182)*($Stock.AJ182^$E182)*EXP($D182*AJ1)
     # ds_round["
     return ds["price_constant"].loc["WORLD"] * pow(
