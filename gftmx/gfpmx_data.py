@@ -390,6 +390,8 @@ class GFPMXData:
             # add them as a 1D arrays
             coefficients = df.columns[df.columns.str.contains("elast|const|marginal")]
             for col in coefficients:
+                # coerce to a numeric value
+                df[col] = pandas.to_numeric(df[col], errors="coerce")
                 ds[element + "_" + col] = convert_to_1d_array(df, col)
         return ds
 
