@@ -66,11 +66,13 @@ def remove_after_base_year_and_copy(ds, base_year):
     return ds_out
 
 
+# Use and underscore so that we don't overwrite the python round() function
 round_ = remove_after_base_year_and_copy(round_ref, 2018)
 indround = remove_after_base_year_and_copy(indround_ref, 2018)
 fuel = remove_after_base_year_and_copy(fuel_ref, 2018)
 sawn = remove_after_base_year_and_copy(sawn_ref, 2018)
-# Use and underscore so that we don't overwrite the python round() function
+other = remove_after_base_year_and_copy(other_ref, 2018)
+
 # Add GDP to the datasets
 sawn["gdp"] = gdp
 round_["gdp"] = gdp
@@ -114,13 +116,18 @@ def domestic_production(ds, t):
     return np.maximum(prod, 0)
 
 
-def world_price_indround(ds, t):
+def world_price_indround(ds, ds_other, t):
     """Compute the world price of industrial roundwood equation 9"""
-    # TODO
+    # TODO: compute the world price of industrial roundwood
     # $G182*($IndroundProd.AJ182^$F182)*($Stock.AJ182^$E182)*EXP($D182*AJ1)
     # ds_round["
-    return ds["price_constant"].loc["WORLD"] * pow(
-        ds["prod"].loc["WORLD", t], ds["price_world_price_elasticity"].loc["WORLD"]
+    return (
+        ds["price_constant"].loc["WORLD"]
+        * pow(
+            ds["prod"].loc["WORLD", t], ds["price_world_price_elasticity"].loc["WORLD"]
+        )
+        # *
+        # pow(ds_other["stock"].loc[
     )
 
 
@@ -146,7 +153,7 @@ sawn["cons"].loc[:, t] = consumption(sawn, t)
 sawn["imp"].loc[:, t] = import_demand(sawn, t)
 sawn["exp"].loc[:, t] = export_supply(sawn, t)
 sawn["prod"].loc[:, t] = domestic_production(sawn, t)
-sawn["price"].loc["WORLD", t] = world_price(sawn, round_, t)
+sawn["price"].loc["WORLD", t] = world_price(sawn, indround, t)
 sawn["price"].loc[COUNTRIES, t] = local_price(sawn, t)
 
 # Compare computed results to the reference dataset
