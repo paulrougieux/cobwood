@@ -13,6 +13,7 @@ Advantages of using xarray over pandas:
 
 import numpy as np
 from numpy.testing import assert_allclose
+import xarray
 
 # import pandas
 # import seaborn
@@ -55,7 +56,7 @@ COUNTRIES = sawn_ref.country[~sawn_ref.country.isin(COUNTRY_AGGREGATES)]
 # We will compute demand from the base_year + 1
 
 
-def remove_after_base_year_and_copy(ds, base_year):
+def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
     """Remove values after the base year and return a deep copy of the
     input dataset, i.e. the input dataset is not modified.
     """
@@ -78,7 +79,7 @@ sawn["gdp"] = gdp
 round_["gdp"] = gdp
 
 
-def consumption(ds, t):
+def consumption(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute consumption equation 1"""
     return (
         ds["cons_constant"]
@@ -87,7 +88,7 @@ def consumption(ds, t):
     )
 
 
-def import_demand(ds, t):
+def import_demand(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute import demand equation 4"""
     return (
         ds["imp_constant"]
@@ -99,7 +100,7 @@ def import_demand(ds, t):
     )
 
 
-def export_supply(ds, t):
+def export_supply(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute export supply equation 7
 
     Replace negative values by zero."""
@@ -108,7 +109,7 @@ def export_supply(ds, t):
     return np.maximum(exp, 0)
 
 
-def domestic_production(ds, t):
+def domestic_production(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute domestic production equation 8
     Replace negative values by zero
     """
@@ -116,22 +117,26 @@ def domestic_production(ds, t):
     return np.maximum(prod, 0)
 
 
-def world_price_indround(ds, ds_other, t):
+def world_price_indround(
+    ds_indround: xarray.Dataset, ds_other: xarray.Dataset, t: int
+) -> xarray.DataArray:
     """Compute the world price of industrial roundwood equation 9"""
-    # TODO: compute the world price of industrial roundwood
-    # $G182*($IndroundProd.AJ182^$F182)*($Stock.AJ182^$E182)*EXP($D182*AJ1)
-    # ds_round["
     return (
-        ds["price_constant"].loc["WORLD"]
+        ds_indround["price_constant"].loc["WORLD"]
         * pow(
-            ds["prod"].loc["WORLD", t], ds["price_world_price_elasticity"].loc["WORLD"]
+            ds_indround["prod"].loc["WORLD", t],
+            ds_indround["price_world_price_elasticity"].loc["WORLD"],
         )
-        # *
-        # pow(ds_other["stock"].loc[
+        * pow(
+            ds_other["stock"].loc["WORLD", t],
+            ds_indround["price_stock_elast"].loc["WORLD"],
+        )
     )
 
 
-def world_price(ds, ds_primary, t):
+def world_price(
+    ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
+) -> xarray.DataArray:
     """Compute the world price equation 10
     as a function of the input price
     """
@@ -140,21 +145,38 @@ def world_price(ds, ds_primary, t):
     )
 
 
-def local_price(ds, t):
+def local_price(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute the local price equation 12"""
     return ds["price_constant"].loc[COUNTRIES] * pow(
         ds["price"].loc["WORLD", t], ds["price_world_price_elasticity"].loc[COUNTRIES]
     )
 
 
+def forest_stock(ds: xarray.Dataset, t: int) -> xarray.DataArray:
+    """Compute the forest stock expressed as growth drain equation 15
+
+    Replace negative values by zero."""
+    # TODO
+    # stock =
+    # np.maximum(exp, 0)
+    # return (ds:xarray.Dataset
+    # )
+
+
 # Compute one time step
-t = 2019
-sawn["cons"].loc[:, t] = consumption(sawn, t)
-sawn["imp"].loc[:, t] = import_demand(sawn, t)
-sawn["exp"].loc[:, t] = export_supply(sawn, t)
-sawn["prod"].loc[:, t] = domestic_production(sawn, t)
-sawn["price"].loc["WORLD", t] = world_price(sawn, indround, t)
-sawn["price"].loc[COUNTRIES, t] = local_price(sawn, t)
+year = 2019
+# 1. Compute stock growth and drain from t-1
+
+# 2. Compute cons, prod, trade and prices of secondary products
+# Consumption is driven by GDP and demand at t-1
+sawn["cons"].loc[:, year] = consumption(sawn, year)
+sawn["imp"].loc[:, year] = import_demand(sawn, year)
+sawn["exp"].loc[:, year] = export_supply(sawn, year)
+sawn["prod"].loc[:, year] = domestic_production(sawn, year)
+sawn["price"].loc["WORLD", year] = world_price(sawn, indround, year)
+sawn["price"].loc[COUNTRIES, year] = local_price(sawn, year)
+# 3. Compute cons, prod and trade of primary products
+indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
 
 # Compare computed results to the reference dataset
 vars_to_compare = ["cons", "imp", "exp", "prod"]
@@ -184,7 +206,7 @@ print(sawn_df[["cons_diff", "prod_diff"]].describe())
 sawn_df[["country"] + cols_to_check + ["prod_diff"]].sort_values(
     "prod_diff", ascending=False
 )
-sawn_ref_df[["country"] + cols_to_check]
+print(sawn_ref_df[["country"] + cols_to_check])
 
 
 # Plot comparison
