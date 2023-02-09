@@ -9,6 +9,39 @@ Advantages of using xarray over pandas:
 - The shift_index() function is not needed any more, we can call
   sawn["price"].loc[:, t - 1] directly.
 
+
+TODO:
+
+- Evaluate whether it is better to keep countries and aggregates in the same dataset.
+
+  Option A If countries and aggregates are in the same dataset, consumption should be
+  computed for countries only first, the aggregates computed later.
+
+        ds["cons_constant"]
+        * pow(ds["price"].loc[COUNTRIES, t - 1], ds["cons_price_elasticity"])
+        * pow(ds["gdp"].loc[COUNTRIES, t], ds["cons_gdp_elasticity"])
+
+  World price is
+
+        ds["price_constant"].loc["WORLD"]
+        * pow(ds_primary["price"].loc["WORLD", t], ds["price_input_elast"].loc["WORLD"])
+
+  Should the .loc["WORLD"] and .loc[COUNTRIES] be done when the function is
+  called? No better to leave no ambiguity.
+
+
+  Option B If there was a dataset of countries only and a dataset of aggregates only we
+  would compute consumption as such:
+
+        ds["cons_constant"]
+        * pow(ds["price"].loc[:, t - 1], ds["cons_price_elasticity"])
+        * pow(ds["gdp"].loc[:, t], ds["cons_gdp_elasticity"])
+
+  World prices would be computed as:
+
+        ds_agg["price_constant"].loc["WORLD"]
+        * pow(ds_primary_agg["price"].loc["WORLD", t], ds_agg["price_input_elast"].loc["WORLD"])
+
 """
 
 import numpy as np
@@ -83,8 +116,8 @@ def consumption(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute consumption equation 1"""
     return (
         ds["cons_constant"]
-        * pow(ds["price"].loc[:, t - 1], ds["cons_price_elasticity"])
-        * pow(ds["gdp"].loc[:, t], ds["cons_gdp_elasticity"])
+        * pow(ds["price"].loc[COUNTRIES, t - 1], ds["cons_price_elasticity"])
+        * pow(ds["gdp"].loc[COUNTRIES, t], ds["cons_gdp_elasticity"])
     )
 
 
@@ -93,10 +126,10 @@ def import_demand(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     return (
         ds["imp_constant"]
         * pow(
-            ds["price"].loc[:, t - 1] * (1 + ds["tariff"].loc[:, t - 1]),
+            ds["price"].loc[COUNTRIES, t - 1] * (1 + ds["tariff"].loc[:, t - 1]),
             ds["imp_price_elasticity"],
         )
-        * pow(ds["gdp"].loc[:, t], ds["imp_gdp_elasticity"])
+        * pow(ds["gdp"].loc[COUNTRIES, t], ds["imp_gdp_elasticity"])
     )
 
 
@@ -104,8 +137,11 @@ def export_supply(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute export supply equation 7
 
     Replace negative values by zero."""
-    world_imp = ds["imp"].loc[:, t].sum()
-    exp = ds["exp_marginal_propensity_to_export"] * world_imp + ds["exp_constant"]
+    world_imp = ds["imp"].loc[COUNTRIES, t].sum()
+    exp = (
+        ds["exp_marginal_propensity_to_export"].loc[COUNTRIES] * world_imp
+        + ds["exp_constant"]
+    )
     return np.maximum(exp, 0)
 
 
@@ -113,7 +149,11 @@ def domestic_production(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute domestic production equation 8
     Replace negative values by zero
     """
-    prod = ds["cons"].loc[:, t] + ds["exp"].loc[:, t] - ds["imp"].loc[:, t]
+    prod = (
+        ds["cons"].loc[COUNTRIES, t]
+        + ds["exp"].loc[COUNTRIES, t]
+        - ds["imp"].loc[COUNTRIES, t]
+    )
     return np.maximum(prod, 0)
 
 
@@ -152,31 +192,47 @@ def local_price(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     )
 
 
-def forest_stock(ds: xarray.Dataset, t: int) -> xarray.DataArray:
+def forest_stock(
+    ds: xarray.Dataset, ds_round: xarray.Dataset, t: int
+) -> xarray.DataArray:
     """Compute the forest stock expressed as growth drain equation 15
 
-    Replace negative values by zero."""
-    # TODO
-    # stock =
-    # np.maximum(exp, 0)
-    # return (ds:xarray.Dataset
-    # )
+    Notes:
+    - Roundwood is the sum of industrial round wood and fuel wood.
+    - Replaces negative values by zero
+    - Converts the stock from thousand m3 to million m3
+        - TODO remove this conversion? Currently kept for comparison purposes with GFPMx.
+            - Other units are in 1000 m3, should the whole model be harmonized to m3?
+    """
+    stock = (
+        ds["stock"].loc[COUNTRIES, t - 1]
+        * (1 + ds["stock_stock_growth_rate_without_harvest"].loc[COUNTRIES])
+        - ds["stock_harvest_effect_on_stock"].loc[COUNTRIES]
+        * ds_round["prod"].loc[COUNTRIES, t - 1]
+        / 1000
+    )
+    return np.maximum(stock, 0)
 
 
 # Compute one time step
 year = 2019
-# 1. Compute stock growth and drain from t-1
-
+# 1. Compute stock growth and drain from stock and production at t-1
+other["stock"].loc[COUNTRIES, year] = forest_stock(other, round_, year)
 # 2. Compute cons, prod, trade and prices of secondary products
 # Consumption is driven by GDP and demand at t-1
-sawn["cons"].loc[:, year] = consumption(sawn, year)
-sawn["imp"].loc[:, year] = import_demand(sawn, year)
-sawn["exp"].loc[:, year] = export_supply(sawn, year)
-sawn["prod"].loc[:, year] = domestic_production(sawn, year)
+sawn["cons"].loc[COUNTRIES, year] = consumption(sawn, year)
+sawn["imp"].loc[COUNTRIES, year] = import_demand(sawn, year)
+sawn["exp"].loc[COUNTRIES, year] = export_supply(sawn, year)
+sawn["prod"].loc[COUNTRIES, year] = domestic_production(sawn, year)
 sawn["price"].loc["WORLD", year] = world_price(sawn, indround, year)
 sawn["price"].loc[COUNTRIES, year] = local_price(sawn, year)
 # 3. Compute cons, prod and trade of primary products
 indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
+
+# Compute roundwood as the sum of industrial round wood and fuel wood
+round_["prod"].loc[COUNTRIES, year] = (
+    indround["prod"].loc[COUNTRIES, year] + fuel["prod"].loc[COUNTRIES, year]
+)
 
 # Compare computed results to the reference dataset
 vars_to_compare = ["cons", "imp", "exp", "prod"]

@@ -386,9 +386,9 @@ class GFPMXData:
             element = sheets.loc[this_sheet]["element"]
             # Add the 2D array to the dataset
             ds[element] = convert_to_2d_array(df)
-            # If "elast", "const" or "marginal" are in the column names then
-            # add them as a 1D arrays
-            coefficients = df.columns[df.columns.str.contains("elast|const|marginal")]
+            # If `coef_keywords` are in the column names then add them as a 1D arrays
+            coef_keywords = "elast|const|marginal|stock"
+            coefficients = df.columns[df.columns.str.contains(coef_keywords)]
             for col in coefficients:
                 # coerce to a numeric value
                 df[col] = pandas.to_numeric(df[col], errors="coerce")
