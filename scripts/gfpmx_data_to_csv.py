@@ -34,6 +34,11 @@ from tqdm import tqdm
 # Internal modules #
 from gftmx.data_dir import gftmx_data_dir
 
+# TODO make this a method of gfpmx_data that can load a different Excel file
+# and output it to a sub directory of gfpmx_data_dir with a directory name that
+# correspond to the input file name. --> This will make it possible to have 2
+# gfpmx_data objects one with the old Excel file and another one with the new
+# Excel file
 # Input file from https://buongiorno.russell.wisc.edu/gfpm/
 excel_file = "~/large_models/GFPMX-8-6-2021.xlsx"
 
@@ -99,6 +104,10 @@ for key in tqdm(gfpmx_excel_file.keys()):
         # They usually contain quality checks such as
         # World prod/cons or Worldexp/Worldimp
         df = df[~df["faostat_name"].isna()].copy()
+
+    # Harmonize column names
+    if "world_elasticity" in df.columns:
+        df.rename(columns={"world_elasticity": "world_price_elasticity"}, inplace=True)
 
     # Further renaming for the purpose of libcbm usage
     if key in ["FuelProd", "IndroundProd"]:

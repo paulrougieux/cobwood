@@ -241,7 +241,8 @@ def import_demand_indround():
 def compute_end_product_time_step(
     ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
 ) -> None:
-    """Compute the
+    """Compute consumption, production trade and price equations corresponding
+    to a semi finished products (end product for the purpose of this model).
 
     ! This function modifies the input data set `ds` for the given time step.
     """
@@ -265,10 +266,9 @@ other["stock"].loc[COUNTRIES, year] = forest_stock(other, round_, year)
 # 2. Compute cons, prod, trade and prices of secondary products
 # Consumption is driven by GDP and demand at t-1
 
-# Compare
+# TODO: delete this comparison
 sawn2 = sawn.copy(deep=True)
-compute_end_product_time_step(year, sawn2, indround)
-
+compute_end_product_time_step(sawn2, indround, year)
 sawn["cons"].loc[COUNTRIES, year] = consumption(sawn, year)
 sawn["imp"].loc[COUNTRIES, year] = import_demand(sawn, year)
 sawn["exp"].loc[COUNTRIES, year] = export_supply(sawn, year)
@@ -280,6 +280,9 @@ assert sawn.equals(sawn2)
 # 3. Compute cons, prod and trade of primary products
 # TODO: compute the import demand for industrial roundwood
 # TODO: compute the export supply of industrial roundwood
+# indroundexp =MAX(0,$F2*$IndroundImp.CI$182+$G2)
+# sawnexp =MAX(0,$F2*$SawnImp.CI$182+$G2)
+
 indround["exp"].loc[COUNTRIES, year] = export_supply(indround, year)
 # TODO: compute production and trade of industrial roundwood
 indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)

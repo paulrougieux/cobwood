@@ -11,6 +11,10 @@ Give access to the dataset from the GFPMX model by Joseph Buongiorno.
 Originally released at
     https://buongiorno.russell.wisc.edu/gfpm/
 
+Before using this object, the Excel file needs to be exported to csv files with
+
+    ipython ~/repos/gftmx/scripts/gfpmx_data_to_csv.py
+
 """
 
 # Built in modules
@@ -63,6 +67,86 @@ def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
     return xarray.DataArray(df.set_index("country")[var], dims=["country"])
 
 
+def check_variable_presence(ds: xarray.Dataset) -> None:
+    """Check that the required variables and coefficients are present to
+    compute equations. Since various products have different equations, the
+    requirements differ among primary and secondary products.
+    """
+    common_vars = [
+        "cons",
+        "cons_constant",
+        "cons_price_elasticity",
+        "cons_usd",
+        "exp",
+        "exp_usd",
+        "exp_constant",
+        "exp_marginal_propensity_to_export",
+        "imp",
+        "imp_constant",
+        "imp_price_elasticity",
+        "imp_usd",
+        "nettrade",
+        "nettrade_usd",
+        "price",
+        "price_constant",
+        "price_world_price_elasticity",
+        "prod",
+        "prod_usd",
+        "tariff",
+    ]
+    indround_vars = [
+        "cons_products_elasticity",
+        "imp_products_elasticity",
+        "price_stock_elast",
+    ]
+    end_product_vars = [
+        "cons_gdp_elasticity",
+        "conspercap",
+        "imp_gdp_elasticity",
+        "imp_usd_constant",
+        "imp_usd_gdp_elasticity",
+        "imp_usd_price_elasticity",
+        "price_input_elast",
+    ]
+    other_vars = [
+        "area",
+        "area_constant",
+        "gdp",
+        "gdppercap",
+        "harvestperha",
+        "harvestperstock",
+        "population",
+        "stock",
+        "stock_harvest_effect_on_stock",
+        "stock_stock_growth_rate_without_harvest",
+        "stockpercap",
+        "stockperha",
+        "totalcons_usd",
+        "totalexp_usd",
+        "totalimp_usd",
+        "totalnettrade_usd",
+        "totalprod_usd",
+        "valueadded",
+    ]
+    # TODO: add checks for fuel wood
+    data_vars = list(ds.data_vars)
+    required_vars = set()
+    if ds.attrs["product"] == "pulp":
+        required_vars = common_vars
+    if ds.attrs["product"] == "indround":
+        required_vars = common_vars + indround_vars
+    if ds.attrs["product"] in ["sawn", "panel", "paper"]:
+        required_vars = common_vars + end_product_vars
+    if ds.attrs["product"] == "other":
+        required_vars = other_vars
+    # Check that the required variables are present
+    if not set(required_vars).issubset(data_vars):
+        msg = "The following variables are missing from "
+        msg += f"{ds.attrs['product']}:\n"
+        msg += f"{set(required_vars) - set(data_vars)}"
+        raise ValueError(msg)
+
+
 class GFPMXData:
     """
     Read data from the GFTMX data set.
@@ -88,6 +172,8 @@ class GFPMXData:
     """
 
     # Location of the csv files
+    # TODO: After moving the script gfpmx_data_to_csv as a method,
+    # change this so that it becomes an argument
     data_dir = gftmx_data_dir / "gfpmx"
 
     # Simulation base year i.e. last year of historical data available in the spreadsheet
@@ -372,8 +458,11 @@ class GFPMXData:
             other_sheets = self.sheets[self.sheets["product"] == "other"]
             other_sheets = other_sheets[other_sheets["element"].isin(other_element)]
             sheets = pandas.concat([sheets, other_sheets])
-        # Create a dataset
+        # Create a dataset for this product
         ds = xarray.Dataset()
+        # Add metadata
+        ds.attrs["product"] = product
+        # Load all sheets for this product
         for this_sheet in sheets.index:
             try:
                 df = self.get_sheet_wide(this_sheet)
@@ -393,6 +482,7 @@ class GFPMXData:
                 # coerce to a numeric value
                 df[col] = pandas.to_numeric(df[col], errors="coerce")
                 ds[element + "_" + col] = convert_to_1d_array(df, col)
+        check_variable_presence(ds)
         return ds
 
 
