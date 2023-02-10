@@ -60,6 +60,7 @@ indround_ref = gfpmx_data.convert_sheets_to_dataset("indround")
 round_ref = gfpmx_data.convert_sheets_to_dataset("round")
 fuel_ref = gfpmx_data.convert_sheets_to_dataset("fuel")
 sawn_ref = gfpmx_data.convert_sheets_to_dataset("sawn")
+pulp_ref = gfpmx_data.convert_sheets_to_dataset("pulp")
 panel_ref = gfpmx_data.convert_sheets_to_dataset("panel")
 gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
 
@@ -100,16 +101,14 @@ def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
     return ds_out
 
 
-# Use and underscore so that we don't overwrite the python round() function
-round_ = remove_after_base_year_and_copy(round_ref, 2018)
-indround = remove_after_base_year_and_copy(indround_ref, 2018)
 fuel = remove_after_base_year_and_copy(fuel_ref, 2018)
-sawn = remove_after_base_year_and_copy(sawn_ref, 2018)
+indround = remove_after_base_year_and_copy(indround_ref, 2018)
 other = remove_after_base_year_and_copy(other_ref, 2018)
-
-# Add GDP to the datasets
-sawn["gdp"] = gdp
-round_["gdp"] = gdp
+panel = remove_after_base_year_and_copy(panel_ref, 2018)
+pulp = remove_after_base_year_and_copy(pulp_ref, 2018)
+# Use an underscore so that we don't overwrite the python round() function
+round_ = remove_after_base_year_and_copy(round_ref, 2018)
+sawn = remove_after_base_year_and_copy(sawn_ref, 2018)
 
 
 def consumption(ds: xarray.Dataset, t: int) -> xarray.DataArray:
@@ -145,7 +144,7 @@ def export_supply(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     return np.maximum(exp, 0)
 
 
-def domestic_production(ds: xarray.Dataset, t: int) -> xarray.DataArray:
+def production(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute domestic production equation 8
     Replace negative values by zero
     """
@@ -214,19 +213,75 @@ def forest_stock(
     return np.maximum(stock, 0)
 
 
+def consumption_indround(
+    ds_indround: xarray.Dataset,
+    ds_sawn: xarray.Dataset,
+    ds_panel: xarray.Dataset,
+    ds_pulp: xarray.Dataset,
+    t: int,
+) -> xarray.DataArray:
+    """Domestic demand for industrial roundwood equation 3"""
+    # TODO: compute the domestic demand for industrial roundwood
+    cons = pow(
+        ds_indround["price"].loc[COUNTRIES, t - 1],
+        ds_indround["cons_price_elasticity"].loc[COUNTRIES],
+    ) * pow(
+        ds_sawn["prod"].loc[COUNTRIES, t]
+        + ds_panel["prod"].loc[COUNTRIES, t]
+        + ds_pulp["prod"].loc[COUNTRIES, t],
+        ds_indround["cons_products_elasticity"],
+    )
+    return np.maximum(cons, 0)
+
+
+def import_demand_indround():
+    """Compute the import demand of industrial roundwood"""
+
+
+def compute_end_product_time_step(
+    ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
+) -> None:
+    """Compute the
+
+    ! This function modifies the input data set `ds` for the given time step.
+    """
+    ds["cons"].loc[COUNTRIES, t] = consumption(ds, t)
+    ds["imp"].loc[COUNTRIES, t] = import_demand(ds, t)
+    ds["exp"].loc[COUNTRIES, t] = export_supply(ds, t)
+    ds["prod"].loc[COUNTRIES, t] = production(ds, t)
+    ds["price"].loc["WORLD", t] = world_price(ds, ds_primary, t)
+    ds["price"].loc[COUNTRIES, t] = local_price(ds, t)
+
+
+# Add GDP projections to the datasets
+sawn["gdp"] = gdp
+round_["gdp"] = gdp
+
 # Compute one time step
 year = 2019
+
 # 1. Compute stock growth and drain from stock and production at t-1
 other["stock"].loc[COUNTRIES, year] = forest_stock(other, round_, year)
 # 2. Compute cons, prod, trade and prices of secondary products
 # Consumption is driven by GDP and demand at t-1
+
+# Compare
+sawn2 = sawn.copy(deep=True)
+compute_end_product_time_step(year, sawn2, indround)
+
 sawn["cons"].loc[COUNTRIES, year] = consumption(sawn, year)
 sawn["imp"].loc[COUNTRIES, year] = import_demand(sawn, year)
 sawn["exp"].loc[COUNTRIES, year] = export_supply(sawn, year)
-sawn["prod"].loc[COUNTRIES, year] = domestic_production(sawn, year)
+sawn["prod"].loc[COUNTRIES, year] = production(sawn, year)
 sawn["price"].loc["WORLD", year] = world_price(sawn, indround, year)
 sawn["price"].loc[COUNTRIES, year] = local_price(sawn, year)
+assert sawn.equals(sawn2)
+
 # 3. Compute cons, prod and trade of primary products
+# TODO: compute the import demand for industrial roundwood
+# TODO: compute the export supply of industrial roundwood
+indround["exp"].loc[COUNTRIES, year] = export_supply(indround, year)
+# TODO: compute production and trade of industrial roundwood
 indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
 
 # Compute roundwood as the sum of industrial round wood and fuel wood
