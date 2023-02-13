@@ -22,31 +22,29 @@ This can be then used directly from any sub module:
 """
 
 # Third party modules
-import pandas
 import logging
 
 # Internal modules
-from gftmx.data_dir import gftmx_data_dir
+from gftmx import gftmx_data_dir
 
 # create logger with 'gftmx'
-logger = logging.getLogger('gftmx')
+logger = logging.getLogger("gftmx")
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler(gftmx_data_dir / 'gfpmx.log')
+fh = logging.FileHandler(gftmx_data_dir / "gfpmx.log")
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
 ch.setLevel(logging.ERROR)
 # create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 fh.setFormatter(formatter)
 ch.setFormatter(formatter)
 # add the handlers to the logger
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-logger.info('Created a logger with file handler %s.',
-            str(gftmx_data_dir / 'gfpmx.log'))
+logger.info("Created a logger with file handler %s.", str(gftmx_data_dir / "gfpmx.log"))
 # Usage
 # from gftmx.gfpmx_runner import gfpmx_runner
 # logger.info('Calling gfpmx_runner.run_next_step().')

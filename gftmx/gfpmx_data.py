@@ -25,7 +25,7 @@ import pandas
 import xarray
 
 # Internal modules
-from gftmx.data_dir import gftmx_data_dir
+from gftmx import gftmx_data_dir
 
 
 def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
