@@ -1,6 +1,9 @@
 ```python
 import pandas
-from gftmx
+import seaborn
+import numpy as np
+import matplotlib.pyplot as plt
+from gftmx import gftmx_data_dir
 ```
 
 # Introduction
@@ -23,9 +26,115 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 
 
 
-```python
-# Load prepared comparison dataset
 
+
+## Load data
+
+```python
+comp_eu = pandas.read_parquet(gftmx_data_dir / "pik" / "comp_eu.parquet")
+
+# Reshape to long format
+comp_eu_long = comp_eu.melt(
+    id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
+)
+```
+
+# Comparison plots
+
+
+## XY comparison plots
+
+```python
+# Compare PIK BAU to GFTMx GDP scenario
+comp_eu["country"] = comp_eu["country"].astype("category")
+g = seaborn.FacetGrid(
+    comp_eu.query("not pik_bau.isna()"),
+    col="country",
+    col_wrap=6,
+    sharex=False,
+    sharey=False,
+)  # , height=6)
+g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp", y="pik_bau", hue="country") 
+# From https://stackoverflow.com/questions/54390054/how-to-add-a-comparison-line-to-all-plots-when-using-seaborns-facetgrid
+def const_line(*args, **kwargs):
+    x = np.arange(0, 1e7, 1e6)
+    plt.plot(x, x)
+g.map(const_line)
+```
+
+## X along time
+
+
+## PIK GDP 2005 constant USD - Others GDP 2017 constant USD
+
+```python
+# GDP in billion USD
+comp_eu_long["gdp_b"] = comp_eu_long["gdp"] / 1e3
+g = seaborn.relplot(
+    data=comp_eu_long,
+    x="year",
+    y="gdp_b",
+    col="country",
+    col_wrap=7,
+    hue="source",
+    style="source",
+    kind="line",
+    height=3,
+    facet_kws={"sharey": False, "sharex": False},
+)
+g.fig.supylabel("GDP in billion USD")
+g.fig.subplots_adjust(left=0.05)
+g.set(ylim=(0, None))
+# plt.savefig("/tmp/comp_gdp_by_country.pdf")
+# plt.savefig("/tmp/comp_gdp_by_country.png")
+```
+
+```python
+# Whole EU
+comp_eu_long_agg = (
+    comp_eu_long.groupby(["year", "source"])
+    .agg(sum)
+    .reset_index()
+    # TODO: fix this in a more elegant way
+    .query("gdp>0.1")
+    .copy()
+)
+
+selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair"]
+p = seaborn.lineplot(
+    x="year",
+    y="gdp_b",
+    hue="source",
+    data=comp_eu_long_agg.query("source in @selected_sources"),
+)
+p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
+plt.show()
+# plt.savefig("/tmp/comp_gdp_eu_aggregate.png")
+```
+
+## GDP rescaled to 2017 values
+
+```python
+# With rescaled values
+eu_countries = faostat.country_groups.eu_country_names
+comp2_long["gdp_b"] = comp2_long["gdp"] / 1e3
+g = seaborn.relplot(
+    data=comp2_long.query("country in @eu_countries"),
+    x="year",
+    y="gdp_b",
+    col="country",
+    col_wrap=7,
+    hue="source",
+    style="source",
+    kind="line",
+    height=3,
+    facet_kws={"sharey": False, "sharex": False},
+)
+g.fig.supylabel("GDP in billion USD")
+g.fig.subplots_adjust(left=0.05)
+g.set(ylim=(0, None))
+plt.savefig("/tmp/comp_gdp_by_country_rescaled.pdf")
+# plt.savefig("/tmp/comp_gdp_by_country.png")
 ```
 
 ```python

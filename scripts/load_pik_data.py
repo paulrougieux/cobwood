@@ -71,14 +71,14 @@ Paul Rougieux
 > have not been subject to the FAIR redistribution)."
 
 """
+# TODO: update to 2017 constant usd
+# Search "world bank change constant USD reference year"
 
 from pathlib import Path
-import numpy as np
 import pandas
-import matplotlib.pyplot as plt
-import seaborn
 
 # import gdxpds
+from gftmx import gftmx_data_dir
 from gftmx.gfpmx_data import gfpmx_data
 
 # To get country ISO codes
@@ -267,107 +267,25 @@ comp_eu_long = comp_long[selector].copy()
 # Check that the PIK constant 2005 USD values correspond to WB current value in 2005
 comp_eu_2005 = comp_eu.query("year == 2005 and pik_bau == pik_bau")
 
+
+#####################
+# Store output data #
+#####################
 # Write to parquet files
-
-# TODO: move these plots to the notebook
-# TODO: update to 2017 constant usd
-# Search "world bank change constant usd reference year"
-
-
-#######################
-# XY comparison plots #
-#######################
-# Compare PIK BAU to GFTMx GDP scenario
-comp_eu["country"] = comp_eu["country"].astype("category")
-g = seaborn.FacetGrid(
-    comp_eu.query("not pik_bau.isna()"),
-    col="country",
-    col_wrap=6,
-    sharex=False,
-    sharey=False,
-)  # , height=6)
-g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp", y="pik_bau", hue="country")
-# From https://stackoverflow.com/questions/54390054/how-to-add-a-comparison-line-to-all-plots-when-using-seaborns-facetgrid
-
-
-def const_line(*args, **kwargs):
-    x = np.arange(0, 1e7, 1e6)
-    plt.plot(x, x)
-
-
-g.map(const_line)
-plt.show()
-
-
-#################################
-# X along time comparison plots #
-#################################
-# GDP in billion USD
-comp_eu_long["gdp_b"] = comp_eu_long["gdp"] / 1e3
-g = seaborn.relplot(
-    data=comp_eu_long,
-    x="year",
-    y="gdp_b",
-    col="country",
-    col_wrap=7,
-    hue="source",
-    style="source",
-    kind="line",
-    height=3,
-    facet_kws={"sharey": False, "sharex": False},
-)
-g.fig.supylabel("GDP in billion USD")
-g.fig.subplots_adjust(left=0.05)
-g.set(ylim=(0, None))
-plt.savefig("/tmp/comp_gdp_by_country.pdf")
-# plt.savefig("/tmp/comp_gdp_by_country.png")
-
-# With rescaled values
-eu_countries = faostat.country_groups.eu_country_names
-comp2_long["gdp_b"] = comp2_long["gdp"] / 1e3
-g = seaborn.relplot(
-    data=comp2_long.query("country in @eu_countries"),
-    x="year",
-    y="gdp_b",
-    col="country",
-    col_wrap=7,
-    hue="source",
-    style="source",
-    kind="line",
-    height=3,
-    facet_kws={"sharey": False, "sharex": False},
-)
-g.fig.supylabel("GDP in billion USD")
-g.fig.subplots_adjust(left=0.05)
-g.set(ylim=(0, None))
-plt.savefig("/tmp/comp_gdp_by_country_rescaled.pdf")
-# plt.savefig("/tmp/comp_gdp_by_country.png")
-
-
-# Whole EU
-comp_eu_long_agg = (
-    comp_eu_long.groupby(["year", "source"])
-    .agg(sum)
-    .reset_index()
-    # TODO: fix this in a more elegant way
-    .query("gdp>0.1")
-    .copy()
+pik_data_dir = gftmx_data_dir / "pik"
+if not pik_data_dir.exists():
+    pik_data_dir.mkdir()
+# Remove interpolated data
+(
+    comp_eu.drop(columns=["pik_bau_i", "pik_fair_i"]).to_parquet(
+        pik_data_dir / "comp_eu.parquet"
+    )
 )
 
-selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair"]
-p = seaborn.lineplot(
-    x="year",
-    y="gdp_b",
-    hue="source",
-    data=comp_eu_long_agg.query("source in @selected_sources"),
+# Write to a compressed csv file
+compression_opts = dict(method="zip", archive_name="comp.csv")
+(
+    comp.drop(columns=["pik_bau_i", "pik_fair_i"]).to_csv(  # Remove interpolated data
+        "/tmp/comp.csv.zip", index=False, compression=compression_opts
+    )
 )
-p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
-# plt.show()
-plt.savefig("/tmp/comp_gdp_eu_aggregate.png")
-
-# Convert to 2017 USD
-# Compute index on 2005 value
-comp_eu_long
-
-
-# Compute yearly increase by variable
