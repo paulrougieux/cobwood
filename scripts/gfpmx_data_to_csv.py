@@ -32,7 +32,7 @@ from tqdm import tqdm
 # First party modules #
 
 # Internal modules #
-from gftmx.data_dir import gftmx_data_dir
+from gftmx import gftmx_data_dir
 
 # TODO make this a method of gfpmx_data that can load a different Excel file
 # and output it to a sub directory of gfpmx_data_dir with a directory name that
@@ -97,9 +97,14 @@ for key in tqdm(gfpmx_excel_file.keys()):
 
     # This applies to product sheets, which have a "faostat_name" column
     if "faostat_name" in df.columns:
+
         # Harmonize product names
         if df["faostat_name"].unique().tolist() == ["Sawnwood"]:
             df["faostat_name"] = "Sawnwood+sleepers"
+
+        # Fix typo in roundwood name
+        df["faostat_name"].replace({"Roundwwood": "Roundwood"}, inplace=True)
+
         # Remove rows that don't have a faostat_name
         # They usually contain quality checks such as
         # World prod/cons or Worldexp/Worldimp
