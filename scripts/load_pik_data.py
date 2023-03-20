@@ -78,7 +78,7 @@ from pathlib import Path
 import pandas
 
 # import gdxpds
-from gftmx import gftmx_data_dir
+import gftmx
 from gftmx.gfpmx_data import gfpmx_data
 
 # To get country ISO codes
@@ -212,33 +212,36 @@ comp["pik_bau_i"] = comp.groupby("country_iso")["pik_bau"].transform(
 comp["pik_fair_i"] = comp.groupby("country_iso")["pik_fair"].transform(
     pandas.Series.interpolate, "linear"
 )
-bau_gdp_2017 = (
-    comp.loc[comp["year"] == 2017, ["country_iso", "pik_bau_i"]]
-    .rename(columns={"pik_bau_i": "pik_bau_2017"})
+selector = {
+    "gfpm_gdp": "gfpm_gdp_2017",
+    "wb_gdp_cur": "wb_gdp_2017",
+    "pik_bau_i": "pik_bau_2017",
+    "pik_fair_i": "pik_fair_2017",
+}
+gdp_2017 = (
+    comp.loc[comp["year"] == 2017, ["country_iso", *selector.keys()]]
+    .rename(columns=selector)
     # Remove NA values in country
-    .query("country_iso == country_iso")
-    .copy()
-)
-wb_gdp_2017 = (
-    comp.loc[comp["year"] == 2017, ["country_iso", "wb_gdp_cur"]]
-    .rename(columns={"wb_gdp_cur": "wb_gdp_2017"})
-    # Remove NA values in country # Todo: fix this at another level
     .query("country_iso == country_iso")
     .copy()
 )
 
 index = ["country_iso", "year"]
 comp2 = (
-    comp.merge(bau_gdp_2017, on="country_iso")  # [index + ["pik_bau_i"]]
-    .merge(wb_gdp_2017, on="country_iso")
+    comp.merge(gdp_2017, on="country_iso")  # [index + ["pik_bau_i"]]
     # Scale to one in 2017
     # .assign(pik_bau_scale_2017 = lambda x: x["pik_bau_i"] / x["pik_bau_2017"])
     # Multiply by the current value in 2017
     .assign(
-        pik_bau_adj2017=lambda x: (x["pik_bau_i"] / x["pik_bau_2017"])
-        * x["wb_gdp_2017"]
-    )
-    .drop(columns=["pik_bau_2017", "wb_gdp_2017"])
+        pik_bau_adjwb2017=lambda x: (x["pik_bau_i"] / x["pik_bau_2017"])
+        * x["wb_gdp_2017"],
+        pik_fair_adjwb2017=lambda x: (x["pik_fair_i"] / x["pik_fair_2017"])
+        * x["wb_gdp_2017"],
+        pik_bau_adjgfpm2017=lambda x: (x["pik_bau_i"] / x["pik_bau_2017"])
+        * x["gfpm_gdp_2017"],
+        pik_fair_adjgfpm2017=lambda x: (x["pik_fair_i"] / x["pik_fair_2017"])
+        * x["gfpm_gdp_2017"],
+    ).drop(columns=["pik_bau_2017", "pik_fair_2017", "wb_gdp_2017"])
 )
 
 #   # Join 2017 constant values from the world bank
@@ -268,19 +271,27 @@ comp_eu_long = comp_long[selector].copy()
 comp_eu_2005 = comp_eu.query("year == 2005 and pik_bau == pik_bau")
 
 
+############################################
+# Rescale using the rate of growth instead #
+############################################
+
+
 #####################
 # Store output data #
 #####################
 # Write to parquet files
-pik_data_dir = gftmx_data_dir / "pik"
+pik_data_dir = gftmx.data_dir / "pik"
 if not pik_data_dir.exists():
     pik_data_dir.mkdir()
-# Remove interpolated data
+
 (
+    # Remove interpolated data
     comp_eu.drop(columns=["pik_bau_i", "pik_fair_i"]).to_parquet(
         pik_data_dir / "comp_eu.parquet"
     )
 )
+
+comp2.to_parquet(pik_data_dir / "comp2.parquet")
 
 # Write to a compressed csv file
 compression_opts = dict(method="zip", archive_name="comp.csv")
