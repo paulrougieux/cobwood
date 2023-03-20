@@ -3,7 +3,8 @@ import pandas
 import seaborn
 import numpy as np
 import matplotlib.pyplot as plt
-from gftmx import gftmx_data_dir
+import gftmx
+from biotrade.faostat import faostat
 ```
 
 # Introduction
@@ -31,11 +32,15 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 ## Load data
 
 ```python
-comp_eu = pandas.read_parquet(gftmx_data_dir / "pik" / "comp_eu.parquet")
+comp_eu = pandas.read_parquet(gftmx.data_dir / "pik" / "comp_eu.parquet")
+comp2 = pandas.read_parquet(gftmx.data_dir / "pik" / "comp2.parquet")
 
 # Reshape to long format
 comp_eu_long = comp_eu.melt(
     id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
+)
+comp2_long = comp2.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
+      id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
 )
 ```
 
@@ -133,8 +138,37 @@ g = seaborn.relplot(
 g.fig.supylabel("GDP in billion USD")
 g.fig.subplots_adjust(left=0.05)
 g.set(ylim=(0, None))
-plt.savefig("/tmp/comp_gdp_by_country_rescaled.pdf")
+#plt.savefig("/tmp/comp_gdp_by_country_rescaled.pdf")
 # plt.savefig("/tmp/comp_gdp_by_country.png")
+```
+
+```python
+# Whole EU
+comp2_long_agg_eu = (
+    comp2_long
+    .query("country in @eu_countries")
+    .groupby(["year", "source"])
+    .agg(sum)
+    .reset_index()
+    # TODO: fix this in a more elegant way
+    .query("gdp>0.1")
+    .copy()
+)
+
+selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair", "pik_bau_adjwb2017", "pik_fair_adjwb2017", "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017"]
+p = seaborn.lineplot(
+    x="year",
+    y="gdp",
+    hue="source",
+    data=comp2_long_agg_eu.query("source in @selected_sources"),
+)
+p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
+plt.show()
+# plt.savefig("/tmp/comp_gdp_eu_aggregate.png")
+```
+
+```python
+comp2_long_agg_eu.query("source in @selected_sources")
 ```
 
 ```python
