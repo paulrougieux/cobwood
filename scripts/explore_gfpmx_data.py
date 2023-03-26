@@ -17,6 +17,9 @@ from gftmx.gfpmx_data import gfpmx_data
 round_ = gfpmx_data.get_country_rows("round")
 fuel = gfpmx_data.get_country_rows("fuel")
 indround = gfpmx_data.get_country_rows("indround")
+area = gfpmx_data.get_sheet_long("area")
+stock = gfpmx_data.get_sheet_long("stock")
+
 
 # Select EU countries
 eucountries = faostat.country_groups.eu_country_names + ["Czech Republic"]
@@ -56,9 +59,37 @@ print_increase_in_production(fueleu, "cons", 2020, 2050)
 roundprodagg = roundeu.groupby("year")["prod"].agg(sum).rename("round")
 indroundprodagg = indroundeu.groupby("year")["prod"].agg(sum).rename("indround")
 fuelprodagg = fueleu.groupby("year")["prod"].agg(sum).rename("fuel")
-# TODO replace this with a function and list comprehension
-agg = pandas.concat([roundprodagg, indroundprodagg, fuelprodagg], axis=1)
-np.testing.assert_allclose(agg["round"], agg["indround"] + agg["fuel"])
 
-agg_selected = agg.query("year in [2010,2015,2030,2050]").transpose()
+
+def agg_eu(sheet_name, variable):
+    """Load and aggregate the given variable for EU countries
+    Example use:
+        >>> round_prod_agg = agg_eu("roundprod", "prod")
+        >>> stock_agg = agg_eu("stock", "stock")
+    """
+    df = gfpmx_data.get_sheet_long(sheet_name).query("country in @eucountries")
+    df_agg = df.groupby("year")[variable].agg(sum).rename(sheet_name)
+    return df_agg
+
+
+stock_agg = agg_eu("stock", "stock")
+area_agg = agg_eu("area", "area")
+round_prod_agg = agg_eu("roundprod", "prod")
+sheet_and_variable = [
+    ("area", "area"),
+    ("stock", "stock"),
+    ("roundprod", "prod"),
+    ("indroundprod", "prod"),
+    ("fuelprod", "prod"),
+]
+agg_eu = pandas.concat([agg_eu(*sheet_var) for sheet_var in sheet_and_variable], axis=1)
+
+np.testing.assert_allclose(
+    agg_eu["roundprod"], agg_eu["indroundprod"] + agg_eu["fuelprod"]
+)
+agg_selected = agg_eu.query("year in [2010,2015,2030,2050]").transpose()
+# Divide by 1000 and write to a csv file
+# Forest area in 1000 ha -> million ha
+# Stock in Million M3 -> billion m3
+# Harvest in 1000 m3 -> million m3
 # (agg_selected / 1e3).to_csv("/tmp/gfpmxeuagg_selected.csv")

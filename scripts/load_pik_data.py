@@ -274,6 +274,8 @@ comp_eu_2005 = comp_eu.query("year == 2005 and pik_bau == pik_bau")
 ############################################
 # Rescale using the rate of growth instead #
 ############################################
+# What countries are available and how does is the fair redistribution implemented?
+# For each country compute the proportion decrease between 2020 and 2030.
 
 
 #####################

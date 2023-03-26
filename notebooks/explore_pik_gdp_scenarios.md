@@ -32,8 +32,12 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 ## Load data
 
 ```python
+code_continent = faostat.country_groups.df[["iso3_code", "continent"]].rename(columns={"iso3_code":"country_iso"})
 comp_eu = pandas.read_parquet(gftmx.data_dir / "pik" / "comp_eu.parquet")
-comp2 = pandas.read_parquet(gftmx.data_dir / "pik" / "comp2.parquet")
+comp2 = (
+    pandas.read_parquet(gftmx.data_dir / "pik" / "comp2.parquet")
+    .merge(code_continent, on="country_iso")
+)
 
 # Reshape to long format
 comp_eu_long = comp_eu.melt(
@@ -155,7 +159,9 @@ comp2_long_agg_eu = (
     .copy()
 )
 
-selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair", "pik_bau_adjwb2017", "pik_fair_adjwb2017", "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017"]
+selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair", 
+                    "pik_bau_adjwb2017", "pik_fair_adjwb2017", "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017",
+                    "wb_gdp_cst"]
 p = seaborn.lineplot(
     x="year",
     y="gdp",
@@ -169,6 +175,51 @@ plt.show()
 
 ```python
 comp2_long_agg_eu.query("source in @selected_sources")
+```
+
+# Decrease profile in the degrowth scenario
+
+
+## By continent
+
+The plot by contry and by continent below illustrate how African countries are continying to grow in the FAIR scenario, with the redistribution happening from high income countries. Developped countries such as Canada, USA, Japan and EUropean countries see a decrease in GDP.
+
+```python
+continents = list(comp2["continent"].unique())
+```
+
+```python
+for this_continent in continents:
+    g = seaborn.relplot(
+        data=comp2.query("continent == @this_continent"),
+        x="year",
+        y="pik_fair_i",
+        col="country",
+        col_wrap=7,
+        kind="line",
+        height=3,
+        facet_kws={"sharey": False, "sharex": False},
+    )
+    g.fig.suptitle(f"PIK Fair GDP in {this_continent}")
+    g.fig.supylabel("GDP in billion USD")
+    g.fig.subplots_adjust(left=0.05)
+    g.set(ylim=(0, None))
+    plt.subplots_adjust(top=0.95)
+    plt.show()
+```
+
+```python
+comp2.columns
+```
+
+```python
+#for this_continent in continents:
+this_continent == "Africa"
+df = comp2.query("continent == @this_continent")
+# Rate of growth
+df.groupby("country_iso").assign(diff = lambda x: x["pik_fair_i"].shift())
+df
+# diff
 ```
 
 ```python
