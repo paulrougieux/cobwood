@@ -35,8 +35,8 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 eu_countries = faostat.country_groups.eu_country_names
 code_continent = faostat.country_groups.df[["iso3_code", "continent"]].rename(columns={"iso3_code":"country_iso"})
 comp_eu = pandas.read_parquet(gftmx.data_dir / "pik" / "comp_eu.parquet")
-comp2 = (
-    pandas.read_parquet(gftmx.data_dir / "pik" / "comp2.parquet")
+gdp_comp = (
+    pandas.read_parquet(gftmx.data_dir / "pik" / "gdp_comp.parquet")
     .merge(code_continent, on="country_iso")
 )
 
@@ -44,7 +44,7 @@ comp2 = (
 comp_eu_long = comp_eu.melt(
     id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
 )
-comp2_long = comp2.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
+gdp_comp_long = gdp_comp.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
       id_vars=["country_iso", "year", "country", "continent"], var_name="source", value_name="gdp"
 )
 ```
@@ -64,7 +64,7 @@ g = seaborn.FacetGrid(
     sharex=False,
     sharey=False,
 )  # , height=6)
-g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp", y="pik_bau", hue="country") 
+g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp", y="pik_bau", hue="country")
 # From https://stackoverflow.com/questions/54390054/how-to-add-a-comparison-line-to-all-plots-when-using-seaborns-facetgrid
 def const_line(*args, **kwargs):
     x = np.arange(0, 1e7, 1e6)
@@ -125,14 +125,14 @@ plt.show()
 ## GDP rescaled to 2017 values
 
 ```python
-comp2_long["gdp"]
+gdp_comp_long["gdp"]
 ```
 
 ```python
 # With rescaled values
-comp2_long["gdp_b"] = comp2_long["gdp"] / 1e3
+gdp_comp_long["gdp_b"] = gdp_comp_long["gdp"] / 1e3
 g = seaborn.relplot(
-    data=comp2_long.query("country in @eu_countries"),
+    data=gdp_comp_long.query("country in @eu_countries"),
     x="year",
     y="gdp_b",
     col="country",
@@ -152,8 +152,8 @@ g.set(ylim=(0, None))
 
 ```python
 # Whole EU
-comp2_long_agg_eu = (
-    comp2_long
+gdp_comp_long_agg_eu = (
+    gdp_comp_long
     .query("country in @eu_countries")
     .groupby(["year", "source"])
     .agg(sum)
@@ -163,14 +163,14 @@ comp2_long_agg_eu = (
     .copy()
 )
 
-selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair", 
+selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair",
                     "pik_bau_adjwb2017", "pik_fair_adjwb2017", "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017",
                     "wb_gdp_cst"]
 p = seaborn.lineplot(
     x="year",
     y="gdp",
     hue="source",
-    data=comp2_long_agg_eu.query("source in @selected_sources"),
+    data=gdp_comp_long_agg_eu.query("source in @selected_sources"),
 )
 p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
 plt.show()
@@ -178,7 +178,7 @@ plt.show()
 ```
 
 ```python
-comp2_long_agg_eu.query("source in @selected_sources")
+gdp_comp_long_agg_eu.query("source in @selected_sources")
 ```
 
 # Decrease profile in the degrowth scenario
@@ -193,13 +193,13 @@ The plot by contry and by continent below illustrate how African countries are c
 
 ```python
 #com_agg = (
-#    comp2_long
+#    gdp_comp_long
 #    .groupby(["year", "continent"]
 ```
 
 ```python
 g = seaborn.relplot(
-        data=comp2.query("continent == @this_continent"),
+        data=gdp_comp.query("continent == @this_continent"),
         x="year",
         y="pik_fair_i",
         col="country",
@@ -219,13 +219,13 @@ plt.show()
 ### Each country detailed
 
 ```python
-continents = list(comp2["continent"].unique())
+continents = list(gdp_comp["continent"].unique())
 ```
 
 ```python
 for this_continent in continents:
     g = seaborn.relplot(
-        data=comp2.query("continent == @this_continent"),
+        data=gdp_comp.query("continent == @this_continent"),
         x="year",
         y="pik_fair_i",
         col="country",
@@ -243,7 +243,7 @@ for this_continent in continents:
 ```
 
 ```python
-comp2.columns
+gdp_comp.columns
 ```
 
 ## Shift forward by 5 years
@@ -258,18 +258,18 @@ comp2.columns
 ```
 
 ```python
-comp2
+gdp_comp
 
 ```
 
 ```python
 # Rate of growth
-comp2["pik_fair_shift_5"] = comp2.groupby("country_iso")["pik_fair_adjgfpm2017"].shift(periods=5)
+gdp_comp["pik_fair_shift_5"] = gdp_comp.groupby("country_iso")["pik_fair_adjgfpm2017"].shift(periods=5)
 
 # Whole EU
 
-comp2_long_agg_eu_2 = (
-    comp2
+gdp_comp_long_agg_eu_2 = (
+    gdp_comp
     .melt(id_vars=["country_iso", "year", "country", "continent"], var_name="source", value_name="gdp")
     .query("country in @eu_countries")
     .groupby(["year", "source"])
@@ -285,7 +285,7 @@ p = seaborn.lineplot(
     x="year",
     y="gdp",
     hue="source",
-    data=comp2_long_agg_eu_2.query("source in @selected_sources"),
+    data=gdp_comp_long_agg_eu_2.query("source in @selected_sources"),
 )
 p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
 plt.show()
@@ -299,7 +299,7 @@ plt.show()
 ```python
 #for this_continent in continents:
 this_continent == "Africa"
-comp_africa = comp2.query("continent == @this_continent")
+comp_africa = gdp_comp.query("continent == @this_continent")
 ```
 
 ```python
