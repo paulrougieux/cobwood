@@ -87,7 +87,7 @@ agg_eu = pandas.concat([agg_eu(*sheet_var) for sheet_var in sheet_and_variable],
 np.testing.assert_allclose(
     agg_eu["roundprod"], agg_eu["indroundprod"] + agg_eu["fuelprod"]
 )
-agg_selected = agg_eu.query("year in [2010,2015,2030,2050]").transpose()
+agg_selected = agg_eu.query("year in [2010,2015,2020,2030,2050]").transpose()
 # Divide by 1000 and write to a csv file
 # Forest area in 1000 ha -> million ha
 # Stock in Million M3 -> billion m3
