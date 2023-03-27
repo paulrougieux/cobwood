@@ -227,7 +227,7 @@ gdp_2017 = (
 )
 
 index = ["country_iso", "year"]
-comp2 = (
+gdp_comp = (
     comp.merge(gdp_2017, on="country_iso")  # [index + ["pik_bau_i"]]
     # Scale to one in 2017
     # .assign(pik_bau_scale_2017 = lambda x: x["pik_bau_i"] / x["pik_bau_2017"])
@@ -250,7 +250,7 @@ comp2 = (
 
 
 # Reshape to long format
-comp2_long = comp2.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
+gdp_comp_long = gdp_comp.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
     id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
 )
 
@@ -293,7 +293,7 @@ if not pik_data_dir.exists():
     )
 )
 
-comp2.to_parquet(pik_data_dir / "comp2.parquet")
+gdp_comp.to_parquet(pik_data_dir / "gdp_comp.parquet")
 
 # Write to a compressed csv file
 compression_opts = dict(method="zip", archive_name="comp.csv")
