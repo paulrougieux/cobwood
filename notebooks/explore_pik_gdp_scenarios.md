@@ -32,6 +32,7 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 ## Load data
 
 ```python
+eu_countries = faostat.country_groups.eu_country_names
 code_continent = faostat.country_groups.df[["iso3_code", "continent"]].rename(columns={"iso3_code":"country_iso"})
 comp_eu = pandas.read_parquet(gftmx.data_dir / "pik" / "comp_eu.parquet")
 comp2 = (
@@ -44,7 +45,7 @@ comp_eu_long = comp_eu.melt(
     id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
 )
 comp2_long = comp2.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
-      id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
+      id_vars=["country_iso", "year", "country", "continent"], var_name="source", value_name="gdp"
 )
 ```
 
@@ -124,8 +125,11 @@ plt.show()
 ## GDP rescaled to 2017 values
 
 ```python
+comp2_long["gdp"]
+```
+
+```python
 # With rescaled values
-eu_countries = faostat.country_groups.eu_country_names
 comp2_long["gdp_b"] = comp2_long["gdp"] / 1e3
 g = seaborn.relplot(
     data=comp2_long.query("country in @eu_countries"),
@@ -184,6 +188,36 @@ comp2_long_agg_eu.query("source in @selected_sources")
 
 The plot by contry and by continent below illustrate how African countries are continying to grow in the FAIR scenario, with the redistribution happening from high income countries. Developped countries such as Canada, USA, Japan and EUropean countries see a decrease in GDP.
 
+
+### Grouped
+
+```python
+#com_agg = (
+#    comp2_long
+#    .groupby(["year", "continent"]
+```
+
+```python
+g = seaborn.relplot(
+        data=comp2.query("continent == @this_continent"),
+        x="year",
+        y="pik_fair_i",
+        col="country",
+        col_wrap=7,
+        kind="line",
+        height=3,
+        facet_kws={"sharey": False, "sharex": False},
+    )
+g.fig.suptitle(f"PIK Fair GDP in {this_continent}")
+g.fig.supylabel("GDP in billion USD")
+g.fig.subplots_adjust(left=0.05)
+g.set(ylim=(0, None))
+plt.subplots_adjust(top=0.95)
+plt.show()
+```
+
+### Each country detailed
+
 ```python
 continents = list(comp2["continent"].unique())
 ```
@@ -212,14 +246,60 @@ for this_continent in continents:
 comp2.columns
 ```
 
+## Shift forward by 5 years
+
+```python
+
+
+```
+
+```python
+
+```
+
+```python
+comp2
+
+```
+
+```python
+# Rate of growth
+comp2["pik_fair_shift_5"] = comp2.groupby("country_iso")["pik_fair_adjgfpm2017"].shift(periods=5)
+
+# Whole EU
+
+comp2_long_agg_eu_2 = (
+    comp2
+    .melt(id_vars=["country_iso", "year", "country", "continent"], var_name="source", value_name="gdp")
+    .query("country in @eu_countries")
+    .groupby(["year", "source"])
+    .agg(sum)
+    .reset_index()
+    # TODO: fix this in a more elegant way
+    .query("gdp>0.1")
+    .copy()
+)
+
+selected_sources = ["gfpm_gdp", "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017", "pik_fair_shift_5"]
+p = seaborn.lineplot(
+    x="year",
+    y="gdp",
+    hue="source",
+    data=comp2_long_agg_eu_2.query("source in @selected_sources"),
+)
+p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
+plt.show()
+# plt.savefig("/tmp/comp_gdp_eu_aggregate.png")
+```
+
+```python
+
+```
+
 ```python
 #for this_continent in continents:
 this_continent == "Africa"
-df = comp2.query("continent == @this_continent")
-# Rate of growth
-df.groupby("country_iso").assign(diff = lambda x: x["pik_fair_i"].shift())
-df
-# diff
+comp_africa = comp2.query("continent == @this_continent")
 ```
 
 ```python
