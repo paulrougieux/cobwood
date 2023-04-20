@@ -9,7 +9,7 @@ Run this script at the command line with:
 
     ipython -i ~/repos/gftmx/scripts/load_pik_data.py
 
-See comparison plots in the notebook:
+See also the associated notebook with comparison plots:
 
     ../notebooks/explore_pik_gdp_scenarios.md
 
@@ -243,6 +243,15 @@ gdp_comp = (
         * x["gfpm_gdp_2017"],
     ).drop(columns=["pik_bau_2017", "pik_fair_2017", "wb_gdp_2017"])
 )
+
+# TODO: adjust to GFPM 2020
+
+
+# Shift by 5 years
+gdp_comp["pik_fair_shift_5"] = gdp_comp.groupby("country_iso")[
+    "pik_fair_adjgfpm2017"
+].shift(periods=5)
+
 
 #   # Join 2017 constant values from the world bank
 #   .merge(wb[index + ["wb_gdp_cst"]], on=index, how="left")

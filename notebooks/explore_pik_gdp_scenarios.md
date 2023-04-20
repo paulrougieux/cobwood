@@ -186,7 +186,10 @@ gdp_comp_long_agg_eu.query("source in @selected_sources")
 
 ## By continent
 
-The plot by contry and by continent below illustrate how African countries are continying to grow in the FAIR scenario, with the redistribution happening from high income countries. Developped countries such as Canada, USA, Japan and EUropean countries see a decrease in GDP.
+The plot by country and by continent below illustrate how African countries are
+continuing to grow in the FAIR scenario, with the redistribution happening from high
+income countries. Developed countries such as Canada, USA, Japan and European countries
+see a decrease in GDP.
 
 
 ### Grouped
@@ -263,7 +266,7 @@ gdp_comp
 ```
 
 ```python
-# Rate of growth
+# Shift by 5 years
 gdp_comp["pik_fair_shift_5"] = gdp_comp.groupby("country_iso")["pik_fair_adjgfpm2017"].shift(periods=5)
 
 # Whole EU
@@ -292,7 +295,16 @@ plt.show()
 # plt.savefig("/tmp/comp_gdp_eu_aggregate.png")
 ```
 
+## EU GDP change over the period
+
+
+
 ```python
+(gdp_comp_long_agg_eu_2
+ .query("year in [2020,2050]")
+ .pivot(index = "source", columns="year", values="gdp")
+ .assign(change = lambda x: (x[2050] / x[2020] -1)*100)
+)
 
 ```
 
@@ -300,6 +312,11 @@ plt.show()
 #for this_continent in continents:
 this_continent == "Africa"
 comp_africa = gdp_comp.query("continent == @this_continent")
+```
+
+```python
+# Pivot wider and write to a csv file for use in the Excel version of the model
+
 ```
 
 ```python

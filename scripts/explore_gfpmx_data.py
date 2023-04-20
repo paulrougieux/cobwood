@@ -9,16 +9,28 @@ Run this script at the command line with:
 - Compute the percentage change between any given year.
 
 """
+
+import pathlib
 import numpy as np
 import pandas
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from biotrade.faostat import faostat
 from gftmx.gfpmx_data import gfpmx_data
 
+# Path to Valerio's EU Net Annual Increment data
+nai_path = pathlib.Path.home() / "repos/eu_cbm/eu_cbm_explore/scenarios"
+
+# Load GFTMx data
 round_ = gfpmx_data.get_country_rows("round")
 fuel = gfpmx_data.get_country_rows("fuel")
 indround = gfpmx_data.get_country_rows("indround")
 area = gfpmx_data.get_sheet_long("area")
 stock = gfpmx_data.get_sheet_long("stock")
+
+# Load NAI data
+nai_eu = pandas.read_csv(nai_path / "avitabile_2023_nai_eu.csv")
+nai_eu["nai_thousand_m3"] = nai_eu["nai_ha"] * nai_eu["area_kha"]
 
 
 # Select EU countries
@@ -61,20 +73,20 @@ indroundprodagg = indroundeu.groupby("year")["prod"].agg(sum).rename("indround")
 fuelprodagg = fueleu.groupby("year")["prod"].agg(sum).rename("fuel")
 
 
-def agg_eu(sheet_name, variable):
+def aggregate_eu(sheet_name, variable):
     """Load and aggregate the given variable for EU countries
     Example use:
-        >>> round_prod_agg = agg_eu("roundprod", "prod")
-        >>> stock_agg = agg_eu("stock", "stock")
+        >>> round_prod_agg = aggregate_eu("roundprod", "prod")
+        >>> stock_agg = aggregate_eu("stock", "stock")
     """
     df = gfpmx_data.get_sheet_long(sheet_name).query("country in @eucountries")
     df_agg = df.groupby("year")[variable].agg(sum).rename(sheet_name)
     return df_agg
 
 
-stock_agg = agg_eu("stock", "stock")
-area_agg = agg_eu("area", "area")
-round_prod_agg = agg_eu("roundprod", "prod")
+stock_agg = aggregate_eu("stock", "stock")
+area_agg = aggregate_eu("area", "area")
+round_prod_agg = aggregate_eu("roundprod", "prod")
 sheet_and_variable = [
     ("area", "area"),
     ("stock", "stock"),
@@ -82,14 +94,46 @@ sheet_and_variable = [
     ("indroundprod", "prod"),
     ("fuelprod", "prod"),
 ]
-agg_eu = pandas.concat([agg_eu(*sheet_var) for sheet_var in sheet_and_variable], axis=1)
+agg_eu = pandas.concat(
+    [aggregate_eu(*sheet_var) for sheet_var in sheet_and_variable], axis=1
+)
 
 np.testing.assert_allclose(
     agg_eu["roundprod"], agg_eu["indroundprod"] + agg_eu["fuelprod"]
 )
-agg_selected = agg_eu.query("year in [2010,2015,2020,2030,2050]").transpose()
+# Note: Time series start in 1992
+agg_selected = agg_eu.query("year in [1992,2000,2010,2015,2020,2030,2050]").transpose()
 # Divide by 1000 and write to a csv file
 # Forest area in 1000 ha -> million ha
 # Stock in Million M3 -> billion m3
 # Harvest in 1000 m3 -> million m3
 # (agg_selected / 1e3).to_csv("/tmp/gfpmxeuagg_selected.csv")
+
+# Add Net Annual Increment to the harvest data
+# Set the index so that it is passed on as an index
+naihar_eu = agg_eu.merge(nai_eu.set_index("year"), on="year", how="left")
+naihar_eu["nai_thousand_m3"] = naihar_eu["nai_thousand_m3"].interpolate(
+    method="linear", limit_area="inside"
+)
+
+# Plot EU harvest projection
+selector = agg_eu.index <= 2050
+cols = ["roundprod", "indroundprod", "fuelprod", "nai_thousand_m3"]
+(
+    (naihar_eu.loc[selector, cols] / 1e3)
+    .rename(
+        columns={
+            "roundprod": "Total Roundwood",
+            "indroundprod": "Industrial Roundwood",
+            "fuelprod": "Fuel wood",
+            "nai_thousand_m3": "Net Annual Increment",
+        }
+    )
+    .plot(
+        title="GFPMx EU 27 harvest projections",
+        ylabel="Million m3",
+        colormap=ListedColormap(["black", "orange", "red", "green"]),
+    )
+)
+# plt.show()
+plt.savefig("/tmp/gfpmx_eu_havest.png")
