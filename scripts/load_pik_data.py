@@ -287,6 +287,39 @@ comp_eu_2005 = comp_eu.query("year == 2005 and pik_bau == pik_bau")
 # For each country compute the proportion decrease between 2020 and 2030.
 
 
+###################################################
+# Keep only selected year for comparison purposes #
+###################################################
+gdp_comp_eu = gdp_comp.query("country in @faostat.country_groups.eu_country_names")
+# Keep only ssp2 and adjusted pik fair scenario
+gdp_comp_long_agg_eu_2 = (
+    gdp_comp.melt(
+        id_vars=["country_iso", "year", "country", "continent"],
+        var_name="source",
+        value_name="gdp",
+    )
+    .query("country in @eu_countries")
+    .groupby(["year", "source"])
+    .agg(sum)
+    .reset_index()
+    # TODO: fix this in a more elegant way
+    .query("gdp>0.1")
+    .copy()
+)
+
+# Aggregate for EU
+selected_sources = ["gfpm_gdp", "pik_fair_adjgfpm2017", "pik_bau_adjgfpm2017"]
+selected_years = [1992, 2000, 2010, 2015, 2020, 2030, 2050]
+
+gdp_comp_eu_selected = (
+    gdp_comp_long_agg_eu_2
+    # Convert frmo million USD to billion USD
+    .assign(gdp_bil=lambda x: x["gdp"] / 1e3)
+    .query("year in @selected_years and source in @selected_sources")
+    .pivot(index="source", columns="year", values="gdp_bil")
+)
+gdp_comp_eu_selected.to_csv("/tmp/gdp_comp_eu_selected.csv")
+
 #####################
 # Store output data #
 #####################

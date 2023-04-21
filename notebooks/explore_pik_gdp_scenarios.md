@@ -201,6 +201,7 @@ see a decrease in GDP.
 ```
 
 ```python
+this_continent = "Africa"
 g = seaborn.relplot(
         data=gdp_comp.query("continent == @this_continent"),
         x="year",
@@ -293,6 +294,43 @@ p = seaborn.lineplot(
 p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
 plt.show()
 # plt.savefig("/tmp/comp_gdp_eu_aggregate.png")
+```
+
+```python
+(
+        gdp_comp_long_agg_eu_2
+        .query("source in @cols_plot.keys()")
+        .assign(source = lambda x: x["source"].replace(cols_plot))
+    )
+```
+
+```python
+selected_sources = ["", "pik_fair_adjgfpm2017"]
+cols_plot = {
+      "gfpm_gdp": "GFPMx SSP2 GDP",
+      "pik_fair_adjgfpm2017": "PIK Fair GDP"
+}
+style_dict = {list(cols_plot.values())[0]: ('-', 'black'), list(cols_plot.values())[1]: ('--', 'black')}
+data = (
+        gdp_comp_long_agg_eu_2
+        .query("source in @cols_plot.keys()")
+        .assign(gdp_bil = lambda x: x["gdp"] / 1e3,
+                source = lambda x: x["source"].replace(cols_plot))
+    )
+p = seaborn.lineplot(
+    x="year",
+    y="gdp_bil",
+    style="source",
+    data=data
+)
+# Apply custom linestyle and color for each source
+for line, source in zip(p.lines, data["source"].unique()):
+    linestyle, color = style_dict[source]
+    line.set_linestyle(linestyle)
+    line.set_color(color)
+
+p.set(ylabel="GDP in billion USD", title="EU GDP scenarios")
+plt.show()
 ```
 
 ## EU GDP change over the period

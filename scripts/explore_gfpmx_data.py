@@ -28,10 +28,12 @@ indround = gfpmx_data.get_country_rows("indround")
 area = gfpmx_data.get_sheet_long("area")
 stock = gfpmx_data.get_sheet_long("stock")
 
-# Load NAI data
+# Load NAI data and compute total yearly increment
 nai_eu = pandas.read_csv(nai_path / "avitabile_2023_nai_eu.csv")
-nai_eu["nai_thousand_m3"] = nai_eu["nai_ha"] * nai_eu["area_kha"]
-
+nai_eu["tot_nai_thousand_m3_ob"] = nai_eu["nai_ha"] * nai_eu["forest_area_kha"]
+nai_eu["faws_nai_thousand_m3_ob"] = nai_eu["nai_ha"] * nai_eu["faws_area_kha"]
+# Net Annual Increment in Forests Availaable for Wood Supply in thousand m3 under bark
+nai_eu["faws_nai_thousand_m3_ub"] = nai_eu["nai_ha"] * nai_eu["faws_area_kha"] / 1.12
 
 # Select EU countries
 eucountries = faostat.country_groups.eu_country_names + ["Czech Republic"]
@@ -112,25 +114,24 @@ agg_selected = agg_eu.query("year in [1992,2000,2010,2015,2020,2030,2050]").tran
 # Add Net Annual Increment to the harvest data
 # Set the index so that it is passed on as an index
 naihar_eu = agg_eu.merge(nai_eu.set_index("year"), on="year", how="left")
-naihar_eu["nai_thousand_m3"] = naihar_eu["nai_thousand_m3"].interpolate(
+naihar_eu["faws_nai_thousand_m3_ub"] = naihar_eu["faws_nai_thousand_m3_ub"].interpolate(
     method="linear", limit_area="inside"
 )
 
 # Plot EU harvest projection
 selector = agg_eu.index <= 2050
 cols = ["roundprod", "indroundprod", "fuelprod", "nai_thousand_m3"]
+cols_plot = {
+    "roundprod": "Total Roundwood removals",
+    "indroundprod": "Industrial Roundwood",
+    "fuelprod": "Fuel wood",
+    "faws_nai_thousand_m3_ub": "Net Annual Increment (FAWS, UB)",
+}
 (
-    (naihar_eu.loc[selector, cols] / 1e3)
-    .rename(
-        columns={
-            "roundprod": "Total Roundwood",
-            "indroundprod": "Industrial Roundwood",
-            "fuelprod": "Fuel wood",
-            "nai_thousand_m3": "Net Annual Increment",
-        }
-    )
+    (naihar_eu.loc[selector, cols_plot.keys()] / 1e3)
+    .rename(columns=cols_plot)
     .plot(
-        title="GFPMx EU 27 harvest projections",
+        title="GFPMx EU 27 harvest projections in the SSP2 scenario",
         ylabel="Million m3",
         colormap=ListedColormap(["black", "orange", "red", "green"]),
     )
