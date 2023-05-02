@@ -103,9 +103,6 @@ def check_variable_presence(ds: xarray.Dataset) -> None:
         "cons_gdp_elasticity",
         "conspercap",
         "imp_gdp_elasticity",
-        "imp_usd_constant",
-        "imp_usd_gdp_elasticity",
-        "imp_usd_price_elasticity",
         "price_input_elast",
     ]
     other_vars = [
