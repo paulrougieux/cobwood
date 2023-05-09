@@ -4,11 +4,19 @@ Usage:
 
     ipython -i ~/repos/gftmx/scripts/compute_all_equations_with_xarray.py
 
+See also:
+
+- A drawing illustrating the model structure in
+  draft_articles/gftm_degrowth/model_structure.odg
+
+- Buongiorno, J. (2021). GFPMX: A Cobweb Model of the Global Forest Sector,
+  with an Application to the Impact of the COVID-19 Pandemic. Sustainability,
+  13(10), 5507. https://www.mdpi.com/2071-1050/13/10/5507
+
 Advantages of using xarray over pandas:
 
 - The shift_index() function is not needed any more, we can call
   sawn["price"].loc[:, t - 1] directly.
-
 
 TODO:
 
@@ -44,6 +52,7 @@ TODO:
 
 """
 
+import warnings
 import numpy as np
 from numpy.testing import assert_allclose
 import xarray
@@ -60,8 +69,9 @@ indround_ref = gfpmx_data.convert_sheets_to_dataset("indround")
 round_ref = gfpmx_data.convert_sheets_to_dataset("round")
 fuel_ref = gfpmx_data.convert_sheets_to_dataset("fuel")
 sawn_ref = gfpmx_data.convert_sheets_to_dataset("sawn")
-pulp_ref = gfpmx_data.convert_sheets_to_dataset("pulp")
 panel_ref = gfpmx_data.convert_sheets_to_dataset("panel")
+pulp_ref = gfpmx_data.convert_sheets_to_dataset("pulp")
+paper_ref = gfpmx_data.convert_sheets_to_dataset("paper")
 gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
 
 COUNTRY_AGGREGATES = [
@@ -101,14 +111,22 @@ def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
     return ds_out
 
 
+other = remove_after_base_year_and_copy(other_ref, 2018)
 fuel = remove_after_base_year_and_copy(fuel_ref, 2018)
 indround = remove_after_base_year_and_copy(indround_ref, 2018)
-other = remove_after_base_year_and_copy(other_ref, 2018)
-panel = remove_after_base_year_and_copy(panel_ref, 2018)
-pulp = remove_after_base_year_and_copy(pulp_ref, 2018)
 # Use an underscore so that we don't overwrite the python round() function
 round_ = remove_after_base_year_and_copy(round_ref, 2018)
 sawn = remove_after_base_year_and_copy(sawn_ref, 2018)
+panel = remove_after_base_year_and_copy(panel_ref, 2018)
+pulp = remove_after_base_year_and_copy(pulp_ref, 2018)
+paper = remove_after_base_year_and_copy(paper_ref, 2018)
+
+# Add GDP projections to the datasets
+sawn["gdp"] = gdp
+round_["gdp"] = gdp
+panel["gdp"] = gdp
+fuel["gdp"] = gdp
+paper["gdp"] = gdp
 
 
 def consumption(ds: xarray.Dataset, t: int) -> xarray.DataArray:
@@ -118,6 +136,46 @@ def consumption(ds: xarray.Dataset, t: int) -> xarray.DataArray:
         * pow(ds["price"].loc[COUNTRIES, t - 1], ds["cons_price_elasticity"])
         * pow(ds["gdp"].loc[COUNTRIES, t], ds["cons_gdp_elasticity"])
     )
+
+
+def consumption_pulp(
+    ds: xarray.Dataset, ds_paper: xarray.Dataset, t: int
+) -> xarray.DataArray:
+    """Compute the Domestic Demand for Wood Pulp equation 2"""
+    return (
+        ds["cons_constant"]
+        * pow(ds["price"].loc[COUNTRIES, t - 1], ds["cons_price_elasticity"])
+        * pow(
+            ds_paper["prod"].loc[COUNTRIES, t], ds["cons_paper_production_elasticity"]
+        )
+    )
+
+
+def import_demand_pulp(
+    ds: xarray.Dataset, ds_paper: xarray.Dataset, t: int
+) -> xarray.DataArray:
+    return
+
+
+def consumption_indround(
+    ds_indround: xarray.Dataset,
+    ds_sawn: xarray.Dataset,
+    ds_panel: xarray.Dataset,
+    ds_pulp: xarray.Dataset,
+    t: int,
+) -> xarray.DataArray:
+    """Domestic demand for industrial roundwood equation 3"""
+    # TODO: compute the domestic demand for industrial roundwood
+    cons = pow(
+        ds_indround["price"].loc[COUNTRIES, t - 1],
+        ds_indround["cons_price_elasticity"].loc[COUNTRIES],
+    ) * pow(
+        ds_sawn["prod"].loc[COUNTRIES, t]
+        + ds_panel["prod"].loc[COUNTRIES, t]
+        + ds_pulp["prod"].loc[COUNTRIES, t],
+        ds_indround["cons_products_elasticity"],
+    )
+    return np.maximum(cons, 0)
 
 
 def import_demand(ds: xarray.Dataset, t: int) -> xarray.DataArray:
@@ -213,27 +271,6 @@ def forest_stock(
     return np.maximum(stock, 0)
 
 
-def consumption_indround(
-    ds_indround: xarray.Dataset,
-    ds_sawn: xarray.Dataset,
-    ds_panel: xarray.Dataset,
-    ds_pulp: xarray.Dataset,
-    t: int,
-) -> xarray.DataArray:
-    """Domestic demand for industrial roundwood equation 3"""
-    # TODO: compute the domestic demand for industrial roundwood
-    cons = pow(
-        ds_indround["price"].loc[COUNTRIES, t - 1],
-        ds_indround["cons_price_elasticity"].loc[COUNTRIES],
-    ) * pow(
-        ds_sawn["prod"].loc[COUNTRIES, t]
-        + ds_panel["prod"].loc[COUNTRIES, t]
-        + ds_pulp["prod"].loc[COUNTRIES, t],
-        ds_indround["cons_products_elasticity"],
-    )
-    return np.maximum(cons, 0)
-
-
 def import_demand_indround():
     """Compute the import demand of industrial roundwood"""
 
@@ -254,57 +291,89 @@ def compute_end_product_time_step(
     ds["price"].loc[COUNTRIES, t] = local_price(ds, t)
 
 
-# Add GDP projections to the datasets
-sawn["gdp"] = gdp
-round_["gdp"] = gdp
-
-# Compute one time step
+#########################
+# Compute one time step #
+#########################
 year = 2019
 
 # 1. Compute stock growth and drain from stock and production at t-1
 other["stock"].loc[COUNTRIES, year] = forest_stock(other, round_, year)
-# 2. Compute cons, prod, trade and prices of secondary products
-# Consumption is driven by GDP and demand at t-1
 
-# TODO: delete this comparison
-sawn2 = sawn.copy(deep=True)
-compute_end_product_time_step(sawn2, indround, year)
-sawn["cons"].loc[COUNTRIES, year] = consumption(sawn, year)
-sawn["imp"].loc[COUNTRIES, year] = import_demand(sawn, year)
-sawn["exp"].loc[COUNTRIES, year] = export_supply(sawn, year)
-sawn["prod"].loc[COUNTRIES, year] = production(sawn, year)
-sawn["price"].loc["WORLD", year] = world_price(sawn, indround, year)
-sawn["price"].loc[COUNTRIES, year] = local_price(sawn, year)
-assert sawn.equals(sawn2)
+# 2. Compute cons, trade, prod and prices of secondary products
+compute_end_product_time_step(sawn, indround, year)
+compute_end_product_time_step(fuel, indround, year)
+compute_end_product_time_step(panel, indround, year)
+compute_end_product_time_step(paper, pulp, year)
 
 # 3. Compute cons, prod and trade of primary products
+# TODO: implement "Import Demand for Wood Pulp" equation 5
 # TODO: compute the import demand for industrial roundwood
 # TODO: compute the export supply of industrial roundwood
 # indroundexp =MAX(0,$F2*$IndroundImp.CI$182+$G2)
 # sawnexp =MAX(0,$F2*$SawnImp.CI$182+$G2)
 
+pulp["cons"].loc[COUNTRIES, year] = consumption_pulp(pulp, paper, year)
+
 indround["exp"].loc[COUNTRIES, year] = export_supply(indround, year)
-# TODO: compute production and trade of industrial roundwood
+
+# TODO: Compute the consumption of industrial roundwood equation 3
+consumption_indround
+
+# TODO: Compute production and trade of industrial roundwood
 indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
+
+##########
+# Checks #
+##########
+# Comparison between sawn modified in place by the
+# compute_end_product_time_step() function
+# and sawn2 computed below
+sawn2 = sawn.copy(deep=True)
+sawn2["cons"].loc[COUNTRIES, year] = consumption(sawn2, year)
+sawn2["imp"].loc[COUNTRIES, year] = import_demand(sawn2, year)
+sawn2["exp"].loc[COUNTRIES, year] = export_supply(sawn2, year)
+sawn2["prod"].loc[COUNTRIES, year] = production(sawn2, year)
+warnings.warn("Compute world price of indround (then delete this warning)")
+# TODO the world price of indround is required here
+sawn2["price"].loc["WORLD", year] = world_price(sawn2, indround, year)
+sawn2["price"].loc[COUNTRIES, year] = local_price(sawn2, year)
+assert sawn.equals(sawn2)
+
 
 # Compute roundwood as the sum of industrial round wood and fuel wood
 round_["prod"].loc[COUNTRIES, year] = (
     indround["prod"].loc[COUNTRIES, year] + fuel["prod"].loc[COUNTRIES, year]
 )
 
-# Compare computed results to the reference dataset
-vars_to_compare = ["cons", "imp", "exp", "prod"]
-year = 2019
-for var in vars_to_compare:
-    print(f"Checking {var}")
-    rtol = 1e-7
-    if var == "prod":
-        rtol = 1e-2
-    assert_allclose(
-        sawn[var].loc[COUNTRIES, year],
-        sawn_ref[var].loc[COUNTRIES, year],
-        rtol=rtol,
-    )
+
+def compare_to_ref(
+    ds: xarray.Dataset, ds_ref: xarray.Dataset, vars_to_compare: list, t: int
+):
+    """Compare the computed dataset to the reference dataset for the given t"""
+    print(f"Checking {ds.product} {vars_to_compare}")
+    for var in vars_to_compare:
+        rtol = 1e-7
+        if var == "prod":
+            rtol = 1e-2
+        try:
+            assert_allclose(
+                ds[var].loc[COUNTRIES, t],
+                ds_ref[var].loc[COUNTRIES, t],
+                rtol=rtol,
+            )
+        except AssertionError as e:
+            print(f"{ds.product}, {var}")
+            raise e
+    print("    OK")
+
+
+ciep_vars = ["cons", "imp", "exp", "prod"]
+compare_to_ref(sawn, sawn_ref, ciep_vars, 2019)
+compare_to_ref(panel, panel_ref, ciep_vars, 2019)
+compare_to_ref(paper, paper_ref, ciep_vars, 2019)
+compare_to_ref(pulp, pulp_ref, ["cons"], 2019)
+
+
 # Compare world price
 assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])
 
