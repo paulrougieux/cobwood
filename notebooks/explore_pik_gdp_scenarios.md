@@ -311,9 +311,9 @@ cols_plot = {
       "pik_fair_adjgfpm2017": "PIK Fair GDP"
 }
 style_dict = {list(cols_plot.values())[0]: ('-', 'black'), list(cols_plot.values())[1]: ('--', 'black')}
-data = (
+df = (
         gdp_comp_long_agg_eu_2
-        .query("source in @cols_plot.keys()")
+        .query("source in @cols_plot.keys() and year <= 2050")
         .assign(gdp_bil = lambda x: x["gdp"] / 1e3,
                 source = lambda x: x["source"].replace(cols_plot))
     )
@@ -321,10 +321,10 @@ p = seaborn.lineplot(
     x="year",
     y="gdp_bil",
     style="source",
-    data=data
+    data=df
 )
 # Apply custom linestyle and color for each source
-for line, source in zip(p.lines, data["source"].unique()):
+for line, source in zip(p.lines, df["source"].unique()):
     linestyle, color = style_dict[source]
     line.set_linestyle(linestyle)
     line.set_color(color)
