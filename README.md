@@ -19,9 +19,9 @@ http://www.fao.org/faostat/en/#data/FO/visualize
 
 # Xarray
 
-Each equation in the model runs for 180 countries over 80 years. We implement equations
-over 2 dimensional data arrays. Country names represent the first dimension (also called
-coordinate) and years constitute the second dimension. Xarray data arrays can be
+An equation typically runs for 180 countries over 80 years. We implement each equation
+over 2 dimensional data arrays where country names represent the first dimension (also
+called coordinate) and years constitute the second dimension. Xarray data arrays can be
 converted to a format similar to the original GFPMx spreadsheet with countries in rows
 and years in columns. For example the following code uses `DataArray.to_pandas()` to
 convert the pulp import array to a csv file using the pandas to_csv() method:
