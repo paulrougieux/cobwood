@@ -17,17 +17,37 @@ The data is based on the FAOSTAT forestry production and trade data set availabl
 http://www.fao.org/faostat/en/#data/FO/visualize
 
 
-
-
 # Xarray
 
-Xarray data arrays can be converted to a format similar to the original spreadsheet with
-countries in rows and years in columns. For example the following code converts the pulp
-import array to a csv file using the pandas to_csv() method:
-
+Each equation in the model runs for 180 countries over 80 years. We implement equations
+over 2 dimensional data arrays. Country names represent the first dimension (also called
+coordinate) and years constitute the second dimension. Xarray data arrays can be
+converted to a format similar to the original GFPMx spreadsheet with countries in rows
+and years in columns. For example the following code uses `DataArray.to_pandas()` to
+convert the pulp import array to a csv file using the pandas to_csv() method:
 
     from gftmx.gfpmx_data import gfpmx_data
     pulp = gfpmx_data.convert_sheets_to_dataset("pulp")
-    pulp.imp.to_pandas().to_csv("/tmp/pulp_imp.csv")
+    pulp["imp"].to_pandas().to_csv("/tmp/pulp_imp.csv")
 
+Example table containing the first few lines and columns:
+
+| country | 2019 | 2020 | 2021 |
+|---------|------|------|------|
+| Algeria | 66   | 61   | 56   |
+| Angola  | 0    | 0    | 0    |
+| Benin   | 0    | 0    | 0    |
+
+The `DataArray.to_dataframe()` method converts an array and its coordinates into a tidy
+pandas.DataFrame in long format, starting with a country and a year column on the left.
+
+    pulp["imp"].to_dataframe().to_csv("/tmp/pulp_imp_long.csv")
+
+Example table containing the first few lines and columns:
+
+| country | year | imp |
+|---------|------|-----|
+| Algeria | 2019 | 66  |
+| Algeria | 2020 | 61  |
+| Algeria | 2021 | 56  |
 
