@@ -175,7 +175,8 @@ def consumption_indround(
 
     The argument `compatible_mode` is to reproduce a behaviour in GFPMX-8-6-2021.xlsx
     for comparison purposes. Content of cell AJ2 in sheet IndroundCons:
-    =IF($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2<=0,0,$G2*($IndroundPrice.AI2^$D2)*($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2)^$E2)
+    =IF($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2<=0,0,
+        $G2*($IndroundPrice.AI2^$D2)*($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2)^$E2)
     The if condition is only the sum of the 3 secondary products production.
     Because Singapore has a negative constant (column G), it results in a negative consumption.
     """
@@ -199,7 +200,8 @@ def consumption_indround(
     )
     if compatible_mode:
         # Keep only rows where sum_prod_secondary is positive
-        return cons.loc[sum_prod_secondary > 0]
+        cons.loc[sum_prod_secondary < 0] = 0
+        return cons
     # Keep only rows where consumption is positive
     return np.maximum(cons, 0)
 
