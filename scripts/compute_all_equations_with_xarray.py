@@ -63,6 +63,16 @@ import xarray
 from gftmx.gfpmx_data import gfpmx_data
 from gftmx.gfpmx_data import convert_to_2d_array
 
+
+# Reproduce bugs in GFPMX-8-6-2021.xlsx
+GFPMX_8_6_2021_COMPATIBLE_MODE = True
+# List of bugs:
+# 1) Indonesia has negative industrial roundwood consumption because
+#    =IF($PulpProd.AK118+$PanelProd.AK118+$SawnProd.AK118<=0,0,$G118*($IndroundPrice.AJ118^$D118)*($PulpProd.AK118+$PanelProd.AK118+$SawnProd.AK118)^$E118)
+#    Is equal to -57. The if condition should be on the whole expression result,
+#    but it's only the sum of the secondary products production.
+
+
 # Load reference data
 other_ref = gfpmx_data.convert_sheets_to_dataset("other")
 indround_ref = gfpmx_data.convert_sheets_to_dataset("indround")
@@ -159,10 +169,23 @@ def consumption_indround(
     ds_panel: xarray.Dataset,
     ds_pulp: xarray.Dataset,
     t: int,
+    compatible_mode: bool = None,
 ) -> xarray.DataArray:
-    """Domestic demand for industrial roundwood equation 3"""
-    # Content of cell AJ2 in sheet IndroundCons:
-    # =IF($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2<=0,0,$G2*($IndroundPrice.AI2^$D2)*($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2)^$E2)
+    """Domestic demand for industrial roundwood equation 3
+
+    The argument `compatible_mode` is to reproduce a behaviour in GFPMX-8-6-2021.xlsx
+    for comparison purposes. Content of cell AJ2 in sheet IndroundCons:
+    =IF($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2<=0,0,$G2*($IndroundPrice.AI2^$D2)*($PulpProd.AJ2+$PanelProd.AJ2+$SawnProd.AJ2)^$E2)
+    The if condition is only the sum of the 3 secondary products production.
+    Because Singapore has a negative constant (column G), it results in a negative consumption.
+    """
+    if compatible_mode is None:
+        compatible_mode = GFPMX_8_6_2021_COMPATIBLE_MODE
+    sum_prod_secondary = (
+        ds_sawn["prod"].loc[COUNTRIES, t]
+        + ds_panel["prod"].loc[COUNTRIES, t]
+        + ds_pulp["prod"].loc[COUNTRIES, t]
+    )
     cons = (
         ds["cons_constant"].loc[COUNTRIES]
         * pow(
@@ -170,12 +193,14 @@ def consumption_indround(
             ds["cons_price_elasticity"].loc[COUNTRIES],
         )
         * pow(
-            ds_sawn["prod"].loc[COUNTRIES, t]
-            + ds_panel["prod"].loc[COUNTRIES, t]
-            + ds_pulp["prod"].loc[COUNTRIES, t],
+            sum_prod_secondary,
             ds["cons_products_elasticity"],
         )
     )
+    if compatible_mode:
+        # Keep only rows where sum_prod_secondary is positive
+        return cons.loc[sum_prod_secondary > 0]
+    # Keep only rows where consumption is positive
     return np.maximum(cons, 0)
 
 
@@ -298,7 +323,7 @@ def compute_end_product_time_step(
     """Compute consumption, production trade and price equations corresponding
     to a semi finished products (end product for the purpose of this model).
 
-    ! This function modifies the input data set `ds` for the given time step.
+    ! This function modifies the input data set `ds` for the given time step t.
     """
     ds["cons"].loc[COUNTRIES, t] = consumption(ds, t)
     ds["imp"].loc[COUNTRIES, t] = import_demand(ds, t)
