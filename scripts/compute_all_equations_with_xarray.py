@@ -206,6 +206,38 @@ def consumption_indround(
     return np.maximum(cons, 0)
 
 
+def import_demand_indround(
+    ds: xarray.Dataset,
+    ds_sawn: xarray.Dataset,
+    ds_panel: xarray.Dataset,
+    ds_pulp: xarray.Dataset,
+    t: int,
+    compatible_mode: bool = None,
+) -> xarray.DataArray:
+    """Compute the import demand of industrial roundwood equation 6"""
+    if compatible_mode is None:
+        compatible_mode = GFPMX_8_6_2021_COMPATIBLE_MODE
+    sum_prod_secondary = (
+        ds_sawn["prod"].loc[COUNTRIES, t]
+        + ds_panel["prod"].loc[COUNTRIES, t]
+        + ds_pulp["prod"].loc[COUNTRIES, t]
+    )
+    imp = (
+        ds["imp_constant"].loc[COUNTRIES]
+        * pow(
+            (1 + ds["tariff"].loc[COUNTRIES, t]) * ds["price"].loc[COUNTRIES, t - 1],
+            ds["imp_price_elasticity"].loc[COUNTRIES],
+        )
+        * pow(sum_prod_secondary, ds["imp_products_elasticity"].loc[COUNTRIES])
+    )
+    if compatible_mode:
+        # Keep only rows where sum_prod_secondary is positive
+        imp.loc[sum_prod_secondary < 0] = 0
+        return imp
+    # Keep only rows where import demand is positive
+    return np.maximum(imp, 0)
+
+
 def import_demand(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute import demand equation 4"""
     return (
@@ -315,10 +347,6 @@ def forest_stock(
     return np.maximum(stock, 0)
 
 
-def import_demand_indround():
-    """Compute the import demand of industrial roundwood"""
-
-
 def compute_end_product_time_step(
     ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
 ) -> None:
@@ -355,10 +383,10 @@ pulp["imp"].loc[COUNTRIES, year] = import_demand_pulp(pulp, paper, year)
 pulp["exp"].loc[COUNTRIES, year] = export_supply(pulp, year)
 pulp["prod"].loc[COUNTRIES, year] = production(pulp, year)
 
-# TODO: Compute the consumption of industrial roundwood equation 3
-
-# TODO: compute the import demand for industrial roundwood
 indround["cons"].loc[COUNTRIES, year] = consumption_indround(
+    indround, sawn, panel, pulp, year
+)
+indround["imp"].loc[COUNTRIES, year] = import_demand_indround(
     indround, sawn, panel, pulp, year
 )
 indround["exp"].loc[COUNTRIES, year] = export_supply(indround, year)
@@ -419,7 +447,7 @@ compare_to_ref(sawn, sawn_ref, ciep_vars, 2019)
 compare_to_ref(panel, panel_ref, ciep_vars, 2019)
 compare_to_ref(paper, paper_ref, ciep_vars, 2019)
 compare_to_ref(pulp, pulp_ref, ciep_vars, 2019)
-compare_to_ref(indround, indround_ref, ["cons", "exp", "prod"], 2019)
+compare_to_ref(indround, indround_ref, ciep_vars, 2019)
 
 
 # Compare world price
