@@ -170,7 +170,8 @@ class GFPMXData:
 
     # Location of the csv files
     # TODO: After moving the script gfpmx_data_to_csv as a method,
-    # change this so that it becomes an argument
+    # change this so that it becomes an argument see issue
+    # See issue 2 https://gitlab.com/bioeconomy/gftm/gftmx/-/issues/2
     data_dir = gftmx_data_dir / "gfpmx"
 
     # Simulation base year i.e. last year of historical data available in the spreadsheet
@@ -184,8 +185,8 @@ class GFPMXData:
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
         self.index = ["year", "country"]
-        # TODO: add a mapping table between countries and groups
-        self.country_groups = [
+        self.country_groups = self.get_country_groups()
+        self.country_aggregates = [
             "WORLD",
             "AFRICA",
             "NORTH AMERICA",
@@ -194,6 +195,9 @@ class GFPMXData:
             "OCEANIA",
             "EUROPE",
         ]
+        assert set(self.country_aggregates) - set(self.country_groups["region"]) == {
+            "WORLD"
+        }
 
     def list_sheets(self):
         """List sheets available in the GFPMX data folder
@@ -420,7 +424,7 @@ class GFPMXData:
     def get_country_rows(self, *args, **kwargs):
         """Get only the country rows from the joint_sheets method"""
         df = self.join_sheets(*args, **kwargs)
-        selector = df.index.isin(self.country_groups, level="country")
+        selector = df.index.isin(self.country_aggregates, level="country")
         # Copy the slices to new data frames to avoid the warning:
         #   "A value is trying to be set on a copy of a slice from a DataFrame.
         #   Try using .loc[row_indexer,col_indexer] = value instead"
@@ -432,7 +436,7 @@ class GFPMXData:
         Aggregates are world and continents.
         """
         df = self.join_sheets(*args, **kwargs)
-        selector = df.index.isin(self.country_groups, level="country")
+        selector = df.index.isin(self.country_aggregates, level="country")
         return df[selector].copy()
 
     def get_names(self):
@@ -454,6 +458,7 @@ class GFPMXData:
             columns={"gfpm_x_country": "country", "code": "faostat_country_code"},
             inplace=True,
         )
+        df["region"] = df["region"].str.upper()
         return df[["country", "region", "faostat_country", "faostat_country_code"]]
 
     def convert_sheets_to_dataset(
