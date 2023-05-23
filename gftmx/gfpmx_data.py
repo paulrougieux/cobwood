@@ -435,6 +435,27 @@ class GFPMXData:
         selector = df.index.isin(self.country_groups, level="country")
         return df[selector].copy()
 
+    def get_names(self):
+        """Get the product and country names from the names sheet"""
+        csv_file_name = self.data_dir / "names.csv"
+        # Headers are on two columns, load them, merge them and convert to lower case
+        df = pandas.read_csv(csv_file_name, header=[0, 1])
+        df.columns = [str("_".join(col)).lower() for col in df.columns]
+        df.rename(
+            columns=lambda x: re.sub(r"unnamed_\d+_", "", str(x)).lower(), inplace=True
+        )
+        df.rename(columns=lambda x: re.sub(r"_\d+_", "_", str(x)).lower(), inplace=True)
+        return df
+
+    def get_country_groups(self):
+        """Get the country grouping by continents"""
+        df = self.get_names()
+        df.rename(
+            columns={"gfpm_x_country": "country", "code": "faostat_country_code"},
+            inplace=True,
+        )
+        return df[["country", "region", "faostat_country", "faostat_country_code"]]
+
     def convert_sheets_to_dataset(
         self, product: str, other_element: [list, str] = None
     ) -> xarray.Dataset:
