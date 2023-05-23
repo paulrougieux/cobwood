@@ -63,7 +63,6 @@ import xarray
 from gftmx.gfpmx_data import gfpmx_data
 from gftmx.gfpmx_data import convert_to_2d_array
 
-
 # Reproduce bugs in GFPMX-8-6-2021.xlsx
 GFPMX_8_6_2021_COMPATIBLE_MODE = True
 # List of bugs:
@@ -84,16 +83,12 @@ pulp_ref = gfpmx_data.convert_sheets_to_dataset("pulp")
 paper_ref = gfpmx_data.convert_sheets_to_dataset("paper")
 gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
 
-COUNTRY_AGGREGATES = [
-    "WORLD",
-    "AFRICA",
-    "NORTH AMERICA",
-    "SOUTH AMERICA",
-    "ASIA",
-    "OCEANIA",
-    "EUROPE",
-]
-COUNTRIES = sawn_ref.country[~sawn_ref.country.isin(COUNTRY_AGGREGATES)]
+COUNTRY_AGGREGATES = gfpmx_data.country_aggregates
+COUNTRIES = sawn_ref.country[~sawn_ref.country.isin(COUNTRY_AGGREGATES)].values
+# Check that all countries in the dataset are also present in the list
+assert set(list(COUNTRIES)) - set(gfpmx_data.country_groups["country"]) == set()
+# Check that all countries present in the list are also in the dataset
+assert set(gfpmx_data.country_groups["country"]) - set(list(COUNTRIES)) == set()
 
 ######################################################
 # Erase data after base year and copy the data frame #
@@ -291,18 +286,18 @@ def production(ds: xarray.Dataset, t: int) -> xarray.DataArray:
 
 
 def world_price_indround(
-    ds_indround: xarray.Dataset, ds_other: xarray.Dataset, t: int
+    ds: xarray.Dataset, ds_other: xarray.Dataset, t: int
 ) -> xarray.DataArray:
     """Compute the world price of industrial roundwood equation 9"""
     return (
-        ds_indround["price_constant"].loc["WORLD"]
+        ds["price_constant"].loc["WORLD"]
         * pow(
-            ds_indround["prod"].loc["WORLD", t],
-            ds_indround["price_world_price_elasticity"].loc["WORLD"],
+            ds["prod"].loc["WORLD", t],
+            ds["price_world_price_elasticity"].loc["WORLD"],
         )
         * pow(
             ds_other["stock"].loc["WORLD", t],
-            ds_indround["price_stock_elast"].loc["WORLD"],
+            ds["price_stock_elast"].loc["WORLD"],
         )
     )
 
@@ -363,6 +358,28 @@ def compute_end_product_time_step(
     ds["price"].loc[COUNTRIES, t] = local_price(ds, t)
 
 
+def compute_country_aggregates(
+    ds: xarray.Dataset, t: int, variable: str = None
+) -> None:
+    """Compute aggregates for 'WORLD' and for
+    'AFRICA', 'NORTH AMERICA', 'SOUTH AMERICA', 'ASIA', 'OCEANIA', 'EUROPE'
+    param: ds dataset
+    param: t time in years
+    param: variable list of variables to aggregate in the dataset
+    ! This function modifies its input data set `ds` for the given time step t.
+    """
+    regions = [x for x in COUNTRY_AGGREGATES if x != "WORLD"]
+    if variable is None:
+        variable = ["cons", "exp", "imp", "prod"]
+    if isinstance(variable, str):
+        variable = [variable]
+    for var in variable:
+        ds[var].loc["WORLD", t] = ds[var].loc[COUNTRIES, t].sum()
+        ds[var].loc[regions, t] = (
+            ds[var].loc[COUNTRIES, t].groupby(ds["region"].loc[COUNTRIES]).sum()
+        )
+
+
 #########################
 # Compute one time step #
 #########################
@@ -391,10 +408,11 @@ indround["imp"].loc[COUNTRIES, year] = import_demand_indround(
 )
 indround["exp"].loc[COUNTRIES, year] = export_supply(indround, year)
 indround["prod"].loc[COUNTRIES, year] = production(indround, year)
-
-
-# TODO: Compute production and trade of industrial roundwood
 indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
+compute_country_aggregates(indround, year)
+compute_country_aggregates(other, year, "stock")
+assert not indround["price"].loc["WORLD", year].isnull()
+
 
 ##########
 # Checks #

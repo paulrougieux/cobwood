@@ -506,6 +506,9 @@ class GFPMXData:
                 df[col] = pandas.to_numeric(df[col], errors="coerce")
                 ds[element + "_" + col] = convert_to_1d_array(df, col)
         check_variable_presence(ds)
+        # Add region data on continents to be used for groupings
+        region_data = self.country_groups.set_index("country")["region"]
+        ds["region"] = xarray.DataArray.from_series(region_data)
         return ds
 
 
