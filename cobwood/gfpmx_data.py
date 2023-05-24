@@ -25,7 +25,7 @@ import pandas
 import xarray
 
 # Internal modules
-from cobwood import cobwood_data_dir
+import cobwood
 
 
 def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
@@ -153,7 +153,12 @@ class GFPMXData:
 
     Load sawnwood consumption data in long format:
 
-        >>> from cobwood.gfpmx_data import gfpmx_data
+    :param data_dir Location of the csv files
+    :param base_year Simulation base year i.e. last year of historical data
+           available in the spreadsheet
+
+        >>> from cobwood.gfpmx_data import GFPMXData
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
         >>> swd_cons = gfpmx_data['sawncons']
         >>> swd_cons
 
@@ -168,20 +173,16 @@ class GFPMXData:
     `scripts/gfpmx_data_to_csv.py`
     """
 
-    # Location of the csv files
-    # TODO: After moving the script gfpmx_data_to_csv as a method,
-    # change this so that it becomes an argument see issue
-    # See issue 2 https://gitlab.com/bioeconomy/gftm/cobwood/-/issues/2
-    data_dir = cobwood_data_dir / "gfpmx"
-
-    # Simulation base year i.e. last year of historical data available in the spreadsheet
-    base_year = 2018
-
     def __getitem__(self, sheet_name):
         """Return a data frame based on the GFPMX sheet name."""
         return self.get_sheet_long(sheet_name)
 
-    def __init__(self):
+    def __init__(self, data_dir, base_year):
+        # TODO: After moving the script gfpmx_data_to_csv as a method,
+        # change this so that it becomes an argument see issue
+        # See issue 2 https://gitlab.com/bioeconomy/gftm/cobwood/-/issues/2
+        self.data_dir = cobwood.data_dir / data_dir
+        self.base_year = base_year
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
         self.index = ["year", "country"]
@@ -206,8 +207,9 @@ class GFPMXData:
 
         For example show all sheets available
 
-            >>> from cobwood.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import GFPMXData
             >>> from pandas.errors import EmptyDataError
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
             >>> sheets = gfpmx_data.list_sheets()
             >>> sheets
 
@@ -274,7 +276,8 @@ class GFPMXData:
 
         Example use
 
-            >>> from cobwood.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import GFPMXData
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
             >>> print(gfpmx_data.get_sheet_wide("sawnprice"))
 
         """
@@ -287,7 +290,8 @@ class GFPMXData:
 
         Example use
 
-            >>> from cobwood.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import GFPMXData
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
             >>> print(gfpmx_data.get_sheet_long("sawncons"))
 
         """
@@ -323,8 +327,10 @@ class GFPMXData:
     def get_gdp(self, sheet_name="gdp", index=None, var_name="gdp"):
         """Return a data frame of cleaned GDP values
 
-        >>> from cobwood.gfpmx_data import gfpmx_data
-        >>> gfpmx_data.get_gdp()
+        >>> from cobwood.gfpmx_data import GFPMXData
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+        >>> gfpmx_data.get_price_lag('sawnprice')
+
         """
         if index is None:
             index = ["id", "year", "country"]
@@ -336,8 +342,10 @@ class GFPMXData:
     def get_price_lag(self, sheet_name, index=None, var_name="price"):
         """Return a price table with prices shifted by a one year lag
 
-        >>> from cobwood.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import GFPMXData
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
         >>> gfpmx_data.get_price_lag('sawnprice')
+
         """
         if index is None:
             index = ["id", "year", "country"]
@@ -362,7 +370,8 @@ class GFPMXData:
         For example join all roundwood sheets in one data frame and add a
         stock column.
 
-            >>> from cobwood.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import GFPMXData
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
             >>> rwd = gfpmx_data.join_sheets("round", ["stock"])
             >>> rwd.columns
 
@@ -390,9 +399,9 @@ class GFPMXData:
         # Join the product sheets together
         sheets = self.sheets[self.sheets["product"] == product]
         first_sheet = sheets.index[0]
-        df_all = gfpmx_data.get_sheet_long(first_sheet)
+        df_all = self.get_sheet_long(first_sheet)
         for name in sheets.index[1:]:
-            df = gfpmx_data.get_sheet_long(name)
+            df = self.get_sheet_long(name)
             # Keep only index columns or columns starting with element
             element = sheets.loc[name]["element"]
             cols = df.columns[df.columns.str.match("^" + element)].tolist()
@@ -408,7 +417,7 @@ class GFPMXData:
             other_sheets = self.sheets[self.sheets["product"] == "other"]
             other_sheets = other_sheets[other_sheets["element"].isin(other_element)]
             for name in other_sheets.index:
-                df = gfpmx_data.get_sheet_long(name)
+                df = self.get_sheet_long(name)
                 element = other_sheets.loc[name]["element"]
                 cols = df.columns[df.columns.str.match("^" + element)].tolist()
                 # Remove the product name from the join index
@@ -514,7 +523,3 @@ class GFPMXData:
         region_data = self.country_groups.set_index("country")["region"]
         ds["region"] = xarray.DataArray.from_series(region_data)
         return ds
-
-
-# Make a singleton #
-gfpmx_data = GFPMXData()

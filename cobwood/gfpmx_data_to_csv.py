@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+A script to save all sheets of the GFPMX Excel implementation to csv files
+
+Usage:
+
+    >>> from cobwood.gfpmx_data_to_csv import gfpmx_data_to_csv
+    >>> gfpmx_data_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+
+It can also be used as a script directly to generate the default file:
+
+    ipython -i ~/repos/cobwood/cobwood/gfpmx_data_to_csv.py
+
+Source of the GFPMX spread sheet data by Joseph Buongiorno:
+    https://buongiorno.russell.wisc.edu/gfpm/
+
+Author of this script Paul Rougieux
+
+See also the scripts that reproduces the GFPM simulation:
+
+    ~/rp/cobwood/scripts/compute_swd_equations.py
+    ~/rp/cobwood/scripts/compute_all_equations.py
+
+"""
+
+# Built-in modules #
+from pathlib import Path
+import re
+
+# Third party modules #
+import pandas
+from tqdm import tqdm
+
+# First party modules #
+
+# Internal modules #
+import cobwood
+
+
+def extract_world_price_parameter(df, col_name, contains, var_name):
+    """Extract world price parameters such as input elasticity,
+    stock elasticity and trend.
+    """
+    selector = df[col_name].astype(str).str.contains(contains)
+    if any(selector):
+        df = df.rename(columns={col_name: var_name})
+        # Force variable type to numeric
+        df[var_name] = pandas.to_numeric(df[var_name], errors="coerce")
+    return df
+
+
+def gfpmx_data_to_csv(spreadsheet_path):
+    """Convert GFTMX data to csv files and store them inside the cobweb_data directory"""
+    # Output folder
+    gfpmx_data_dir = re.sub(r"\W+", "_", Path(spreadsheet_path).stem).lower()
+    gfpmx_data_dir = cobwood.data_dir / gfpmx_data_dir
+    if not gfpmx_data_dir.exists():
+        gfpmx_data_dir.mkdir(parents=True)
+    print(f"\nLoad the Excel file {spreadsheet_path} in a dictionary of data frames.")
+    gfpmx_excel_file = pandas.read_excel(spreadsheet_path, sheet_name=None)
+    print(gfpmx_excel_file.keys())
+    print(f"\nWrite all sheets to csv files in the output folder\n{gfpmx_data_dir}")
+    for key in tqdm(gfpmx_excel_file.keys()):
+        df = gfpmx_excel_file[key]
+        # Remove empty columns in place
+        df.dropna(how="all", axis=1, inplace=True)
+        # Rename columns to snake case, replace all non alphanumeric characters by an underscore
+        df.rename(columns=lambda x: re.sub(r"\W+", "_", str(x)).lower(), inplace=True)
+        # Add "value" prefix to year columns in preparation for a reshape from wide to long
+        df.rename(columns=lambda x: re.sub(r"^(\d{4})$", r"value\1", x), inplace=True)
+        # Rename element and unit columns
+        df.rename(columns={"unnamed_1": "element", "unnamed_2": "unit"}, inplace=True)
+        # Rename the column that contains the world price elasticity of the input
+        # Equation 9 World Price of Industrial Roundwood
+        # Equation 10 industrial roundwood world price elasticity
+        # Equation 11 pulp world price elasticity
+        price_tables = [
+            "FuelPrice",
+            "SawnPrice",
+            "PanelPrice",
+            "PulpPrice",
+        ]
+        if key in price_tables:
+            df = extract_world_price_parameter(df, "unnamed_4", "ound", "input_elast")
+        if key == "PaperPrice":
+            df = extract_world_price_parameter(df, "unnamed_4", "ulp", "input_elast")
+        if key == "IndroundPrice":
+            df = extract_world_price_parameter(df, "unnamed_3", "trend", "trend")
+            df = extract_world_price_parameter(df, "unnamed_4", "stock", "stock_elast")
+
+        # This applies to product sheets, which have a "faostat_name" column
+        if "faostat_name" in df.columns:
+
+            # Harmonize product names
+            if df["faostat_name"].unique().tolist() == ["Sawnwood"]:
+                df["faostat_name"] = "Sawnwood+sleepers"
+
+            # Fix typo in roundwood name
+            df["faostat_name"].replace({"Roundwwood": "Roundwood"}, inplace=True)
+
+            # Remove rows that don't have a faostat_name
+            # They usually contain quality checks such as
+            # World prod/cons or Worldexp/Worldimp
+            df = df[~df["faostat_name"].isna()].copy()
+
+        # Harmonize column names
+        if "world_elasticity" in df.columns:
+            df.rename(
+                columns={"world_elasticity": "world_price_elasticity"}, inplace=True
+            )
+
+        # Further renaming for the purpose of libcbm usage
+        if key in ["FuelProd", "IndroundProd"]:
+            df.faostat_name = df.faostat_name.ffill()
+            df.element = df.element.ffill()
+            df.unit = df.unit.ffill()
+        # Write the csv file
+        csv_file_name = re.sub(r"\$", r"_usd", key).lower() + ".csv"
+        csv_file_name = Path(gfpmx_data_dir) / csv_file_name
+        df.to_csv(csv_file_name, index=False)
+
+
+if __name__ == "__main__":
+    # TODO make this a method of gfpmx_data that can load a different Excel files
+    # and output it to a sub directory of gfpmx_data_dir with a directory name that
+    # correspond to the input file name. --> This will make it possible to have 2
+    # gfpmx_data objects one with the old Excel file and another one with the new
+    # Excel file
+    # Input file from https://buongiorno.russell.wisc.edu/gfpm/
+    gfpmx_data_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")

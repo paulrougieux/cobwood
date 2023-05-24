@@ -200,6 +200,34 @@ def consumption_indround(
     return np.maximum(cons, 0)
 
 
+def import_demand(ds: xarray.Dataset, t: int) -> xarray.DataArray:
+    """Compute import demand equation 4"""
+    return (
+        ds["imp_constant"]
+        * pow(
+            ds["price"].loc[COUNTRIES, t - 1] * (1 + ds["tariff"].loc[:, t - 1]),
+            ds["imp_price_elasticity"],
+        )
+        * pow(ds["gdp"].loc[COUNTRIES, t], ds["imp_gdp_elasticity"])
+    )
+
+
+def import_demand_pulp(
+    ds: xarray.Dataset, ds_paper: xarray.Dataset, t: int
+) -> xarray.DataArray:
+    """Compute the import demand for Wood Pulp equation 5"""
+    # =$G2*(($PulpPrice.AI2*(1+$PulpTariff.AI2))^$D2)*($PaperProd.AJ2^$E2)
+    return (
+        ds["imp_constant"]
+        * pow(
+            ds["price"].loc[COUNTRIES, t - 1]
+            * (1 + ds["tariff"].loc[COUNTRIES, t - 1]),
+            ds["imp_price_elasticity"],
+        )
+        * pow(ds_paper["prod"].loc[COUNTRIES, t], ds["imp_paper_production_elasticity"])
+    )
+
+
 def import_demand_indround(
     ds: xarray.Dataset,
     ds_sawn: xarray.Dataset,
@@ -232,34 +260,6 @@ def import_demand_indround(
     return np.maximum(imp, 0)
 
 
-def import_demand(ds: xarray.Dataset, t: int) -> xarray.DataArray:
-    """Compute import demand equation 4"""
-    return (
-        ds["imp_constant"]
-        * pow(
-            ds["price"].loc[COUNTRIES, t - 1] * (1 + ds["tariff"].loc[:, t - 1]),
-            ds["imp_price_elasticity"],
-        )
-        * pow(ds["gdp"].loc[COUNTRIES, t], ds["imp_gdp_elasticity"])
-    )
-
-
-def import_demand_pulp(
-    ds: xarray.Dataset, ds_paper: xarray.Dataset, t: int
-) -> xarray.DataArray:
-    """Compute the import demand for Wood Pulp equation 5"""
-    # =$G2*(($PulpPrice.AI2*(1+$PulpTariff.AI2))^$D2)*($PaperProd.AJ2^$E2)
-    return (
-        ds["imp_constant"]
-        * pow(
-            ds["price"].loc[COUNTRIES, t - 1]
-            * (1 + ds["tariff"].loc[COUNTRIES, t - 1]),
-            ds["imp_price_elasticity"],
-        )
-        * pow(ds_paper["prod"].loc[COUNTRIES, t], ds["imp_paper_production_elasticity"])
-    )
-
-
 def export_supply(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute export supply equation 7
 
@@ -284,6 +284,17 @@ def production(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     return np.maximum(prod, 0)
 
 
+def world_price(
+    ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
+) -> xarray.DataArray:
+    """Compute the world price equation 10
+    as a function of the input price
+    """
+    return ds["price_constant"].loc["WORLD"] * pow(
+        ds_primary["price"].loc["WORLD", t], ds["price_input_elast"].loc["WORLD"]
+    )
+
+
 def world_price_indround(
     ds: xarray.Dataset, ds_other: xarray.Dataset, t: int
 ) -> xarray.DataArray:
@@ -300,17 +311,6 @@ def world_price_indround(
             ds["price_stock_elast"].loc["WORLD"],
         )
         * np.exp(ds["price_trend"].loc["WORLD"] * t)
-    )
-
-
-def world_price(
-    ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
-) -> xarray.DataArray:
-    """Compute the world price equation 10
-    as a function of the input price
-    """
-    return ds["price_constant"].loc["WORLD"] * pow(
-        ds_primary["price"].loc["WORLD", t], ds["price_input_elast"].loc["WORLD"]
     )
 
 
@@ -427,6 +427,9 @@ assert not indround["price"].loc["WORLD", year].isnull()
 compute_secondary_product_price(sawn, indround, year)
 compute_secondary_product_price(fuel, indround, year)
 compute_secondary_product_price(panel, indround, year)
+compute_secondary_product_price(pulp, indround, year)
+# The world price of pulp is required to compute the price of paper
+assert not pulp["price"].loc["WORLD", year].isnull()
 compute_secondary_product_price(paper, pulp, year)
 
 
