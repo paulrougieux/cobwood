@@ -480,14 +480,12 @@ def compare_to_ref(
     print("    OK")
 
 
-ciep_vars = ["cons", "imp", "exp", "prod"]
-compare_to_ref(sawn, sawn_ref, ciep_vars, 2019)
-compare_to_ref(sawn, sawn_ref, "price", 2019)
-compare_to_ref(panel, panel_ref, ciep_vars, 2019)
-compare_to_ref(paper, paper_ref, ciep_vars, 2019)
-compare_to_ref(pulp, pulp_ref, ciep_vars, 2019)
-compare_to_ref(indround, indround_ref, ciep_vars, 2019)
-compare_to_ref(indround, indround_ref, "price", 2019)
+ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
+compare_to_ref(sawn, sawn_ref, ciepp_vars, 2019)
+compare_to_ref(panel, panel_ref, ciepp_vars, 2019)
+compare_to_ref(paper, paper_ref, ciepp_vars, 2019)
+compare_to_ref(pulp, pulp_ref, ciepp_vars, 2019)
+compare_to_ref(indround, indround_ref, ciepp_vars, 2019)
 
 # Compare world price
 assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])
