@@ -56,8 +56,8 @@ def extract_world_price_parameter(df, col_name, contains, var_name):
     """Extract world price parameters such as input elasticity,
     stock elasticity and trend.
     """
-    # if contains == "trend":
-    #     breakpoint()
+    if contains == "trend":
+        breakpoint()
     selector = df[col_name].astype(str).str.contains(contains)
     if any(selector):
         df = df.rename(columns={col_name: var_name})

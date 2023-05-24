@@ -52,7 +52,6 @@ TODO:
 
 """
 
-import warnings
 import numpy as np
 from numpy.testing import assert_allclose
 import xarray
@@ -289,6 +288,7 @@ def world_price_indround(
     ds: xarray.Dataset, ds_other: xarray.Dataset, t: int
 ) -> xarray.DataArray:
     """Compute the world price of industrial roundwood equation 9"""
+    # =$G182*($IndroundProd.AJ182^$F182)*($Stock.AJ182^$E182)*EXP($D182*AJ1)
     return (
         ds["price_constant"].loc["WORLD"]
         * pow(
@@ -299,6 +299,7 @@ def world_price_indround(
             ds_other["stock"].loc["WORLD", t],
             ds["price_stock_elast"].loc["WORLD"],
         )
+        * np.exp(ds["price_trend"].loc["WORLD"] * t)
     )
 
 
@@ -342,22 +343,6 @@ def forest_stock(
     return np.maximum(stock, 0)
 
 
-def compute_end_product_time_step(
-    ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
-) -> None:
-    """Compute consumption, production trade and price equations corresponding
-    to a semi finished products (end product for the purpose of this model).
-
-    ! This function modifies the input data set `ds` for the given time step t.
-    """
-    ds["cons"].loc[COUNTRIES, t] = consumption(ds, t)
-    ds["imp"].loc[COUNTRIES, t] = import_demand(ds, t)
-    ds["exp"].loc[COUNTRIES, t] = export_supply(ds, t)
-    ds["prod"].loc[COUNTRIES, t] = production(ds, t)
-    ds["price"].loc["WORLD", t] = world_price(ds, ds_primary, t)
-    ds["price"].loc[COUNTRIES, t] = local_price(ds, t)
-
-
 def compute_country_aggregates(
     ds: xarray.Dataset, t: int, variable: str = None
 ) -> None:
@@ -380,6 +365,30 @@ def compute_country_aggregates(
         )
 
 
+def compute_secondary_product_ciep(
+    ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
+) -> None:
+    """Compute consumption, import, export and production equations
+    corresponding to a semi finished (secondary) product.
+
+    ! This function modifies the input data set `ds` for the given time step t.
+    """
+    ds["cons"].loc[COUNTRIES, t] = consumption(ds, t)
+    ds["imp"].loc[COUNTRIES, t] = import_demand(ds, t)
+    ds["exp"].loc[COUNTRIES, t] = export_supply(ds, t)
+    ds["prod"].loc[COUNTRIES, t] = production(ds, t)
+
+
+def compute_secondary_product_price(
+    ds: xarray.Dataset, ds_primary: xarray.Dataset, t: int
+) -> None:
+    """Compute world prices and local prices
+    ! This function modifies the input data set `ds` for the given time step t.
+    """
+    ds["price"].loc["WORLD", t] = world_price(ds, ds_primary, t)
+    ds["price"].loc[COUNTRIES, t] = local_price(ds, t)
+
+
 #########################
 # Compute one time step #
 #########################
@@ -388,18 +397,17 @@ year = 2019
 # 1. Compute stock growth and drain from stock and production at t-1
 other["stock"].loc[COUNTRIES, year] = forest_stock(other, round_, year)
 
-# 2. Compute cons, trade, prod and prices of secondary products
-compute_end_product_time_step(sawn, indround, year)
-compute_end_product_time_step(fuel, indround, year)
-compute_end_product_time_step(panel, indround, year)
-compute_end_product_time_step(paper, pulp, year)
+# 2. Compute cons, imp, exp and prod of secondary products
+compute_secondary_product_ciep(sawn, indround, year)
+compute_secondary_product_ciep(fuel, indround, year)
+compute_secondary_product_ciep(panel, indround, year)
+compute_secondary_product_ciep(paper, pulp, year)
 
-# 3. Compute cons, prod and trade of primary products
+# 3. Compute cons, imp, exp and prod of primary products
 pulp["cons"].loc[COUNTRIES, year] = consumption_pulp(pulp, paper, year)
 pulp["imp"].loc[COUNTRIES, year] = import_demand_pulp(pulp, paper, year)
 pulp["exp"].loc[COUNTRIES, year] = export_supply(pulp, year)
 pulp["prod"].loc[COUNTRIES, year] = production(pulp, year)
-
 indround["cons"].loc[COUNTRIES, year] = consumption_indround(
     indround, sawn, panel, pulp, year
 )
@@ -408,25 +416,31 @@ indround["imp"].loc[COUNTRIES, year] = import_demand_indround(
 )
 indround["exp"].loc[COUNTRIES, year] = export_supply(indround, year)
 indround["prod"].loc[COUNTRIES, year] = production(indround, year)
-indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
+
+# 4. Compute prices
 compute_country_aggregates(indround, year)
 compute_country_aggregates(other, year, "stock")
+indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
+indround["price"].loc[COUNTRIES, year] = local_price(indround, year)
+# The world price of indround is required to compute the price of secondary products
 assert not indround["price"].loc["WORLD", year].isnull()
+compute_secondary_product_price(sawn, indround, year)
+compute_secondary_product_price(fuel, indround, year)
+compute_secondary_product_price(panel, indround, year)
+compute_secondary_product_price(paper, pulp, year)
 
 
 ##########
 # Checks #
 ##########
 # Comparison between sawn modified in place by the
-# compute_end_product_time_step() function
+# compute_secondary_product_ciep() function
 # and sawn2 computed below
 sawn2 = sawn.copy(deep=True)
 sawn2["cons"].loc[COUNTRIES, year] = consumption(sawn2, year)
 sawn2["imp"].loc[COUNTRIES, year] = import_demand(sawn2, year)
 sawn2["exp"].loc[COUNTRIES, year] = export_supply(sawn2, year)
 sawn2["prod"].loc[COUNTRIES, year] = production(sawn2, year)
-warnings.warn("Compute world price of indround (then delete this warning)")
-# TODO the world price of indround is required here
 sawn2["price"].loc["WORLD", year] = world_price(sawn2, indround, year)
 sawn2["price"].loc[COUNTRIES, year] = local_price(sawn2, year)
 assert sawn.equals(sawn2)
@@ -439,11 +453,17 @@ round_["prod"].loc[COUNTRIES, year] = (
 
 
 def compare_to_ref(
-    ds: xarray.Dataset, ds_ref: xarray.Dataset, vars_to_compare: list, t: int
+    ds: xarray.Dataset, ds_ref: xarray.Dataset, variable: [list, str], t: int
 ):
-    """Compare the computed dataset to the reference dataset for the given t"""
-    print(f"Checking {ds.product} {', '.join(vars_to_compare)}")
-    for var in vars_to_compare:
+    """Compare the computed dataset to the reference dataset for the given t
+    Example use:
+        >>> compare_to_ref(sawn, sawn_ref, "price", 2019)
+        >>> compare_to_ref(indround, indround_ref, ["cons", "imp"], 2019)
+    """
+    if isinstance(variable, str):
+        variable = [variable]
+    print(f"Checking {ds.product} {', '.join(variable)}")
+    for var in variable:
         rtol = 1e-7
         if var == "prod":
             rtol = 1e-2
@@ -462,11 +482,12 @@ def compare_to_ref(
 
 ciep_vars = ["cons", "imp", "exp", "prod"]
 compare_to_ref(sawn, sawn_ref, ciep_vars, 2019)
+compare_to_ref(sawn, sawn_ref, "price", 2019)
 compare_to_ref(panel, panel_ref, ciep_vars, 2019)
 compare_to_ref(paper, paper_ref, ciep_vars, 2019)
 compare_to_ref(pulp, pulp_ref, ciep_vars, 2019)
 compare_to_ref(indround, indround_ref, ciep_vars, 2019)
-
+compare_to_ref(indround, indround_ref, "price", 2019)
 
 # Compare world price
 assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])

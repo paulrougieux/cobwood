@@ -498,8 +498,12 @@ class GFPMXData:
             element = sheets.loc[this_sheet]["element"]
             # Add the 2D array to the dataset
             ds[element] = convert_to_2d_array(df)
-            # If `coef_keywords` are in the column names then add them as a 1D arrays
-            coef_keywords = "elast|const|marginal|stock"
+            # Add the 1D arrays to the dataset
+            # If `coef_keywords` are in the column names
+            # Note: trend and stock elasticity are defined for the World only
+            # and could be stored as an attribute, we keep them as a 1D array
+            # for now.
+            coef_keywords = "elast|const|marginal|stock|trend"
             coefficients = df.columns[df.columns.str.contains(coef_keywords)]
             for col in coefficients:
                 # coerce to a numeric value
