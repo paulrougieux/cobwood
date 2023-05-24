@@ -26,7 +26,8 @@ converted to a format similar to the original GFPMx spreadsheet with countries i
 and years in columns. For example the following code uses `DataArray.to_pandas()` to
 convert the pulp import array to a csv file using the pandas to_csv() method:
 
-    from cobwood.gfpmx_data import gfpmx_data
+    from cobwood.gfpmx_data import GFPMXData
+    gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
     pulp = gfpmx_data.convert_sheets_to_dataset("pulp")
     pulp["imp"].to_pandas().to_csv("/tmp/pulp_imp.csv")
 

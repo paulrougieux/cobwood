@@ -56,13 +56,12 @@ import numpy as np
 from numpy.testing import assert_allclose
 import xarray
 
-# import pandas
-# import seaborn
-
-from cobwood.gfpmx_data import gfpmx_data
 from cobwood.gfpmx_data import convert_to_2d_array
+from cobwood.gfpmx_data import GFPMXData
 
-# Reproduce bugs in GFPMX-8-6-2021.xlsx
+gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+
+# Reproduce behaviour/bugs in GFPMX-8-6-2021.xlsx
 GFPMX_8_6_2021_COMPATIBLE_MODE = True
 # List of bugs:
 # 1) Indonesia has negative industrial roundwood consumption because

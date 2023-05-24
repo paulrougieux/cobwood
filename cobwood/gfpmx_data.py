@@ -34,8 +34,9 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
 
     Example use:
 
-        >>> from cobwood.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import GFPMXData
         >>> from cobwood.gfpmx_data import convert_to_2d_array
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
         >>> gdp_df = gfpmx_data.get_sheet_wide("gdp")
@@ -58,8 +59,9 @@ def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
 
     Example use:
 
-        >>> from cobwood.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import GFPMXData
         >>> from cobwood.gfpmx_data import convert_to_1d_array
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
 
