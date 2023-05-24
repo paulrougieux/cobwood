@@ -2,7 +2,7 @@
 
 Run this script at the command line with:
 
-    ipython -i ~/repos/gftmx/scripts/explore_gfpmx_data.py
+    ipython -i ~/repos/cobwood/scripts/explore_gfpmx_data.py
 
 
 - Compute the aggregate for EU countries of production and consumption.
@@ -16,7 +16,7 @@ import pandas
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from biotrade.faostat import faostat
-from gftmx.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import gfpmx_data
 
 # Path to Valerio's EU Net Annual Increment data
 nai_path = pathlib.Path.home() / "repos/eu_cbm/eu_cbm_explore/scenarios"

@@ -13,7 +13,7 @@ Originally released at
 
 Before using this object, the Excel file needs to be exported to csv files with
 
-    ipython ~/repos/gftmx/scripts/gfpmx_data_to_csv.py
+    ipython ~/repos/cobwood/scripts/gfpmx_data_to_csv.py
 
 """
 
@@ -25,7 +25,7 @@ import pandas
 import xarray
 
 # Internal modules
-from gftmx import gftmx_data_dir
+from cobwood import cobwood_data_dir
 
 
 def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
@@ -34,8 +34,8 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
 
     Example use:
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
-        >>> from gftmx.gfpmx_data import convert_to_2d_array
+        >>> from cobwood.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import convert_to_2d_array
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
         >>> gdp_df = gfpmx_data.get_sheet_wide("gdp")
@@ -58,8 +58,8 @@ def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
 
     Example use:
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
-        >>> from gftmx.gfpmx_data import convert_to_1d_array
+        >>> from cobwood.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import convert_to_1d_array
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
 
@@ -153,7 +153,7 @@ class GFPMXData:
 
     Load sawnwood consumption data in long format:
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import gfpmx_data
         >>> swd_cons = gfpmx_data['sawncons']
         >>> swd_cons
 
@@ -171,8 +171,8 @@ class GFPMXData:
     # Location of the csv files
     # TODO: After moving the script gfpmx_data_to_csv as a method,
     # change this so that it becomes an argument see issue
-    # See issue 2 https://gitlab.com/bioeconomy/gftm/gftmx/-/issues/2
-    data_dir = gftmx_data_dir / "gfpmx"
+    # See issue 2 https://gitlab.com/bioeconomy/gftm/cobwood/-/issues/2
+    data_dir = cobwood_data_dir / "gfpmx"
 
     # Simulation base year i.e. last year of historical data available in the spreadsheet
     base_year = 2018
@@ -206,7 +206,7 @@ class GFPMXData:
 
         For example show all sheets available
 
-            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import gfpmx_data
             >>> from pandas.errors import EmptyDataError
             >>> sheets = gfpmx_data.list_sheets()
             >>> sheets
@@ -274,7 +274,7 @@ class GFPMXData:
 
         Example use
 
-            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import gfpmx_data
             >>> print(gfpmx_data.get_sheet_wide("sawnprice"))
 
         """
@@ -287,7 +287,7 @@ class GFPMXData:
 
         Example use
 
-            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import gfpmx_data
             >>> print(gfpmx_data.get_sheet_long("sawncons"))
 
         """
@@ -323,7 +323,7 @@ class GFPMXData:
     def get_gdp(self, sheet_name="gdp", index=None, var_name="gdp"):
         """Return a data frame of cleaned GDP values
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import gfpmx_data
         >>> gfpmx_data.get_gdp()
         """
         if index is None:
@@ -336,7 +336,7 @@ class GFPMXData:
     def get_price_lag(self, sheet_name, index=None, var_name="price"):
         """Return a price table with prices shifted by a one year lag
 
-        >>> from gftmx.gfpmx_data import gfpmx_data
+        >>> from cobwood.gfpmx_data import gfpmx_data
         >>> gfpmx_data.get_price_lag('sawnprice')
         """
         if index is None:
@@ -362,7 +362,7 @@ class GFPMXData:
         For example join all roundwood sheets in one data frame and add a
         stock column.
 
-            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import gfpmx_data
             >>> rwd = gfpmx_data.join_sheets("round", ["stock"])
             >>> rwd.columns
 
@@ -469,7 +469,7 @@ class GFPMXData:
 
         Example load sawnwood data, add GDP to the panel data:
 
-            >>> from gftmx.gfpmx_data import gfpmx_data
+            >>> from cobwood.gfpmx_data import gfpmx_data
             >>> sawn = gfpmx_data.convert_sheets_to_dataset("sawn")
             >>> print(sawn.data_vars)
             >>> panel = gfpmx_data.convert_sheets_to_dataset("panel", ["gdp"])

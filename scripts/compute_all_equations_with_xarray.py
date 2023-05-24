@@ -2,7 +2,7 @@
 
 Usage:
 
-    ipython -i ~/repos/gftmx/scripts/compute_all_equations_with_xarray.py
+    ipython -i ~/repos/cobwood/scripts/compute_all_equations_with_xarray.py
 
 See also:
 
@@ -59,8 +59,8 @@ import xarray
 # import pandas
 # import seaborn
 
-from gftmx.gfpmx_data import gfpmx_data
-from gftmx.gfpmx_data import convert_to_2d_array
+from cobwood.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import convert_to_2d_array
 
 # Reproduce bugs in GFPMX-8-6-2021.xlsx
 GFPMX_8_6_2021_COMPATIBLE_MODE = True

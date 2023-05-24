@@ -13,7 +13,7 @@ jupyter:
 ---
 
 ```python
-from gftmx.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import gfpmx_data
 import numpy as np
 import pandas
 ```

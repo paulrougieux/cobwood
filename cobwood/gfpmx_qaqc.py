@@ -7,7 +7,7 @@ For example the sum of country values should be equal to the world value.
 
 import pandas
 from numpy.testing import assert_allclose
-from gftmx.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import gfpmx_data
 
 
 def check_world_aggregates(df, df_agg, rtol=None):
@@ -62,7 +62,7 @@ def check_nrows_years_countries(df, dataset_name):
 # Compare only values after the base year
 
 
-def compare_to_original_gftmx(df, variables=None, base_year=None):
+def compare_to_original_cobwood(df, variables=None, base_year=None):
     """Compare computed variables to the original GFTMx values
     After times t = base_year + 1
     """

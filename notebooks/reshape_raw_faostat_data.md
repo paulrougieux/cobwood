@@ -14,7 +14,7 @@ jupyter:
 
 ```python
 # Load 
-from gftmx.faostat import faostat
+from cobwood.faostat import faostat
 fo = faostat.read_csv("Forestry_E_All_Data_(Normalized).zip")
 ```
 

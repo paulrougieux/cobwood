@@ -3,7 +3,7 @@ import pandas
 import seaborn
 import numpy as np
 import matplotlib.pyplot as plt
-import gftmx
+import cobwood
 from biotrade.faostat import faostat
 ```
 
@@ -22,7 +22,7 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 
 - The data is prepared in a script which can be run at the command line with:
 
-      ipython -i ~/repos/gftmx/scripts/load_pik_data.py
+      ipython -i ~/repos/cobwood/scripts/load_pik_data.py
 
 
 
@@ -34,9 +34,9 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 ```python
 eu_countries = faostat.country_groups.eu_country_names
 code_continent = faostat.country_groups.df[["iso3_code", "continent"]].rename(columns={"iso3_code":"country_iso"})
-comp_eu = pandas.read_parquet(gftmx.data_dir / "pik" / "comp_eu.parquet")
+comp_eu = pandas.read_parquet(cobwood.data_dir / "pik" / "comp_eu.parquet")
 gdp_comp = (
-    pandas.read_parquet(gftmx.data_dir / "pik" / "gdp_comp.parquet")
+    pandas.read_parquet(cobwood.data_dir / "pik" / "gdp_comp.parquet")
     .merge(code_continent, on="country_iso")
 )
 

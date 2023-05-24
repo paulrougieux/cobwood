@@ -9,12 +9,12 @@ Unit D1 Bioeconomy.
 
 Download a compressed CSV file from the FAOSTAT API and save it in the data folder.
 
->>> from gftmx.faostat import faostat
+>>> from cobwood.faostat import faostat
 >>> faostat.download("Forestry_E_All_Data_(Normalized).zip")
 
 Read a compressed CSV
 
->>> from gftmx.faostat import faostat
+>>> from cobwood.faostat import faostat
 >>> fo = faostat.read_csv("Forestry_E_All_Data_(Normalized).zip")
 """
 
@@ -28,10 +28,10 @@ from zipfile import ZipFile
 import pandas
 
 # Internal modules
-from gftmx import gftmx_data_dir
+from cobwood import cobwood_data_dir
 
 # Define a location to store data locally
-faostat_data_folder = gftmx_data_dir + "faostat"
+faostat_data_folder = cobwood_data_dir + "faostat"
 # Create the faostat data folder if it doesn't exist
 if not Path(faostat_data_folder).exists():
     Path(faostat_data_folder).mkdir(parents=True)
@@ -52,7 +52,7 @@ class Faostat:
 
         Sample use
 
-        >>> from gftmx.faostat import faostat
+        >>> from cobwood.faostat import faostat
         >>> faostat.download("Forestry_E_All_Data_(Normalized).zip")
         """
         orig_url = self.url_base + "/" + file_name
@@ -80,7 +80,7 @@ class Faostat:
 
         Sample use
 
-        >>> from gftmx.faostat import faostat
+        >>> from cobwood.faostat import faostat
         >>> fo = faostat.read_csv("Forestry_E_All_Data_(Normalized).zip")
         """
         zip_file_name = self.data_folder + "/" + file_name

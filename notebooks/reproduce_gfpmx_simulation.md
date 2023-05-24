@@ -14,7 +14,7 @@ jupyter:
 
 ```python
 # Load 
-from gftmx.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import gfpmx_data
 ```
 
 # Introduction

@@ -6,7 +6,7 @@ A script to compute GFPMX sawnwood equations recursively in a time loop
 
 Run this file with:
 
-     ipython -i ~/repos/gftmx/scripts/compute_sawnwood_equations.py
+     ipython -i ~/repos/cobwood/scripts/compute_sawnwood_equations.py
 
 Equation numbers in this script refer to the paper:
 
@@ -27,8 +27,8 @@ Excel file "~/large_models/GFPMX-8-6-2021.xlsx"
 from numpy.testing import assert_allclose
 
 # Internal modules
-from gftmx.gfpmx_data import gfpmx_data
-from gftmx.gfpmx_functions import (
+from cobwood.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_functions import (
     shift_index,
     compute_demand,
     compute_import_demand,

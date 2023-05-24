@@ -5,7 +5,7 @@ A script to compute GFPMX equations using xarray
 
 Run this file with:
 
-     ipython -i ~/repos/gftmx/scripts/experiment_with_xarray.py
+     ipython -i ~/repos/cobwood/scripts/experiment_with_xarray.py
 
 The first attempt is the easiest one based on the long format. But since it is based on the long
 format, we loose the units. It would be nice to have the units as dataset
@@ -25,7 +25,7 @@ The third attempt distinguishes:
 # Third party modules
 import xarray
 
-from gftmx.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import gfpmx_data
 
 # Load data
 indround_agg = gfpmx_data.get_agg_rows("indround")

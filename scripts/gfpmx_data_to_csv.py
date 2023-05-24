@@ -6,7 +6,7 @@ A script to save all sheets of the GFPMX Excel implementation to csv files
 
 Typically you would run this file from a command line like this:
 
-     ipython -i ~/rp/gftmx/scripts/gfpmx_data_to_csv.py
+     ipython -i ~/rp/cobwood/scripts/gfpmx_data_to_csv.py
 
 Source of the GFPMX spread sheet data by Joseph Buongiorno:
     https://buongiorno.russell.wisc.edu/gfpm/
@@ -15,8 +15,8 @@ Author of this script Paul Rougieux
 
 See also the scripts that reproduces the GFPM simulation:
 
-    ~/rp/gftmx/scripts/compute_swd_equations.py
-    ~/rp/gftmx/scripts/compute_all_equations.py
+    ~/rp/cobwood/scripts/compute_swd_equations.py
+    ~/rp/cobwood/scripts/compute_all_equations.py
 
 """
 
@@ -32,7 +32,7 @@ from tqdm import tqdm
 # First party modules #
 
 # Internal modules #
-from gftmx import gftmx_data_dir
+from cobwood import cobwood_data_dir
 
 # TODO make this a method of gfpmx_data that can load a different Excel file
 # and output it to a sub directory of gfpmx_data_dir with a directory name that
@@ -43,7 +43,7 @@ from gftmx import gftmx_data_dir
 excel_file = "~/large_models/GFPMX-8-6-2021.xlsx"
 
 # Output folder
-gfpmx_data_dir = Path(gftmx_data_dir) / "gfpmx"
+gfpmx_data_dir = Path(cobwood_data_dir) / "gfpmx"
 if not Path(gfpmx_data_dir).exists():
     Path(gfpmx_data_dir).mkdir(parents=True)
 
@@ -126,7 +126,7 @@ for key in tqdm(gfpmx_excel_file.keys()):
 
 # Paste files to libcbm_data for the forest dynamics model
 if False:
-    dest_dir = Path.home() / "repos/eu_cbm/eu_cbm_data/domestic_harvest/gftmx"
+    dest_dir = Path.home() / "repos/eu_cbm/eu_cbm_data/domestic_harvest/cobwood"
     dest_dir.mkdir(exist_ok=True)
     # Renames those primary product files to "harvest"
     shutil.copy(gfpmx_data_dir / "fuelprod.csv", dest_dir / "fw_harvest.csv")

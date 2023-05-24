@@ -7,7 +7,7 @@ TODO: rename this script to compute_all_equations_with_pandas.py
 
 Run this file with:
 
-     ipython -i ~/repos/gftmx/scripts/compute_all_equations.py
+     ipython -i ~/repos/cobwood/scripts/compute_all_equations.py
 
 Equation numbers in this script refer to the paper:
 
@@ -24,8 +24,8 @@ Equation numbers in this script refer to the paper:
 Excel file "~/large_models/GFPMX-8-6-2021.xlsx"
 """
 
-from gftmx.gfpmx_data import gfpmx_data
-from gftmx.gfpmx_functions import (
+from cobwood.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_functions import (
     shift_index,
     compute_demand,
     compute_import_demand,
@@ -34,10 +34,10 @@ from gftmx.gfpmx_functions import (
     compute_world_price,
     compute_local_price,
 )
-from gftmx.gfpmx_qaqc import (
+from cobwood.gfpmx_qaqc import (
     check_world_aggregates,
     check_nrows_years_countries,
-    compare_to_original_gftmx,
+    compare_to_original_cobwood,
 )
 
 # Load data
@@ -49,7 +49,7 @@ sawn_agg = gfpmx_data.get_agg_rows("sawn", ["gdp"])
 fuel = gfpmx_data.get_country_rows("fuel", ["gdp"])
 fuel_agg = gfpmx_data.get_agg_rows("fuel", ["gdp"])
 # TODO: remove rows containing "World prod/cons" or simply that don't have a FAOSTAT name from
-# the input data pre-processed in "~/rp/gftmx/scripts/gfpmx_data_to_csv.py"
+# the input data pre-processed in "~/rp/cobwood/scripts/gfpmx_data_to_csv.py"
 panel = gfpmx_data.get_country_rows("panel", ["gdp"])
 panel_agg = gfpmx_data.get_agg_rows("panel", ["gdp"])
 paper = gfpmx_data.get_country_rows("paper", ["gdp"])
@@ -111,7 +111,7 @@ for t in range(gfpmx_data.base_year + 1, years.max() + 1):
     # Compute domestic demand for wood pulp
 
 
-compare_to_original_gftmx(fuel)
-compare_to_original_gftmx(sawn)
-compare_to_original_gftmx(panel)
-compare_to_original_gftmx(paper)
+compare_to_original_cobwood(fuel)
+compare_to_original_cobwood(sawn)
+compare_to_original_cobwood(panel)
+compare_to_original_cobwood(paper)

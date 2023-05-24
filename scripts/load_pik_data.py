@@ -7,7 +7,7 @@ Load PIK-Magpie scenario data from the paper
 
 Run this script at the command line with:
 
-    ipython -i ~/repos/gftmx/scripts/load_pik_data.py
+    ipython -i ~/repos/cobwood/scripts/load_pik_data.py
 
 See also the associated notebook with comparison plots:
 
@@ -78,8 +78,8 @@ from pathlib import Path
 import pandas
 
 # import gdxpds
-import gftmx
-from gftmx.gfpmx_data import gfpmx_data
+import cobwood
+from cobwood.gfpmx_data import gfpmx_data
 
 # To get country ISO codes
 from biotrade.faostat import faostat
@@ -324,7 +324,7 @@ gdp_comp_eu_selected.to_csv("/tmp/gdp_comp_eu_selected.csv")
 # Store output data #
 #####################
 # Write to parquet files
-pik_data_dir = gftmx.data_dir / "pik"
+pik_data_dir = cobwood.data_dir / "pik"
 if not pik_data_dir.exists():
     pik_data_dir.mkdir()
 

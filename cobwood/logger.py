@@ -9,14 +9,14 @@ Unit D1 Bioeconomy.
 
 Copied from https://docs.python.org/3/howto/logging-cookbook.html
 
-Create a gftmx logger with file handler:
+Create a cobwood logger with file handler:
 
-    >>> import gftmx.logger
+    >>> import cobwood.logger
 
 This can be then used directly from any sub module:
 
     >>> import logging
-    >>> logger = logging.getLogger('gftmx.sub_module')
+    >>> logger = logging.getLogger('cobwood.sub_module')
     >>> logger.info("Doing this and that")
 
 """
@@ -25,13 +25,13 @@ This can be then used directly from any sub module:
 import logging
 
 # Internal modules
-from gftmx import gftmx_data_dir
+from cobwood import cobwood_data_dir
 
-# create logger with 'gftmx'
-logger = logging.getLogger("gftmx")
+# create logger with 'cobwood'
+logger = logging.getLogger("cobwood")
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler(gftmx_data_dir / "gfpmx.log")
+fh = logging.FileHandler(cobwood_data_dir / "gfpmx.log")
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
@@ -44,9 +44,11 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-logger.info("Created a logger with file handler %s.", str(gftmx_data_dir / "gfpmx.log"))
+logger.info(
+    "Created a logger with file handler %s.", str(cobwood_data_dir / "gfpmx.log")
+)
 # Usage
-# from gftmx.gfpmx_runner import gfpmx_runner
+# from cobwood.gfpmx_runner import gfpmx_runner
 # logger.info('Calling gfpmx_runner.run_next_step().')
 # gfpmx_runner.run_next_step()
 # logger.info('Finished gfpmx_runner.run_next_step().')
