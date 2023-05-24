@@ -6,7 +6,7 @@ A script to save all sheets of the GFPMX Excel implementation to csv files
 
 Usage:
 
-    >>> from cobwood.gfpmx_data_to_csv import gfpmx_data_to_csv
+    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_data_to_csv
     >>> gfpmx_data_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
 
 It can also be used as a script directly to generate the default file:
@@ -51,7 +51,7 @@ def extract_world_price_parameter(df, col_name, contains, var_name):
     return df
 
 
-def gfpmx_data_to_csv(spreadsheet_path):
+def gfpmx_spreadsheet_to_csv(spreadsheet_path):
     """Convert GFTMX data to csv files and store them inside the cobweb_data directory"""
     # Output folder
     gfpmx_data_dir = re.sub(r"\W+", "_", Path(spreadsheet_path).stem).lower()
@@ -129,4 +129,4 @@ if __name__ == "__main__":
     # gfpmx_data objects one with the old Excel file and another one with the new
     # Excel file
     # Input file from https://buongiorno.russell.wisc.edu/gfpm/
-    gfpmx_data_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+    gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")

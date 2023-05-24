@@ -11,9 +11,28 @@ Give access to the dataset from the GFPMX model by Joseph Buongiorno.
 Originally released at
     https://buongiorno.russell.wisc.edu/gfpm/
 
-Before using this object, the Excel file needs to be exported to csv files with
+Before using this object, the Excel file needs to be exported to csv files with:
 
-    ipython ~/repos/cobwood/scripts/gfpmx_data_to_csv.py
+    >>> from cobwood.gfpmx_data_to_csv import gfpmx_data_to_csv
+    >>> gfpmx_data_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+
+The data will then be available in a sub directory of `cobweb.data_dir` with
+the same name as the spreadsheet file (except that it will be in snake case
+`gfpmx_8_6_2021`). You will then be able to load Xarray datasets with the
+`convert_sheets_to_dataset()` method:
+
+    >>> from cobwood.gfpmx_data import GFPMXData
+    >>> from cobwood.gfpmx_data import convert_to_2d_array
+    >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+    >>> other_ref = gfpmx_data.convert_sheets_to_dataset("other")
+    >>> indround_ref = gfpmx_data.convert_sheets_to_dataset("indround")
+    >>> round_ref = gfpmx_data.convert_sheets_to_dataset("round")
+    >>> fuel_ref = gfpmx_data.convert_sheets_to_dataset("fuel")
+    >>> sawn_ref = gfpmx_data.convert_sheets_to_dataset("sawn")
+    >>> panel_ref = gfpmx_data.convert_sheets_to_dataset("panel")
+    >>> pulp_ref = gfpmx_data.convert_sheets_to_dataset("pulp")
+    >>> paper_ref = gfpmx_data.convert_sheets_to_dataset("paper")
+    >>> gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
 
 """
 
