@@ -4,12 +4,17 @@
 """
 A script to save all sheets of the GFPMX Excel implementation to csv files
 
-Usage:
+Usage example on all available GFPMX spreadsheets:
 
     >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
+    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
+    # Note the last file is an `xlsb` in binary format. You might get an
+    ImportError: Missing optional dependency 'pyxlsb'.  Use pip or conda to
+    install pyxlsb.
 
-It can also be used as a script directly to generate the default file:
+It can also be used as a script directly to export the default spreadsheet to csv:
 
     ipython -i ~/repos/cobwood/cobwood/gfpmx_spreadsheet_to_csv.py
 
