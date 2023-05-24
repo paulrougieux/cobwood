@@ -49,7 +49,7 @@ sawn_agg = gfpmx_data.get_agg_rows("sawn", ["gdp"])
 fuel = gfpmx_data.get_country_rows("fuel", ["gdp"])
 fuel_agg = gfpmx_data.get_agg_rows("fuel", ["gdp"])
 # TODO: remove rows containing "World prod/cons" or simply that don't have a FAOSTAT name from
-# the input data pre-processed in "~/rp/cobwood/scripts/gfpmx_data_to_csv.py"
+# the input data pre-processed in "~/rp/cobwood/scripts/gfpmx_spreadsheet_to_csv.py"
 panel = gfpmx_data.get_country_rows("panel", ["gdp"])
 panel_agg = gfpmx_data.get_agg_rows("panel", ["gdp"])
 paper = gfpmx_data.get_country_rows("paper", ["gdp"])

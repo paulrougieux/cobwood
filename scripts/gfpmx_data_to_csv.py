@@ -3,7 +3,7 @@
 
 """
 The script to save all sheets of the GFPMX Excel implementation to csv files
-has been moved to cobwood/gfpmx_data_to_csv.py
+has been moved to cobwood/gfpmx_spreadsheet_to_csv.py
 
 This script might remain useful to investigate issues with column names or sheet names.
 

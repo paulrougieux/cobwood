@@ -13,8 +13,8 @@ Originally released at
 
 Before using this object, the Excel file needs to be exported to csv files with:
 
-    >>> from cobwood.gfpmx_data_to_csv import gfpmx_data_to_csv
-    >>> gfpmx_data_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
 
 The data will then be available in a sub directory of `cobweb.data_dir` with
 the same name as the spreadsheet file (except that it will be in snake case
@@ -191,7 +191,7 @@ class GFPMXData:
         estimated easily
 
     See also the script that moves data from the original Excel spreadsheet to CSV files:
-    `scripts/gfpmx_data_to_csv.py`
+    `scripts/gfpmx_spreadsheet_to_csv.py`
     """
 
     def __getitem__(self, sheet_name):
@@ -199,7 +199,7 @@ class GFPMXData:
         return self.get_sheet_long(sheet_name)
 
     def __init__(self, data_dir, base_year):
-        # TODO: After moving the script gfpmx_data_to_csv as a method,
+        # TODO: After moving the script gfpmx_spreadsheet_to_csv as a method,
         # change this so that it becomes an argument see issue
         # See issue 2 https://gitlab.com/bioeconomy/gftm/cobwood/-/issues/2
         self.data_dir = cobwood.data_dir / data_dir

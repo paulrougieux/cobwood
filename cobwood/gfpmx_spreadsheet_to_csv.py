@@ -6,12 +6,12 @@ A script to save all sheets of the GFPMX Excel implementation to csv files
 
 Usage:
 
-    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_data_to_csv
-    >>> gfpmx_data_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
 
 It can also be used as a script directly to generate the default file:
 
-    ipython -i ~/repos/cobwood/cobwood/gfpmx_data_to_csv.py
+    ipython -i ~/repos/cobwood/cobwood/gfpmx_spreadsheet_to_csv.py
 
 Source of the GFPMX spread sheet data by Joseph Buongiorno:
     https://buongiorno.russell.wisc.edu/gfpm/
