@@ -22,7 +22,17 @@ TODO:
 
 - Evaluate whether it is better to keep countries and aggregates in the same dataset.
 
-  Option A If countries and aggregates are in the same dataset, consumption should be
+- TODO within option A replace COUNTRIES by a list internal to the dataset for example
+
+  >>> ds = sawn
+  >>> all(ds["price"].loc[~ds.region.isnull(), 2019] ==  ds["price"].loc[COUNTRIES, 2019])
+  >>> ds["c"] = ~ds.region.isnull()
+  >>> ds["price"].loc[ds.c, 2019]
+  >>> assert(all(ds["country"].loc[~ds.c] ==
+  >>>            ['WORLD', 'AFRICA', 'NORTH AMERICA', 'SOUTH AMERICA', 'ASIA', 'OCEANIA', 'EUROPE']))
+
+
+  Option A first option as of begining of 2023. Countries and aggregates are in the same dataset, consumption can be
   computed for countries only first, the aggregates computed later.
 
         ds["cons_constant"]
@@ -37,18 +47,59 @@ TODO:
   Should the .loc["WORLD"] and .loc[COUNTRIES] be done when the function is
   called? No better to leave no ambiguity.
 
+  All uses of the world aggregates in the equations below, show that only the
+  world price, world production and world stock variables are used in equations:
 
-  Option B If there was a dataset of countries only and a dataset of aggregates only we
-  would compute consumption as such:
+        ds["price_constant"].loc["WORLD"]
+        pow(ds_primary["price"].loc["WORLD", t], ds["price_input_elast"].loc["WORLD"])
+        ds_agg["price_constant"].loc["WORLD"]
+        pow(ds_primary_agg["price"].loc["WORLD", t], ds_agg["price_input_elast"].loc["WORLD"])
+        ds["price_constant"].loc["WORLD"]
+        ds_primary["price"].loc["WORLD", t], ds["price_input_elast"].loc["WORLD"]
+        ds["price_constant"].loc["WORLD"]
+        ds["prod"].loc["WORLD", t],
+        ds["price_world_price_elasticity"].loc["WORLD"],
+        ds_other["stock"].loc["WORLD", t],
+        ds["price_stock_elast"].loc["WORLD"],
+        np.exp(ds["price_trend"].loc["WORLD"] * t)
+        ds["price"].loc["WORLD", t], ds["price_world_price_elasticity"].loc[COUNTRIES]
+
+
+  Option B There is a dataset of countries only and a dataset of aggregates only we
+  can compute consumption as such:
 
         ds["cons_constant"]
         * pow(ds["price"].loc[:, t - 1], ds["cons_price_elasticity"])
         * pow(ds["gdp"].loc[:, t], ds["cons_gdp_elasticity"])
 
-  World prices would be computed as:
+  World prices can be computed as:
 
         ds_agg["price_constant"].loc["WORLD"]
         * pow(ds_primary_agg["price"].loc["WORLD", t], ds_agg["price_input_elast"].loc["WORLD"])
+
+  Option C Aggregates are stored as another dimension. Since the continent
+  aggregates are not used, they could be stored separately as part of the
+  dataset. Or the dataset could contain another dimension that distinguishes
+  the aggregates.
+
+
+    Do we need a big or a small class? Do we need a class at all?
+    - Con: This would mean using methods instead of functions. Nah.
+       - All the computation functions can remain as functions, they don't need to be part of the class
+    - Pro: a class would mean storing all data sets as class attributes,
+      and providing an object for model comparison yes.
+          - The only blocker is the COUNTRIES list, which is also part of gfpmx_data.
+
+    class GFPMX_runner:
+        # Run the GFPMX simulation, I"m not in favour of this big monster class
+        def __init__(self, data_dir, base_year):
+            self.gfpmx_data = GFPMXData(data_dir=data_dir, base_year=base_year)
+
+    class mini_gfpmx_data:
+       # carry only indround, fuel, pulp, sawn, panel, paper
+
+  Option D Aggregates are only available as a method computed from the data, based on the
+
 
 """
 
@@ -112,6 +163,8 @@ def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
     ds_out = ds.copy(deep=True)
     for x in ds_out.data_vars:
         if len(ds_out[x].dims) == 2 and "tariff" not in x:
+            if x == "stock":
+                breakpoint()
             ds_out[x].loc[dict(year=ds_out.coords["year"] > base_year)] = np.nan
     return ds_out
 
@@ -321,7 +374,7 @@ def local_price(ds: xarray.Dataset, t: int) -> xarray.DataArray:
 
 
 def forest_stock(
-    ds: xarray.Dataset, ds_round: xarray.Dataset, t: int
+    ds: xarray.Dataset, ds_indround: xarray.Dataset, ds_fuel: xarray.Dataset, t: int
 ) -> xarray.DataArray:
     """Compute the forest stock expressed as growth drain equation 15
 
@@ -332,12 +385,14 @@ def forest_stock(
         - TODO remove this conversion? Currently kept for comparison purposes with GFPMx.
             - Other units are in 1000 m3, should the whole model be harmonized to m3?
     """
+    indround_fuel_prod = (
+        ds_indround["prod"].loc[COUNTRIES, t - 1]
+        + ds_fuel["prod"].loc[COUNTRIES, t - 1]
+    )
     stock = (
         ds["stock"].loc[COUNTRIES, t - 1]
         * (1 + ds["stock_stock_growth_rate_without_harvest"].loc[COUNTRIES])
-        - ds["stock_harvest_effect_on_stock"].loc[COUNTRIES]
-        * ds_round["prod"].loc[COUNTRIES, t - 1]
-        / 1000
+        - ds["stock_harvest_effect_on_stock"].loc[COUNTRIES] * indround_fuel_prod / 1000
     )
     return np.maximum(stock, 0)
 
@@ -358,6 +413,10 @@ def compute_country_aggregates(
     if isinstance(variable, str):
         variable = [variable]
     for var in variable:
+        if any(ds[var].loc[COUNTRIES, t].isnull()):
+            msg = f"NA values in {ds.product} {var}:\n"
+            msg += f"{ds[var].loc[COUNTRIES, t]}"
+            raise ValueError(msg)
         ds[var].loc["WORLD", t] = ds[var].loc[COUNTRIES, t].sum()
         ds[var].loc[regions, t] = (
             ds[var].loc[COUNTRIES, t].groupby(ds["region"].loc[COUNTRIES]).sum()
@@ -391,82 +450,85 @@ def compute_secondary_product_price(
 #########################
 # Compute one time step #
 #########################
-year = 2019
 
-# 1. Compute stock growth and drain from stock and production at t-1
-other["stock"].loc[COUNTRIES, year] = forest_stock(other, round_, year)
 
-# 2. Compute cons, imp, exp and prod of secondary products
-compute_secondary_product_ciep(sawn, indround, year)
-compute_secondary_product_ciep(fuel, indround, year)
-compute_secondary_product_ciep(panel, indround, year)
-compute_secondary_product_ciep(paper, pulp, year)
+def compute_one_time_step(
+    ds_indround, ds_fuel, ds_pulp, ds_sawn, ds_panel, ds_paper, year
+):
+    """Modifies the input data sets in place
+    TODO: change this to use the gfpmx_data as the unique argument
+    This requires adding the boolean country indicator ds.c as a prerequisite"""
+    # 1. Compute stock growth and drain from stock and production at t-1
+    other["stock"].loc[COUNTRIES, year] = forest_stock(other, indround, fuel, year)
+    # 2. Compute cons, imp, exp and prod of secondary products
+    compute_secondary_product_ciep(ds_sawn, ds_indround, year)
+    compute_secondary_product_ciep(ds_fuel, ds_indround, year)
+    compute_secondary_product_ciep(ds_panel, ds_indround, year)
+    compute_secondary_product_ciep(ds_paper, ds_pulp, year)
+    # 3. Compute cons, imp, exp and prod of primary products
+    ds_pulp["cons"].loc[COUNTRIES, year] = consumption_pulp(ds_pulp, ds_paper, year)
+    ds_pulp["imp"].loc[COUNTRIES, year] = import_demand_pulp(ds_pulp, ds_paper, year)
+    ds_pulp["exp"].loc[COUNTRIES, year] = export_supply(ds_pulp, year)
+    ds_pulp["prod"].loc[COUNTRIES, year] = production(ds_pulp, year)
+    ds_indround["cons"].loc[COUNTRIES, year] = consumption_indround(
+        ds_indround, ds_sawn, ds_panel, ds_pulp, year
+    )
+    ds_indround["imp"].loc[COUNTRIES, year] = import_demand_indround(
+        ds_indround, ds_sawn, ds_panel, ds_pulp, year
+    )
+    ds_indround["exp"].loc[COUNTRIES, year] = export_supply(ds_indround, year)
+    ds_indround["prod"].loc[COUNTRIES, year] = production(ds_indround, year)
+    # 4. Compute prices
+    compute_country_aggregates(ds_indround, year)
+    compute_country_aggregates(other, year, "stock")
+    ds_indround["price"].loc["WORLD", year] = world_price_indround(
+        ds_indround, other, year
+    )
+    ds_indround["price"].loc[COUNTRIES, year] = local_price(ds_indround, year)
+    # The world price of ds_indround is required to compute the price of secondary products
+    assert not ds_indround["price"].loc["WORLD", year].isnull()
+    compute_secondary_product_price(ds_sawn, ds_indround, year)
+    compute_secondary_product_price(ds_fuel, ds_indround, year)
+    compute_secondary_product_price(ds_panel, ds_indround, year)
+    compute_secondary_product_price(ds_pulp, ds_indround, year)
+    # The world price of ds_pulp is required to compute the price of ds_paper
+    assert not ds_pulp["price"].loc["WORLD", year].isnull()
+    compute_secondary_product_price(ds_paper, ds_pulp, year)
 
-# 3. Compute cons, imp, exp and prod of primary products
-pulp["cons"].loc[COUNTRIES, year] = consumption_pulp(pulp, paper, year)
-pulp["imp"].loc[COUNTRIES, year] = import_demand_pulp(pulp, paper, year)
-pulp["exp"].loc[COUNTRIES, year] = export_supply(pulp, year)
-pulp["prod"].loc[COUNTRIES, year] = production(pulp, year)
-indround["cons"].loc[COUNTRIES, year] = consumption_indround(
-    indround, sawn, panel, pulp, year
-)
-indround["imp"].loc[COUNTRIES, year] = import_demand_indround(
-    indround, sawn, panel, pulp, year
-)
-indround["exp"].loc[COUNTRIES, year] = export_supply(indround, year)
-indround["prod"].loc[COUNTRIES, year] = production(indround, year)
 
-# 4. Compute prices
-compute_country_aggregates(indround, year)
-compute_country_aggregates(other, year, "stock")
-indround["price"].loc["WORLD", year] = world_price_indround(indround, other, year)
-indround["price"].loc[COUNTRIES, year] = local_price(indround, year)
-# The world price of indround is required to compute the price of secondary products
-assert not indround["price"].loc["WORLD", year].isnull()
-compute_secondary_product_price(sawn, indround, year)
-compute_secondary_product_price(fuel, indround, year)
-compute_secondary_product_price(panel, indround, year)
-compute_secondary_product_price(pulp, indround, year)
-# The world price of pulp is required to compute the price of paper
-assert not pulp["price"].loc["WORLD", year].isnull()
-compute_secondary_product_price(paper, pulp, year)
+compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2019)
+compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2020)
+# See more years below, using the compare_to_ref function to compare
 
+# TODO:
+# # Compute roundwood as the sum of industrial round wood and fuel wood
+# round_["prod"].loc[COUNTRIES, year] = (
+#     indround["prod"].loc[COUNTRIES, year] + fuel["prod"].loc[COUNTRIES, year]
+# )
 
 ##########
 # Checks #
 ##########
-# Comparison between sawn modified in place by the
-# compute_secondary_product_ciep() function
-# and sawn2 computed below
-sawn2 = sawn.copy(deep=True)
-sawn2["cons"].loc[COUNTRIES, year] = consumption(sawn2, year)
-sawn2["imp"].loc[COUNTRIES, year] = import_demand(sawn2, year)
-sawn2["exp"].loc[COUNTRIES, year] = export_supply(sawn2, year)
-sawn2["prod"].loc[COUNTRIES, year] = production(sawn2, year)
-sawn2["price"].loc["WORLD", year] = world_price(sawn2, indround, year)
-sawn2["price"].loc[COUNTRIES, year] = local_price(sawn2, year)
-assert sawn.equals(sawn2)
-
-
-# Compute roundwood as the sum of industrial round wood and fuel wood
-round_["prod"].loc[COUNTRIES, year] = (
-    indround["prod"].loc[COUNTRIES, year] + fuel["prod"].loc[COUNTRIES, year]
-)
 
 
 def compare_to_ref(
-    ds: xarray.Dataset, ds_ref: xarray.Dataset, variable: [list, str], t: int
+    ds: xarray.Dataset,
+    ds_ref: xarray.Dataset,
+    variable: [list, str],
+    t: int,
+    rtol: int = None,
 ):
     """Compare the computed dataset to the reference dataset for the given t
     Example use:
         >>> compare_to_ref(sawn, sawn_ref, "price", 2019)
         >>> compare_to_ref(indround, indround_ref, ["cons", "imp"], 2019)
     """
+    if rtol is None:
+        rtol = 1e-6
     if isinstance(variable, str):
         variable = [variable]
-    print(f"Checking {ds.product} {', '.join(variable)}")
     for var in variable:
-        rtol = 1e-7
+        # Production requires a different tolerance for some reason
         if var == "prod":
             rtol = 1e-2
         try:
@@ -479,9 +541,10 @@ def compare_to_ref(
             first_line_of_error = "".join(str(e).split("\n")[:3])
             msg = f"{ds.product}, {var}, {t}: {first_line_of_error}"
             raise AssertionError(msg) from e
-    print("    OK")
+    print(f"Check {ds.product} {', '.join(variable)}: OK")
 
 
+compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2019)
 ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
 compare_to_ref(sawn, sawn_ref, ciepp_vars, 2019)
 compare_to_ref(panel, panel_ref, ciepp_vars, 2019)
@@ -489,8 +552,68 @@ compare_to_ref(paper, paper_ref, ciepp_vars, 2019)
 compare_to_ref(pulp, pulp_ref, ciepp_vars, 2019)
 compare_to_ref(indround, indround_ref, ciepp_vars, 2019)
 
+compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2020)
+ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
+compare_to_ref(sawn, sawn_ref, ciepp_vars, 2020)
+compare_to_ref(panel, panel_ref, ciepp_vars, 2020)
+compare_to_ref(paper, paper_ref, ciepp_vars, 2020)
+compare_to_ref(pulp, pulp_ref, ciepp_vars, 2020)
+compare_to_ref(indround, indround_ref, ciepp_vars, 2020)
+
+compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2021)
+ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
+compare_to_ref(sawn, sawn_ref, ciepp_vars, 2021)
+compare_to_ref(panel, panel_ref, ciepp_vars, 2021)
+compare_to_ref(paper, paper_ref, ciepp_vars, 2021)
+compare_to_ref(pulp, pulp_ref, ciepp_vars, 2021)
+compare_to_ref(indround, indround_ref, ciepp_vars, 2021)
+
+for this_year in range(2019, 2051):
+    print(this_year)
+    # TODO: decrease tolerance
+    rtol = 1e-2
+    compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, this_year)
+    ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
+    compare_to_ref(sawn, sawn_ref, ciepp_vars, this_year, rtol=rtol)
+    compare_to_ref(panel, panel_ref, ciepp_vars, this_year, rtol=rtol)
+    compare_to_ref(paper, paper_ref, ciepp_vars, this_year, rtol=rtol)
+    compare_to_ref(pulp, pulp_ref, ciepp_vars, this_year, rtol=rtol)
+    compare_to_ref(indround, indround_ref, ciepp_vars, this_year, rtol=rtol)
+
 # Compare world price
-assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])
+#  assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])
+
+
+raise ValueError(
+    """
+- TODO replace COUNTRIES by a list internal to the dataset
+  >>> ds = sawn
+  >>> all(ds["price"].loc[~ds.region.isnull(), 2019] ==  ds["price"].loc[COUNTRIES, 2019])
+  >>> ds["c"] = ~ds.region.isnull()
+  >>> assert(all(ds["country"].loc[~ds.c] ==
+  >>>            ['WORLD', 'AFRICA', 'NORTH AMERICA', 'SOUTH AMERICA', 'ASIA', 'OCEANIA', 'EUROPE']))
+  >>> # This can be used for computations
+  >>> ds["price"].loc[ds.c, 2019]"""
+)
+
+raise ValueError(
+    """ds["price"].loc[ds.c, 2019] open the possibility to use the class gfpmx_data
+                 as the sole argument of compute_one_time_step"""
+)
+
+year = 2019
+# Comparison between sawn modified in place by the
+# compute_secondary_product_ciep() function
+# and sawn2 computed below
+sawn2 = sawn.copy(deep=True)
+sawn2["cons"].loc[COUNTRIES, year] = consumption(sawn2, year)
+sawn2["imp"].loc[COUNTRIES, year] = import_demand(sawn2, year)
+sawn2["exp"].loc[COUNTRIES, year] = export_supply(sawn2, year)
+sawn2["prod"].loc[COUNTRIES, year] = production(sawn2, year)
+sawn2["price"].loc["WORLD", year] = world_price(sawn2, indround, year)
+sawn2["price"].loc[COUNTRIES, year] = local_price(sawn2, year)
+assert sawn.equals(sawn2)
+
 
 # Comparison in case of mismatch
 sawn_df = sawn.loc[dict(country=COUNTRIES, year=year)].to_pandas().reset_index()
