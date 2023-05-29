@@ -24,8 +24,8 @@ Equation numbers in this script refer to the paper:
 Excel file "~/large_models/GFPMX-8-6-2021.xlsx"
 """
 
-from cobwood.gfpmx_data import gfpmx_data
-from cobwood.gfpmx_functions import (
+from cobwood.gfpmx_data import GFPMXData
+from cobwood.gfpmx_functions_pandas import (
     shift_index,
     compute_demand,
     compute_import_demand,
@@ -41,6 +41,7 @@ from cobwood.gfpmx_qaqc import (
 )
 
 # Load data
+gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
 indround_agg = gfpmx_data.get_agg_rows("indround")
 pulp_agg = gfpmx_data.get_agg_rows("pulp")
 pulp = gfpmx_data.get_country_rows("pulp", ["gdp"])
