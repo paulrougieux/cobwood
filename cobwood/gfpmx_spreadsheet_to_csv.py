@@ -10,9 +10,9 @@ Usage example on all available GFPMX spreadsheets:
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
-    # Note the last file is an `xlsb` in binary format. You might get an
-    ImportError: Missing optional dependency 'pyxlsb'.  Use pip or conda to
-    install pyxlsb.
+
+Note the last file is an `xlsb` in binary format. You might get an ImportError:
+Missing optional dependency 'pyxlsb'.  Use pip or conda to install pyxlsb.
 
 It can also be used as a script directly to export the default spreadsheet to csv:
 
