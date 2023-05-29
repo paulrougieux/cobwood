@@ -21,13 +21,6 @@ It can also be used as a script directly to export the default spreadsheet to cs
 Source of the GFPMX spread sheet data by Joseph Buongiorno:
     https://buongiorno.russell.wisc.edu/gfpm/
 
-Author of this script Paul Rougieux
-
-See also the scripts that reproduces the GFPM simulation:
-
-    ~/rp/cobwood/scripts/compute_swd_equations.py
-    ~/rp/cobwood/scripts/compute_all_equations.py
-
 """
 
 # Built-in modules #

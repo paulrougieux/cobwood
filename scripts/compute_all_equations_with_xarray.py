@@ -1,5 +1,7 @@
 """This scripts computes all GFPMx equations using xarray
 
+TODO: Continue work in scripts/compute_gdp_fair_scenario.py
+
 Usage:
 
     ipython -i ~/repos/cobwood/scripts/compute_all_equations_with_xarray.py
@@ -18,7 +20,6 @@ Advantages of using xarray over pandas:
 - The shift_index() function is not needed any more, we can call
   sawn["price"].loc[:, t - 1] directly.
 
-TODO:
 
 - Evaluate whether it is better to keep countries and aggregates in the same dataset.
 
@@ -559,14 +560,6 @@ compare_to_ref(panel, panel_ref, ciepp_vars, 2020)
 compare_to_ref(paper, paper_ref, ciepp_vars, 2020)
 compare_to_ref(pulp, pulp_ref, ciepp_vars, 2020)
 compare_to_ref(indround, indround_ref, ciepp_vars, 2020)
-
-compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2021)
-ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
-compare_to_ref(sawn, sawn_ref, ciepp_vars, 2021)
-compare_to_ref(panel, panel_ref, ciepp_vars, 2021)
-compare_to_ref(paper, paper_ref, ciepp_vars, 2021)
-compare_to_ref(pulp, pulp_ref, ciepp_vars, 2021)
-compare_to_ref(indround, indround_ref, ciepp_vars, 2021)
 
 for this_year in range(2019, 2051):
     print(this_year)
