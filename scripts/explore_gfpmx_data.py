@@ -16,7 +16,10 @@ import pandas
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from biotrade.faostat import faostat
-from cobwood.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import GFPMXData
+
+
+gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
 
 # Path to Valerio's EU Net Annual Increment data
 nai_path = pathlib.Path.home() / "repos/eu_cbm/eu_cbm_explore/scenarios"
@@ -138,3 +141,28 @@ cols_plot = {
 )
 # plt.show()
 plt.savefig("/tmp/gfpmx_eu_havest.png")
+
+
+# Compute production per capita
+naihar_eu_agg = naihar_eu.groupby("year").sum()
+
+# Population The EU population is projected to increase from 446.7 million in
+# 2022 and peak at 453.3 million in 2026 (+1.5 %), then gradually decrease to
+# 447.9 million in 2050
+
+# Production is in 1000 m3
+print(
+    "EU roundwood harvest per person in 2020:",
+    round(naihar_eu_agg.loc[2020, "roundprod"] / 446.7e3, 1),
+    "m3",
+)
+print(
+    "EU roundwood harvest per person in 2020:",
+    round(naihar_eu_agg.loc[2050, "roundprod"] / 447.9e3, 1),
+    "m3",
+)
+print(
+    "EU faws_nai_thousand_m3_ub harvest per person in 2020:",
+    round(naihar_eu_agg.loc[2020, "faws_nai_thousand_m3_ub"] / 446.7e3, 1),
+    "m3",
+)
