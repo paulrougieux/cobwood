@@ -543,6 +543,26 @@ def compare_to_ref(
     print(f"Check {ds.product} {', '.join(variable)}: OK")
 
 
+raise ValueError(
+    """
+- TODO replace COUNTRIES by a list internal to the dataset
+  Find replace with confirmation in VIM Type :%s/old/new/gc and press Enter.
+  >>> ds = sawn
+  >>> # This can be used for computations
+  >>> ds["price"].loc[ds.c, 2019]
+  >>> # Checks
+  >>> all(ds["price"].loc[~ds.region.isnull(), 2019] ==  ds["price"].loc[COUNTRIES, 2019])
+  >>> ds["c"] = ~ds.region.isnull()
+  >>> assert(all(ds["country"].loc[~ds.c] ==
+  >>>            ['WORLD', 'AFRICA', 'NORTH AMERICA', 'SOUTH AMERICA', 'ASIA', 'OCEANIA', 'EUROPE']))
+    """
+)
+
+raise ValueError(
+    """ds["price"].loc[ds.c, 2019] open the possibility to use the class gfpmx_data
+                 as the sole argument of compute_one_time_step"""
+)
+
 compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2019)
 ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
 compare_to_ref(sawn, sawn_ref, ciepp_vars, 2019)
@@ -574,23 +594,6 @@ for this_year in range(2019, 2051):
 # Compare world price
 #  assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])
 
-
-raise ValueError(
-    """
-- TODO replace COUNTRIES by a list internal to the dataset
-  >>> ds = sawn
-  >>> all(ds["price"].loc[~ds.region.isnull(), 2019] ==  ds["price"].loc[COUNTRIES, 2019])
-  >>> ds["c"] = ~ds.region.isnull()
-  >>> assert(all(ds["country"].loc[~ds.c] ==
-  >>>            ['WORLD', 'AFRICA', 'NORTH AMERICA', 'SOUTH AMERICA', 'ASIA', 'OCEANIA', 'EUROPE']))
-  >>> # This can be used for computations
-  >>> ds["price"].loc[ds.c, 2019]"""
-)
-
-raise ValueError(
-    """ds["price"].loc[ds.c, 2019] open the possibility to use the class gfpmx_data
-                 as the sole argument of compute_one_time_step"""
-)
 
 year = 2019
 # Comparison between sawn modified in place by the

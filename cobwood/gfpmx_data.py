@@ -543,4 +543,6 @@ class GFPMXData:
         # Add region data on continents to be used for groupings
         region_data = self.country_groups.set_index("country")["region"]
         ds["region"] = xarray.DataArray.from_series(region_data)
+        # Add country boolean to be used for computations with `loc`
+        ds["c"] = ~ds.region.isnull()
         return ds
