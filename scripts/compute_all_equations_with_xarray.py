@@ -164,8 +164,6 @@ def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
     ds_out = ds.copy(deep=True)
     for x in ds_out.data_vars:
         if len(ds_out[x].dims) == 2 and "tariff" not in x:
-            if x == "stock":
-                breakpoint()
             ds_out[x].loc[dict(year=ds_out.coords["year"] > base_year)] = np.nan
     return ds_out
 
