@@ -26,13 +26,25 @@ the same name as the spreadsheet file (except that it will be in snake case
     >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
     >>> other_ref = gfpmx_data.convert_sheets_to_dataset("other")
     >>> indround_ref = gfpmx_data.convert_sheets_to_dataset("indround")
-    >>> round_ref = gfpmx_data.convert_sheets_to_dataset("round")
     >>> fuel_ref = gfpmx_data.convert_sheets_to_dataset("fuel")
     >>> sawn_ref = gfpmx_data.convert_sheets_to_dataset("sawn")
     >>> panel_ref = gfpmx_data.convert_sheets_to_dataset("panel")
     >>> pulp_ref = gfpmx_data.convert_sheets_to_dataset("pulp")
     >>> paper_ref = gfpmx_data.convert_sheets_to_dataset("paper")
     >>> gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
+
+Run with xarray and compare to the reference dataset
+
+    >>> from cobwood.gfpmx_data import GFPMXData
+    >>> # Base 2018
+    >>> gfpmx_base_2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+    >>> gfpmx_base_2018.run_and_compare_to_ref()
+    >>> # Base 2020
+    >>> gfpmx_base_2020 = GFPMXData(data_dir="gfpmx_base2020", base_year=2018)
+    >>> gfpmx_base_2020.run_and_compare_to_ref()
+    >>> # Base 2021
+    >>> gfpmx_base_2021 = GFPMXData(data_dir="gfpmx_base2021", base_year=2018)
+    >>> gfpmx_base_2021.run_and_compare_to_ref()
 
 """
 
@@ -43,9 +55,11 @@ import re
 import numpy as np
 import pandas
 import xarray
+from numpy.testing import assert_allclose
 
 # Internal modules
 import cobwood
+from cobwood.gfpmx_equations import compute_one_time_step
 
 
 def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
@@ -179,6 +193,39 @@ def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
     return ds_out
 
 
+def compare_to_ref(
+    ds: xarray.Dataset,
+    ds_ref: xarray.Dataset,
+    variable: [list, str],
+    t: int,
+    rtol: int = None,
+):
+    """Compare the computed dataset to the reference dataset for the given t
+    Example use:
+        >>> compare_to_ref(sawn, sawn_ref, "price", 2019)
+        >>> compare_to_ref(indround, indround_ref, ["cons", "imp"], 2019)
+    """
+    if rtol is None:
+        rtol = 1e-6
+    if isinstance(variable, str):
+        variable = [variable]
+    for var in variable:
+        # Production requires a different tolerance for some reason
+        if var == "prod":
+            rtol = 1e-2
+        try:
+            assert_allclose(
+                ds[var].loc[ds.c, t],
+                ds_ref[var].loc[ds.c, t],
+                rtol=rtol,
+            )
+        except AssertionError as e:
+            first_line_of_error = "".join(str(e).split("\n")[:3])
+            msg = f"{ds.product}, {var}, {t}: {first_line_of_error}"
+            raise AssertionError(msg) from e
+    print(f"Check {ds.product} {', '.join(variable)}: OK")
+
+
 class GFPMXData:
     """
     Read data from the GFTMX data set.
@@ -201,8 +248,8 @@ class GFPMXData:
 
         1. Verify the reproducibility of results given in the spreadsheet
 
-        2. Obtain elasticities, constants and other coefficients that cannot be
-        estimated easily
+        2. Reuse elasticities, tariffs, constants and other coefficients that cannot be
+           estimated easily
 
     See also the script that moves data from the original Excel spreadsheet to CSV files:
     `scripts/gfpmx_spreadsheet_to_csv.py`
@@ -560,3 +607,48 @@ class GFPMXData:
         # Add country boolean to be used for computations with `loc`
         ds["c"] = ~ds.region.isnull()
         return ds
+
+    def run_and_compare_to_ref(self, rtol=1e-2):
+        """Takes a gpfmx_data object, remove data after the base year
+        run the model and compare it to the reference dataset
+
+        # TODO: decrease tolerance
+        """
+        base_year = self.base_year
+
+        # Load reference data
+        other_ref = self.convert_sheets_to_dataset("other")
+        indround_ref = self.convert_sheets_to_dataset("indround")
+        fuel_ref = self.convert_sheets_to_dataset("fuel")
+        sawn_ref = self.convert_sheets_to_dataset("sawn")
+        panel_ref = self.convert_sheets_to_dataset("panel")
+        pulp_ref = self.convert_sheets_to_dataset("pulp")
+        paper_ref = self.convert_sheets_to_dataset("paper")
+        gdp = convert_to_2d_array(self.get_sheet_wide("gdp"))
+
+        # Keep only data before the base year
+        other = remove_after_base_year_and_copy(other_ref, base_year)
+        fuel = remove_after_base_year_and_copy(fuel_ref, base_year)
+        indround = remove_after_base_year_and_copy(indround_ref, base_year)
+        sawn = remove_after_base_year_and_copy(sawn_ref, base_year)
+        panel = remove_after_base_year_and_copy(panel_ref, base_year)
+        pulp = remove_after_base_year_and_copy(pulp_ref, base_year)
+        paper = remove_after_base_year_and_copy(paper_ref, base_year)
+
+        # Add GDP projections to the datasets gdp are projected to the future
+        sawn["gdp"] = gdp
+        panel["gdp"] = gdp
+        fuel["gdp"] = gdp
+        paper["gdp"] = gdp
+
+        for this_year in range(base_year + 1, 2051):
+            print(this_year)
+            compute_one_time_step(
+                indround, fuel, pulp, sawn, panel, paper, other, this_year
+            )
+            ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
+            compare_to_ref(sawn, sawn_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(panel, panel_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(paper, paper_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(pulp, pulp_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(indround, indround_ref, ciepp_vars, this_year, rtol=rtol)

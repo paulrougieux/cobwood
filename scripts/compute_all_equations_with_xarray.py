@@ -8,6 +8,8 @@ Usage:
 
 See also:
 
+- The general version of this script in the module cobwood/run_and_compare_to_ref.py
+
 - A drawing illustrating the model structure in
   draft_articles/gftm_degrowth/model_structure.odg
 
@@ -104,12 +106,11 @@ Advantages of using xarray over pandas:
 
 """
 
-from numpy.testing import assert_allclose
-import xarray
 
 from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_data import GFPMXData
 from cobwood.gfpmx_data import remove_after_base_year_and_copy
+from cobwood.gfpmx_data import compare_to_ref
 from cobwood.gfpmx_equations import compute_one_time_step
 from cobwood.gfpmx_equations import consumption
 from cobwood.gfpmx_equations import import_demand
@@ -118,7 +119,9 @@ from cobwood.gfpmx_equations import production
 from cobwood.gfpmx_equations import world_price
 from cobwood.gfpmx_equations import local_price
 
-gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+BASE_YEAR = 2018
+DATA_DIR = "gfpmx_8_6_2021"
+gfpmx_data = GFPMXData(data_dir=DATA_DIR, base_year=BASE_YEAR)
 
 # Load reference data
 other_ref = gfpmx_data.convert_sheets_to_dataset("other")
@@ -152,16 +155,19 @@ assert set(gfpmx_data.country_groups["country"]) - set(list(COUNTRIES)) == set()
 # --> Make a reproducible example and ask on Stackoverflow why this is the case.
 # We will compute demand from the base_year + 1
 
-
-other = remove_after_base_year_and_copy(other_ref, 2018)
-fuel = remove_after_base_year_and_copy(fuel_ref, 2018)
-indround = remove_after_base_year_and_copy(indround_ref, 2018)
+other = remove_after_base_year_and_copy(other_ref, BASE_YEAR)
+fuel = remove_after_base_year_and_copy(fuel_ref, BASE_YEAR)
+indround = remove_after_base_year_and_copy(indround_ref, BASE_YEAR)
 # Use an underscore so that we don't overwrite the python round() function
-round_ = remove_after_base_year_and_copy(round_ref, 2018)
-sawn = remove_after_base_year_and_copy(sawn_ref, 2018)
-panel = remove_after_base_year_and_copy(panel_ref, 2018)
-pulp = remove_after_base_year_and_copy(pulp_ref, 2018)
-paper = remove_after_base_year_and_copy(paper_ref, 2018)
+round_ = remove_after_base_year_and_copy(round_ref, BASE_YEAR)
+sawn = remove_after_base_year_and_copy(sawn_ref, BASE_YEAR)
+panel = remove_after_base_year_and_copy(panel_ref, BASE_YEAR)
+pulp = remove_after_base_year_and_copy(pulp_ref, BASE_YEAR)
+paper = remove_after_base_year_and_copy(paper_ref, BASE_YEAR)
+
+# Memory size
+for ds in [indround, fuel, pulp, sawn, panel, paper, other]:
+    print(f"{ds.product}: {ds.nbytes / 1024 ** 2:.2f} MB")
 
 # Add GDP projections to the datasets gdp are projected to the future
 sawn["gdp"] = gdp
@@ -170,12 +176,10 @@ panel["gdp"] = gdp
 fuel["gdp"] = gdp
 paper["gdp"] = gdp
 
-
 compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, other, 2019)
 compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, other, 2020)
 # See more years below, using the compare_to_ref function to compare
 
-# TODO:
 # # Compute roundwood as the sum of industrial round wood and fuel wood
 # round_["prod"].loc[COUNTRIES, year] = (
 #     indround["prod"].loc[COUNTRIES, year] + fuel["prod"].loc[COUNTRIES, year]
@@ -184,39 +188,6 @@ compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, other, 2020)
 ##########
 # Checks #
 ##########
-
-
-def compare_to_ref(
-    ds: xarray.Dataset,
-    ds_ref: xarray.Dataset,
-    variable: [list, str],
-    t: int,
-    rtol: int = None,
-):
-    """Compare the computed dataset to the reference dataset for the given t
-    Example use:
-        >>> compare_to_ref(sawn, sawn_ref, "price", 2019)
-        >>> compare_to_ref(indround, indround_ref, ["cons", "imp"], 2019)
-    """
-    if rtol is None:
-        rtol = 1e-6
-    if isinstance(variable, str):
-        variable = [variable]
-    for var in variable:
-        # Production requires a different tolerance for some reason
-        if var == "prod":
-            rtol = 1e-2
-        try:
-            assert_allclose(
-                ds[var].loc[ds.c, t],
-                ds_ref[var].loc[ds.c, t],
-                rtol=rtol,
-            )
-        except AssertionError as e:
-            first_line_of_error = "".join(str(e).split("\n")[:3])
-            msg = f"{ds.product}, {var}, {t}: {first_line_of_error}"
-            raise AssertionError(msg) from e
-    print(f"Check {ds.product} {', '.join(variable)}: OK")
 
 
 compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, other, 2019)
@@ -235,7 +206,7 @@ compare_to_ref(paper, paper_ref, ciepp_vars, 2020)
 compare_to_ref(pulp, pulp_ref, ciepp_vars, 2020)
 compare_to_ref(indround, indround_ref, ciepp_vars, 2020)
 
-for this_year in range(2019, 2051):
+for this_year in range(BASE_YEAR + 1, 2051):
     print(this_year)
     # TODO: decrease tolerance
     rtol = 1e-2
