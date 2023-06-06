@@ -40,6 +40,7 @@ the same name as the spreadsheet file (except that it will be in snake case
 import re
 
 # Third party modules
+import numpy as np
 import pandas
 import xarray
 
@@ -163,6 +164,19 @@ def check_variable_presence(ds: xarray.Dataset) -> None:
         msg += f"{ds.attrs['product']}:\n"
         msg += f"{set(required_vars) - set(data_vars)}"
         raise ValueError(msg)
+
+
+def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
+    """Remove values after the base year and return a deep copy of the
+    input dataset, i.e. the input dataset is not modified.
+    This applies only to arrays which have a time dimension.
+    Keep future tariff data, since they are exogenous.
+    """
+    ds_out = ds.copy(deep=True)
+    for x in ds_out.data_vars:
+        if len(ds_out[x].dims) == 2 and "tariff" not in x:
+            ds_out[x].loc[dict(year=ds_out.coords["year"] > base_year)] = np.nan
+    return ds_out
 
 
 class GFPMXData:
