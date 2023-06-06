@@ -22,16 +22,14 @@ the same name as the spreadsheet file (except that it will be in snake case
 `convert_sheets_to_dataset()` method:
 
     >>> from cobwood.gfpmx_data import GFPMXData
-    >>> from cobwood.gfpmx_data import convert_to_2d_array
     >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
-    >>> other_ref = gfpmx_data.convert_sheets_to_dataset("other")
-    >>> indround_ref = gfpmx_data.convert_sheets_to_dataset("indround")
-    >>> fuel_ref = gfpmx_data.convert_sheets_to_dataset("fuel")
-    >>> sawn_ref = gfpmx_data.convert_sheets_to_dataset("sawn")
-    >>> panel_ref = gfpmx_data.convert_sheets_to_dataset("panel")
-    >>> pulp_ref = gfpmx_data.convert_sheets_to_dataset("pulp")
-    >>> paper_ref = gfpmx_data.convert_sheets_to_dataset("paper")
-    >>> gdp = convert_to_2d_array(gfpmx_data.get_sheet_wide("gdp"))
+    >>> print(gfpmx_data.other_ref)
+    >>> print(gfpmx_data.indround_ref)
+    >>> print(gfpmx_data.sawn_ref)
+    >>> print(gfpmx_data.panel_ref)
+    >>> print(gfpmx_data.pulp_ref)
+    >>> print(gfpmx_data.paper_ref)
+    >>> print(gfpmx_data.gdp)
 
 Run with xarray and compare to the reference dataset
 
@@ -39,11 +37,12 @@ Run with xarray and compare to the reference dataset
     >>> # Base 2018
     >>> gfpmx_base_2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
     >>> gfpmx_base_2018.run_and_compare_to_ref()
+    >>> print(gfpmx_base_2018.indround)
     >>> # Base 2020
-    >>> gfpmx_base_2020 = GFPMXData(data_dir="gfpmx_base2020", base_year=2018)
+    >>> gfpmx_base_2020 = GFPMXData(data_dir="gfpmx_base2020", base_year=2020)
     >>> gfpmx_base_2020.run_and_compare_to_ref()
     >>> # Base 2021
-    >>> gfpmx_base_2021 = GFPMXData(data_dir="gfpmx_base2021", base_year=2018)
+    >>> gfpmx_base_2021 = GFPMXData(data_dir="gfpmx_base2021", base_year=2021)
     >>> gfpmx_base_2021.run_and_compare_to_ref()
 
 """
@@ -260,9 +259,6 @@ class GFPMXData:
         return self.get_sheet_long(sheet_name)
 
     def __init__(self, data_dir, base_year):
-        # TODO: After moving the script gfpmx_spreadsheet_to_csv as a method,
-        # change this so that it becomes an argument see issue
-        # See issue 2 https://gitlab.com/bioeconomy/gftm/cobwood/-/issues/2
         self.data_dir = cobwood.data_dir / data_dir
         self.base_year = base_year
         self.sheets = self.list_sheets()
@@ -281,6 +277,33 @@ class GFPMXData:
         assert set(self.country_aggregates) - set(self.country_groups["region"]) == {
             "WORLD"
         }
+
+        # Load reference data
+        self.other_ref = self.convert_sheets_to_dataset("other")
+        self.indround_ref = self.convert_sheets_to_dataset("indround")
+        self.fuel_ref = self.convert_sheets_to_dataset("fuel")
+        self.sawn_ref = self.convert_sheets_to_dataset("sawn")
+        self.panel_ref = self.convert_sheets_to_dataset("panel")
+        self.pulp_ref = self.convert_sheets_to_dataset("pulp")
+        self.paper_ref = self.convert_sheets_to_dataset("paper")
+        self.gdp = convert_to_2d_array(self.get_sheet_wide("gdp"))
+
+        # Keep only data before the base year
+        self.other = remove_after_base_year_and_copy(self.other_ref, self.base_year)
+        self.fuel = remove_after_base_year_and_copy(self.fuel_ref, self.base_year)
+        self.indround = remove_after_base_year_and_copy(
+            self.indround_ref, self.base_year
+        )
+        self.sawn = remove_after_base_year_and_copy(self.sawn_ref, self.base_year)
+        self.panel = remove_after_base_year_and_copy(self.panel_ref, self.base_year)
+        self.pulp = remove_after_base_year_and_copy(self.pulp_ref, self.base_year)
+        self.paper = remove_after_base_year_and_copy(self.paper_ref, self.base_year)
+
+        # Add GDP projections to the datasets gdp are projected to the future
+        self.sawn["gdp"] = self.gdp
+        self.panel["gdp"] = self.gdp
+        self.fuel["gdp"] = self.gdp
+        self.paper["gdp"] = self.gdp
 
     def list_sheets(self):
         """List sheets available in the GFPMX data folder
@@ -614,41 +637,24 @@ class GFPMXData:
 
         # TODO: decrease tolerance
         """
-        base_year = self.base_year
 
-        # Load reference data
-        other_ref = self.convert_sheets_to_dataset("other")
-        indround_ref = self.convert_sheets_to_dataset("indround")
-        fuel_ref = self.convert_sheets_to_dataset("fuel")
-        sawn_ref = self.convert_sheets_to_dataset("sawn")
-        panel_ref = self.convert_sheets_to_dataset("panel")
-        pulp_ref = self.convert_sheets_to_dataset("pulp")
-        paper_ref = self.convert_sheets_to_dataset("paper")
-        gdp = convert_to_2d_array(self.get_sheet_wide("gdp"))
-
-        # Keep only data before the base year
-        other = remove_after_base_year_and_copy(other_ref, base_year)
-        fuel = remove_after_base_year_and_copy(fuel_ref, base_year)
-        indround = remove_after_base_year_and_copy(indround_ref, base_year)
-        sawn = remove_after_base_year_and_copy(sawn_ref, base_year)
-        panel = remove_after_base_year_and_copy(panel_ref, base_year)
-        pulp = remove_after_base_year_and_copy(pulp_ref, base_year)
-        paper = remove_after_base_year_and_copy(paper_ref, base_year)
-
-        # Add GDP projections to the datasets gdp are projected to the future
-        sawn["gdp"] = gdp
-        panel["gdp"] = gdp
-        fuel["gdp"] = gdp
-        paper["gdp"] = gdp
-
-        for this_year in range(base_year + 1, 2051):
+        for this_year in range(self.base_year + 1, 2051):
             print(this_year)
             compute_one_time_step(
-                indround, fuel, pulp, sawn, panel, paper, other, this_year
+                self.indround,
+                self.fuel,
+                self.pulp,
+                self.sawn,
+                self.panel,
+                self.paper,
+                self.other,
+                this_year,
             )
             ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
-            compare_to_ref(sawn, sawn_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(panel, panel_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(paper, paper_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(pulp, pulp_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(indround, indround_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(self.sawn, self.sawn_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(self.panel, self.panel_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(self.paper, self.paper_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(self.pulp, self.pulp_ref, ciepp_vars, this_year, rtol=rtol)
+            compare_to_ref(
+                self.indround, self.indround_ref, ciepp_vars, this_year, rtol=rtol
+            )
