@@ -30,7 +30,7 @@ Requirement prepare the data with:
 
     >>> from cobwood.gfpmx import GFPMX
     >>> # Load data for a base year in 2019
-    >>> gfpmx_bGFPMX("datasource")
+    >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
 
 Note: in CBM, the base year is the first year of the simulation, as illustrated
 by the condition `if self.year < self.country.base_year` (in
