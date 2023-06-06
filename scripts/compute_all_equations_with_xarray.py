@@ -63,7 +63,7 @@ Advantages of using xarray over pandas:
         ds_other["stock"].loc["WORLD", t],
         ds["price_stock_elast"].loc["WORLD"],
         np.exp(ds["price_trend"].loc["WORLD"] * t)
-        ds["price"].loc["WORLD", t], ds["price_world_price_elasticity"].loc[COUNTRIES]
+        ds["price"].loc["WORLD", t], ds["price_world_price_elasticity"].loc[ds.c]
 
 
   Option B There is a dataset of countries only and a dataset of aggregates only we
@@ -190,8 +190,8 @@ def consumption(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute consumption equation 1"""
     return (
         ds["cons_constant"]
-        * pow(ds["price"].loc[COUNTRIES, t - 1], ds["cons_price_elasticity"])
-        * pow(ds["gdp"].loc[COUNTRIES, t], ds["cons_gdp_elasticity"])
+        * pow(ds["price"].loc[ds.c, t - 1], ds["cons_price_elasticity"])
+        * pow(ds["gdp"].loc[ds.c, t], ds["cons_gdp_elasticity"])
     )
 
 
@@ -201,9 +201,9 @@ def consumption_pulp(
     """Compute the Domestic Demand for Wood Pulp equation 2"""
     return (
         ds["cons_constant"]
-        * pow(ds["price"].loc[COUNTRIES, t - 1], ds["cons_price_elasticity"])
+        * pow(ds["price"].loc[ds.c, t - 1], ds["cons_price_elasticity"])
         * pow(
-            ds_paper["prod"].loc[COUNTRIES, t], ds["cons_paper_production_elasticity"]
+            ds_paper["prod"].loc[ds_paper.c, t], ds["cons_paper_production_elasticity"]
         )
     )
 
@@ -228,15 +228,15 @@ def consumption_indround(
     if compatible_mode is None:
         compatible_mode = GFPMX_8_6_2021_COMPATIBLE_MODE
     sum_prod_secondary = (
-        ds_sawn["prod"].loc[COUNTRIES, t]
-        + ds_panel["prod"].loc[COUNTRIES, t]
-        + ds_pulp["prod"].loc[COUNTRIES, t]
+        ds_sawn["prod"].loc[ds_sawn.c, t]
+        + ds_panel["prod"].loc[ds_panel.c, t]
+        + ds_pulp["prod"].loc[ds_pulp.c, t]
     )
     cons = (
-        ds["cons_constant"].loc[COUNTRIES]
+        ds["cons_constant"].loc[ds.c]
         * pow(
-            ds["price"].loc[COUNTRIES, t - 1],
-            ds["cons_price_elasticity"].loc[COUNTRIES],
+            ds["price"].loc[ds.c, t - 1],
+            ds["cons_price_elasticity"].loc[ds.c],
         )
         * pow(
             sum_prod_secondary,
@@ -256,10 +256,10 @@ def import_demand(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     return (
         ds["imp_constant"]
         * pow(
-            ds["price"].loc[COUNTRIES, t - 1] * (1 + ds["tariff"].loc[:, t - 1]),
+            ds["price"].loc[ds.c, t - 1] * (1 + ds["tariff"].loc[:, t - 1]),
             ds["imp_price_elasticity"],
         )
-        * pow(ds["gdp"].loc[COUNTRIES, t], ds["imp_gdp_elasticity"])
+        * pow(ds["gdp"].loc[ds.c, t], ds["imp_gdp_elasticity"])
     )
 
 
@@ -271,11 +271,10 @@ def import_demand_pulp(
     return (
         ds["imp_constant"]
         * pow(
-            ds["price"].loc[COUNTRIES, t - 1]
-            * (1 + ds["tariff"].loc[COUNTRIES, t - 1]),
+            ds["price"].loc[ds.c, t - 1] * (1 + ds["tariff"].loc[ds.c, t - 1]),
             ds["imp_price_elasticity"],
         )
-        * pow(ds_paper["prod"].loc[COUNTRIES, t], ds["imp_paper_production_elasticity"])
+        * pow(ds_paper["prod"].loc[ds.c, t], ds["imp_paper_production_elasticity"])
     )
 
 
@@ -291,17 +290,17 @@ def import_demand_indround(
     if compatible_mode is None:
         compatible_mode = GFPMX_8_6_2021_COMPATIBLE_MODE
     sum_prod_secondary = (
-        ds_sawn["prod"].loc[COUNTRIES, t]
-        + ds_panel["prod"].loc[COUNTRIES, t]
-        + ds_pulp["prod"].loc[COUNTRIES, t]
+        ds_sawn["prod"].loc[ds_sawn.c, t]
+        + ds_panel["prod"].loc[ds_panel.c, t]
+        + ds_pulp["prod"].loc[ds_pulp.c, t]
     )
     imp = (
-        ds["imp_constant"].loc[COUNTRIES]
+        ds["imp_constant"].loc[ds.c]
         * pow(
-            (1 + ds["tariff"].loc[COUNTRIES, t]) * ds["price"].loc[COUNTRIES, t - 1],
-            ds["imp_price_elasticity"].loc[COUNTRIES],
+            (1 + ds["tariff"].loc[ds.c, t]) * ds["price"].loc[ds.c, t - 1],
+            ds["imp_price_elasticity"].loc[ds.c],
         )
-        * pow(sum_prod_secondary, ds["imp_products_elasticity"].loc[COUNTRIES])
+        * pow(sum_prod_secondary, ds["imp_products_elasticity"].loc[ds.c])
     )
     if compatible_mode:
         # Keep only rows where sum_prod_secondary is positive
@@ -315,9 +314,9 @@ def export_supply(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute export supply equation 7
 
     Replace negative values by zero."""
-    world_imp = ds["imp"].loc[COUNTRIES, t].sum()
+    world_imp = ds["imp"].loc[ds.c, t].sum()
     exp = (
-        ds["exp_marginal_propensity_to_export"].loc[COUNTRIES] * world_imp
+        ds["exp_marginal_propensity_to_export"].loc[ds.c] * world_imp
         + ds["exp_constant"]
     )
     return np.maximum(exp, 0)
@@ -327,11 +326,7 @@ def production(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute domestic production equation 8
     Replace negative values by zero
     """
-    prod = (
-        ds["cons"].loc[COUNTRIES, t]
-        + ds["exp"].loc[COUNTRIES, t]
-        - ds["imp"].loc[COUNTRIES, t]
-    )
+    prod = ds["cons"].loc[ds.c, t] + ds["exp"].loc[ds.c, t] - ds["imp"].loc[ds.c, t]
     return np.maximum(prod, 0)
 
 
@@ -367,8 +362,8 @@ def world_price_indround(
 
 def local_price(ds: xarray.Dataset, t: int) -> xarray.DataArray:
     """Compute the local price equation 12"""
-    return ds["price_constant"].loc[COUNTRIES] * pow(
-        ds["price"].loc["WORLD", t], ds["price_world_price_elasticity"].loc[COUNTRIES]
+    return ds["price_constant"].loc[ds.c] * pow(
+        ds["price"].loc["WORLD", t], ds["price_world_price_elasticity"].loc[ds.c]
     )
 
 
@@ -385,13 +380,13 @@ def forest_stock(
             - Other units are in 1000 m3, should the whole model be harmonized to m3?
     """
     indround_fuel_prod = (
-        ds_indround["prod"].loc[COUNTRIES, t - 1]
-        + ds_fuel["prod"].loc[COUNTRIES, t - 1]
+        ds_indround["prod"].loc[ds_indround.c, t - 1]
+        + ds_fuel["prod"].loc[ds_fuel.c, t - 1]
     )
     stock = (
-        ds["stock"].loc[COUNTRIES, t - 1]
-        * (1 + ds["stock_stock_growth_rate_without_harvest"].loc[COUNTRIES])
-        - ds["stock_harvest_effect_on_stock"].loc[COUNTRIES] * indround_fuel_prod / 1000
+        ds["stock"].loc[ds.c, t - 1]
+        * (1 + ds["stock_stock_growth_rate_without_harvest"].loc[ds.c])
+        - ds["stock_harvest_effect_on_stock"].loc[ds.c] * indround_fuel_prod / 1000
     )
     return np.maximum(stock, 0)
 
@@ -412,13 +407,13 @@ def compute_country_aggregates(
     if isinstance(variable, str):
         variable = [variable]
     for var in variable:
-        if any(ds[var].loc[COUNTRIES, t].isnull()):
+        if any(ds[var].loc[ds.c, t].isnull()):
             msg = f"NA values in {ds.product} {var}:\n"
-            msg += f"{ds[var].loc[COUNTRIES, t]}"
+            msg += f"{ds[var].loc[ds.c, t]}"
             raise ValueError(msg)
-        ds[var].loc["WORLD", t] = ds[var].loc[COUNTRIES, t].sum()
+        ds[var].loc["WORLD", t] = ds[var].loc[ds.c, t].sum()
         ds[var].loc[regions, t] = (
-            ds[var].loc[COUNTRIES, t].groupby(ds["region"].loc[COUNTRIES]).sum()
+            ds[var].loc[ds.c, t].groupby(ds["region"].loc[ds.c]).sum()
         )
 
 
@@ -430,10 +425,10 @@ def compute_secondary_product_ciep(
 
     ! This function modifies the input data set `ds` for the given time step t.
     """
-    ds["cons"].loc[COUNTRIES, t] = consumption(ds, t)
-    ds["imp"].loc[COUNTRIES, t] = import_demand(ds, t)
-    ds["exp"].loc[COUNTRIES, t] = export_supply(ds, t)
-    ds["prod"].loc[COUNTRIES, t] = production(ds, t)
+    ds["cons"].loc[ds.c, t] = consumption(ds, t)
+    ds["imp"].loc[ds.c, t] = import_demand(ds, t)
+    ds["exp"].loc[ds.c, t] = export_supply(ds, t)
+    ds["prod"].loc[ds.c, t] = production(ds, t)
 
 
 def compute_secondary_product_price(
@@ -443,7 +438,7 @@ def compute_secondary_product_price(
     ! This function modifies the input data set `ds` for the given time step t.
     """
     ds["price"].loc["WORLD", t] = world_price(ds, ds_primary, t)
-    ds["price"].loc[COUNTRIES, t] = local_price(ds, t)
+    ds["price"].loc[ds.c, t] = local_price(ds, t)
 
 
 #########################
@@ -458,32 +453,32 @@ def compute_one_time_step(
     TODO: change this to use the gfpmx_data as the unique argument
     This requires adding the boolean country indicator ds.c as a prerequisite"""
     # 1. Compute stock growth and drain from stock and production at t-1
-    other["stock"].loc[COUNTRIES, year] = forest_stock(other, indround, fuel, year)
+    other["stock"].loc[other.c, year] = forest_stock(other, indround, fuel, year)
     # 2. Compute cons, imp, exp and prod of secondary products
     compute_secondary_product_ciep(ds_sawn, ds_indround, year)
     compute_secondary_product_ciep(ds_fuel, ds_indround, year)
     compute_secondary_product_ciep(ds_panel, ds_indround, year)
     compute_secondary_product_ciep(ds_paper, ds_pulp, year)
     # 3. Compute cons, imp, exp and prod of primary products
-    ds_pulp["cons"].loc[COUNTRIES, year] = consumption_pulp(ds_pulp, ds_paper, year)
-    ds_pulp["imp"].loc[COUNTRIES, year] = import_demand_pulp(ds_pulp, ds_paper, year)
-    ds_pulp["exp"].loc[COUNTRIES, year] = export_supply(ds_pulp, year)
-    ds_pulp["prod"].loc[COUNTRIES, year] = production(ds_pulp, year)
-    ds_indround["cons"].loc[COUNTRIES, year] = consumption_indround(
+    ds_pulp["cons"].loc[ds_pulp.c, year] = consumption_pulp(ds_pulp, ds_paper, year)
+    ds_pulp["imp"].loc[ds_pulp.c, year] = import_demand_pulp(ds_pulp, ds_paper, year)
+    ds_pulp["exp"].loc[ds_pulp.c, year] = export_supply(ds_pulp, year)
+    ds_pulp["prod"].loc[ds_pulp.c, year] = production(ds_pulp, year)
+    ds_indround["cons"].loc[ds_pulp.c, year] = consumption_indround(
         ds_indround, ds_sawn, ds_panel, ds_pulp, year
     )
-    ds_indround["imp"].loc[COUNTRIES, year] = import_demand_indround(
+    ds_indround["imp"].loc[ds_indround.c, year] = import_demand_indround(
         ds_indround, ds_sawn, ds_panel, ds_pulp, year
     )
-    ds_indround["exp"].loc[COUNTRIES, year] = export_supply(ds_indround, year)
-    ds_indround["prod"].loc[COUNTRIES, year] = production(ds_indround, year)
+    ds_indround["exp"].loc[ds_indround.c, year] = export_supply(ds_indround, year)
+    ds_indround["prod"].loc[ds_indround.c, year] = production(ds_indround, year)
     # 4. Compute prices
     compute_country_aggregates(ds_indround, year)
     compute_country_aggregates(other, year, "stock")
     ds_indround["price"].loc["WORLD", year] = world_price_indround(
         ds_indround, other, year
     )
-    ds_indround["price"].loc[COUNTRIES, year] = local_price(ds_indround, year)
+    ds_indround["price"].loc[ds_indround.c, year] = local_price(ds_indround, year)
     # The world price of ds_indround is required to compute the price of secondary products
     assert not ds_indround["price"].loc["WORLD", year].isnull()
     compute_secondary_product_price(ds_sawn, ds_indround, year)
@@ -532,8 +527,8 @@ def compare_to_ref(
             rtol = 1e-2
         try:
             assert_allclose(
-                ds[var].loc[COUNTRIES, t],
-                ds_ref[var].loc[COUNTRIES, t],
+                ds[var].loc[ds.c, t],
+                ds_ref[var].loc[ds.c, t],
                 rtol=rtol,
             )
         except AssertionError as e:
@@ -542,26 +537,6 @@ def compare_to_ref(
             raise AssertionError(msg) from e
     print(f"Check {ds.product} {', '.join(variable)}: OK")
 
-
-raise ValueError(
-    """
-- TODO replace COUNTRIES by a list internal to the dataset
-  Find replace with confirmation in VIM Type :%s/old/new/gc and press Enter.
-  >>> ds = sawn
-  >>> # This can be used for computations
-  >>> ds["price"].loc[ds.c, 2019]
-  >>> # Checks
-  >>> all(ds["price"].loc[~ds.region.isnull(), 2019] ==  ds["price"].loc[COUNTRIES, 2019])
-  >>> ds["c"] = ~ds.region.isnull()
-  >>> assert(all(ds["country"].loc[~ds.c] ==
-  >>>            ['WORLD', 'AFRICA', 'NORTH AMERICA', 'SOUTH AMERICA', 'ASIA', 'OCEANIA', 'EUROPE']))
-    """
-)
-
-raise ValueError(
-    """ds["price"].loc[ds.c, 2019] open the possibility to use the class gfpmx_data
-                 as the sole argument of compute_one_time_step"""
-)
 
 compute_one_time_step(indround, fuel, pulp, sawn, panel, paper, 2019)
 ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
@@ -593,6 +568,11 @@ for this_year in range(2019, 2051):
 
 # Compare world price
 #  assert_allclose(sawn["price"].loc["WORLD", year], sawn_ref["price"].loc["WORLD", year])
+
+raise ValueError(
+    """ds["price"].loc[ds.c, 2019] opens the possibility to use the class gfpmx_data
+                 as the sole argument of compute_one_time_step"""
+)
 
 
 year = 2019
