@@ -299,12 +299,6 @@ class GFPMXData:
         self.pulp = remove_after_base_year_and_copy(self.pulp_ref, self.base_year)
         self.paper = remove_after_base_year_and_copy(self.paper_ref, self.base_year)
 
-        # Add GDP projections to the datasets gdp are projected to the future
-        self.sawn["gdp"] = self.gdp
-        self.panel["gdp"] = self.gdp
-        self.fuel["gdp"] = self.gdp
-        self.paper["gdp"] = self.gdp
-
     def list_sheets(self):
         """List sheets available in the GFPMX data folder
 
@@ -637,6 +631,14 @@ class GFPMXData:
 
         # TODO: decrease tolerance
         """
+
+        # Add GDP projections to the datasets.
+        # GDP are projected to the future and `self.gdp` might be changed by
+        # the user before the model run. This is why it is added only at this time.
+        self.sawn["gdp"] = self.gdp
+        self.panel["gdp"] = self.gdp
+        self.fuel["gdp"] = self.gdp
+        self.paper["gdp"] = self.gdp
 
         for this_year in range(self.base_year + 1, 2051):
             print(this_year)
