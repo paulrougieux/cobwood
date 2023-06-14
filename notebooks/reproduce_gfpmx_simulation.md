@@ -5,79 +5,156 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.13.4
+      jupytext_version: 1.14.5
   kernelspec:
-    display_name: Python 3
+    display_name: Python 3 (ipykernel)
     language: python
     name: python3
 ---
 
 ```python
-# Load 
-from cobwood.gfpmx_data import gfpmx_data
+from cobwood.gfpmx_data import GFPMXData
+from cobwood.gfpmx_plot import plot_da_by_region
+from cobwood.gfpmx_plot import plot_ds_by_davar
+
+# Equations only required for debugging
+from cobwood.gfpmx_equations import world_price_indround
+from cobwood.gfpmx_equations import world_price
 ```
 
+<!-- #region -->
 # Introduction
 
 The purpose of this notebook is to reproduce estimations from the GFPMX model, using the spreadsheet data available from https://buongiorno.russell.wisc.edu/gfpm/.
 
 
-# Sawnwood 
+
+Before using this object, the Excel file needs to be exported to csv files with:
+
+      >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+      >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+
+<!-- #endregion -->
+
+## Load data
+
 
 ```python
-swd_cons = gfpmx_data['sawncons']
-swd_cons.iloc[[1,-1]]  
+gfpmxb2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+gfpmxb2020 = GFPMXData(data_dir="gfpmx_base2020", base_year=2020)
+gfpmxb2021 = GFPMXData(data_dir="gfpmx_base2021", base_year=2021)
 ```
 
-## Join Consumption, GDP and price data
+# Run
+
 
 ```python
-gfpmx_data['gdp'].iloc[[1,-1]]
+# gfpmx_base_2018.run_and_compare_to_ref()
+gfpmxb2020.run_and_compare_to_ref()
+# gfpmx_base_2021.run_and_compare_to_ref()
 ```
 
-```python
-gfpmx_data['sawnprice'].iloc[[1,-1]]
-```
+# Issues
+
+
+## World price issue
+
+To investigate ths issue I move up the chain of equations:
+
+- World price of sawnwood
+- World price of industrial roundwood
+- World production of industrial roundwood
 
 ```python
-index = ['id', 'year','country']
-swd_cons = gfpmx_data['sawncons']
-swd_cons = (swd_cons
-            .merge(gfpmx_data.get_gdp(), 'left', index)
-            .merge(gfpmx_data.get_price_lag('sawnprice'), 'left', index)
-           )
-swd_cons.drop(columns = ['faostat_name', 'price'], inplace=True)
-
-# Compute the consumption equation
-swd_cons['value2'] = swd_cons.constant * swd_cons['price_lag'].pow(swd_cons.price_elasticity) * \
-    swd_cons.gdp.pow(swd_cons.gdp_elasticity)
-
-swd_cons['comp_prop'] = swd_cons.value2 / swd_cons.value -1
-# Don't display rows with NA values
-display(swd_cons.query("price_lag==price_lag & gdp_elasticity==gdp_elasticity"))
-```
-
-## Verify simulation results
-
-The spreadsheet contains both historical and simulated data. Simulation results start after the base year. Cells up until the base year contain historical data. Cells in base_year + 1 use formulas in the spreadsheet. Before we can perform the calculation, we join the price and GDP sheets to the consumption sheet.
-
-
-### After the base year
-
-Show the comparison proportion after the base year.
-
-```python
-# After the base year
-swd_cons2 = swd_cons.query("year > @gfpmx_data.base_year & price_lag==price_lag & gdp_elasticity==gdp_elasticity")
-swd_cons2
+gfpmxb2020.sawn.price.loc["WORLD"].plot()
 ```
 
 ```python
-swd_cons2.comp_prop.describe()
+print(world_price(gfpmxb2020.sawn, gfpmxb2020.indround, 2020))
+print(world_price(gfpmxb2020.sawn, gfpmxb2020.indround, 2021))
+```
+
+```python
+world_price_indround(gfpmxb2020.indround, gfpmxb2020.other, 2021)
+```
+
+```python
+print(gfpmxb2020.indround["prod"].loc["WORLD", 2020])
+print(gfpmxb2020.indround["prod"].loc["WORLD", 2021])
+```
+
+```python
+gfpmxb2020.indround["prod"].loc["WORLD"].plot()
+```
+
+```python
+import xarray
+# Put world data in one dataset
+ds = xarray.Dataset()
+ds["indroundprod"] = gfpmxb2020.indround["prod"].loc["WORLD"]
+ds["sawnprice"] = gfpmxb2020.sawn.price.loc["WORLD"]
+print(ds)
+```
+
+# Destat and plots
+
+
+## By continents
+
+```python
+plot_da_by_region(gfpmxb2020.indround, "prod")
+```
+
+```python
+plot_da_by_region(gfpmxb2020.indround, "cons")
+```
+
+```python
+plot_da_by_region(gfpmxb2020.indround, "imp")
+```
+
+```python
+plot_da_by_region(gfpmxb2020.indround, "exp")
+```
+
+```python
+gfpmxb2020.indround
 ```
 
 ```python
 
+```
+
+```python
+import seaborn
+indround = gfpmxb2020.indround.loc[{"country":~gfpmxb2020.indround.c}][["cons", "imp", "exp", "prod", "price"]].to_dataframe()
+indround = indround.reset_index().melt(id_vars=["country", "year"])
+indround
+g = seaborn.relplot(
+    data=indround, x="year", y="value", col="variable",
+    hue="country", kind="line",
+    col_wrap=5, height=3,
+    facet_kws={'sharey': False, 'sharex': False}
+)
+g.fig.supylabel("Quantity in 1000 m3, price in USD/m3")
+g.fig.subplots_adjust(left=0.28)
+g.set(ylim=(0, None))
+```
+
+```python
+type(g)
+```
+
+```python
+plot_ds_by_davars(gfpmxb2020)
+```
+
+```python
+plot_ds_by_davar(gfpmxb2020.indround)
+```
+
+```python
+plot_ds_by_davar(gfpmxb2020.sawn)
 ```
 
 ```python

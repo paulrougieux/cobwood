@@ -31,7 +31,8 @@ the same name as the spreadsheet file (except that it will be in snake case
     >>> print(gfpmx_data.paper_ref)
     >>> print(gfpmx_data.gdp)
 
-Run with xarray and compare to the reference dataset
+Run with xarray and compare to the reference dataset for each available model
+version (with different base years)
 
     >>> from cobwood.gfpmx_data import GFPMXData
     >>> # Base 2018
@@ -44,6 +45,12 @@ Run with xarray and compare to the reference dataset
     >>> # Base 2021
     >>> gfpmx_base_2021 = GFPMXData(data_dir="gfpmx_base2021", base_year=2021)
     >>> gfpmx_base_2021.run_and_compare_to_ref()
+
+You can debug equations for the different model versions as follows:
+
+    >>> from cobwood.gfpmx_equations import world_price
+    >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
+
 
 """
 
@@ -632,7 +639,7 @@ class GFPMXData:
         # TODO: decrease tolerance
         """
 
-        # Add GDP projections to the datasets.
+        # Add GDP projections to secondary products datasets.
         # GDP are projected to the future and `self.gdp` might be changed by
         # the user before the model run. This is why it is added only at this time.
         self.sawn["gdp"] = self.gdp
