@@ -122,6 +122,10 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path):
                 },
                 inplace=True,
             )
+        # Capitalize WORLD
+        # It's written "World" in "FuelPrice" GFPMX base 2021
+        if "country" in df.columns:
+            df["country"] = df["country"].replace("World", "WORLD")
 
         # Further renaming for the purpose of libcbm usage
         if key in ["FuelProd", "IndroundProd"]:
