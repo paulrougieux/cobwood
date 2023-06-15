@@ -41,7 +41,7 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
 
         >>> from cobwood.gfpmx_data import GFPMXData
         >>> from cobwood.gfpmx_data import convert_to_2d_array
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
         >>> gdp_df = gfpmx_data.get_sheet_wide("gdp")
@@ -66,7 +66,7 @@ def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
 
         >>> from cobwood.gfpmx_data import GFPMXData
         >>> from cobwood.gfpmx_data import convert_to_1d_array
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
 
@@ -211,7 +211,7 @@ class GFPMXData:
            available in the spreadsheet
 
         >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
         >>> swd_cons = gfpmx_data['sawncons']
         >>> swd_cons
 
@@ -258,7 +258,7 @@ class GFPMXData:
 
             >>> from cobwood.gfpmx_data import GFPMXData
             >>> from pandas.errors import EmptyDataError
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
             >>> sheets = gfpmx_data.list_sheets()
             >>> sheets
 
@@ -326,7 +326,7 @@ class GFPMXData:
         Example use
 
             >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
             >>> print(gfpmx_data.get_sheet_wide("sawnprice"))
 
         """
@@ -340,7 +340,7 @@ class GFPMXData:
         Example use
 
             >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
             >>> print(gfpmx_data.get_sheet_long("sawncons"))
 
         """
@@ -377,7 +377,7 @@ class GFPMXData:
         """Return a data frame of cleaned GDP values
 
         >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
         >>> gfpmx_data.get_price_lag('sawnprice')
 
         """
@@ -392,7 +392,7 @@ class GFPMXData:
         """Return a price table with prices shifted by a one year lag
 
         >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
         >>> gfpmx_data.get_price_lag('sawnprice')
 
         """
@@ -420,7 +420,7 @@ class GFPMXData:
         stock column.
 
             >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
+            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
             >>> rwd = gfpmx_data.join_sheets("round", ["stock"])
             >>> rwd.columns
 
