@@ -9,7 +9,7 @@ version (with different base years)
     >>> # Run and stop when the result diverges from the reference spreadsheet
     >>> gfpmxb2018.run(compare=True)
     >>> # Run and continue when the result diverges (just print the missmatch message)
-    >>> gfpmxb2021.run(compare=True, strict=False)
+    >>> gfpmxb2018.run(compare=True, strict=False)
     >>> # Just run, without comparison (default is compare=False)
     >>> gfpmxb2021.run()
     >>> print(gfpmxb2018.indround)

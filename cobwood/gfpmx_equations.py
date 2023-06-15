@@ -303,14 +303,20 @@ def compute_one_time_step(
     )
     ds_indround["exp"].loc[ds_indround.c, year] = export_supply(ds_indround, year)
     ds_indround["prod"].loc[ds_indround.c, year] = production(ds_indround, year)
-    # 4. Compute prices
+    # 4. Compute Country aggregates and prices
+    compute_country_aggregates(ds_sawn, year)
+    compute_country_aggregates(ds_panel, year)
+    compute_country_aggregates(ds_pulp, year)
+    compute_country_aggregates(ds_paper, year)
+    compute_country_aggregates(ds_fuel, year)
     compute_country_aggregates(ds_indround, year)
     compute_country_aggregates(ds_other, year, "stock")
+    # Compute the world price and the local price of indround
     ds_indround["price"].loc["WORLD", year] = world_price_indround(
         ds_indround, ds_other, year
     )
     ds_indround["price"].loc[ds_indround.c, year] = local_price(ds_indround, year)
-    # The world price of ds_indround is required to compute the price of secondary products
+    # The world price of indround is required to compute the price of secondary products
     assert not ds_indround["price"].loc["WORLD", year].isnull()
     compute_secondary_product_price(ds_sawn, ds_indround, year)
     compute_secondary_product_price(ds_fuel, ds_indround, year)
