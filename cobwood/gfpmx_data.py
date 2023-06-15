@@ -13,10 +13,25 @@ Before using this object, the Excel file needs to be exported to csv files with:
 
 The data will then be available in a sub directory of `cobweb.data_dir` with
 the same name as the spreadsheet file (except that it will be in snake case
-`gfpmx_8_6_2021`). You will then be able to load Xarray datasets with the
-`convert_sheets_to_dataset()` method.
+`gfpmx_8_6_2021`).
 
+    >>> from cobwood.gfpmx_data import GFPMXData
+    >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021")
+    >>> gfpmx_data_b2020 = GFPMXData(data_dir="gfpmx_base2020")
+    >>> gfpmx_data_b2021 = GFPMXData(data_dir="gfpmx_base2021")
 
+You can view spreadsheets contents (loaded from intermediate csv files) by
+selecting their names:
+
+    >>> gfpmx_data_b2018.sheets
+    >>> gfpmx_data_b2018["indroundprod"]
+    >>> gfpmx_data_b2018["stock"]
+
+You can load Xarray datasets with the `convert_sheets_to_dataset()` method.
+
+    >>> indround = gfpmx_data_b2018.convert_sheets_to_dataset("indround")
+    >>> sawn = gfpmx_data_b2018.convert_sheets_to_dataset("sawn")
+    >>> other = gfpmx_data_b2018.convert_sheets_to_dataset("other")
 
 """
 
