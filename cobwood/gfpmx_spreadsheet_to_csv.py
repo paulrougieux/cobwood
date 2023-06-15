@@ -115,6 +115,13 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path):
             df.rename(
                 columns={"world_elasticity": "world_price_elasticity"}, inplace=True
             )
+        if "stock_growth_rate_without_harvest" in df.columns:
+            df.rename(
+                columns={
+                    "stock_growth_rate_without_harvest": "growth_rate_without_harvest"
+                },
+                inplace=True,
+            )
 
         # Further renaming for the purpose of libcbm usage
         if key in ["FuelProd", "IndroundProd"]:

@@ -218,7 +218,7 @@ def forest_stock(
     )
     stock = (
         ds["stock"].loc[ds.c, t - 1]
-        * (1 + ds["stock_stock_growth_rate_without_harvest"].loc[ds.c])
+        * (1 + ds["stock_growth_rate_without_harvest"].loc[ds.c])
         - ds["stock_harvest_effect_on_stock"].loc[ds.c] * indround_fuel_prod / 1000
     )
     return np.maximum(stock, 0)

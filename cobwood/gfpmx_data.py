@@ -157,7 +157,7 @@ def check_variable_presence(ds: xarray.Dataset) -> None:
         "population",
         "stock",
         "stock_harvest_effect_on_stock",
-        "stock_stock_growth_rate_without_harvest",
+        "stock_growth_rate_without_harvest",
         "stockpercap",
         "stockperha",
         "totalcons_usd",
@@ -268,6 +268,7 @@ class GFPMXData:
     def __init__(self, data_dir, base_year):
         self.data_dir = cobwood.data_dir / data_dir
         self.base_year = base_year
+        self.last_time_step = 2050
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
         self.index = ["year", "country"]
@@ -570,11 +571,16 @@ class GFPMXData:
         """Get the country grouping by continents"""
         df = self.get_names()
         df.rename(
-            columns={"gfpm_x_country": "country", "code": "faostat_country_code"},
+            columns={
+                "gfpm_x_country": "country",  # Spreadsheet B2018 and B2020
+                "faostat_gfpm_x_country": "country",  # Spreadsheet B2021
+                "code": "faostat_country_code",
+            },
             inplace=True,
         )
         df["region"] = df["region"].str.upper()
-        return df[["country", "region", "faostat_country", "faostat_country_code"]]
+        assert set(["country", "region"]).issubset(df.columns)
+        return df
 
     def convert_sheets_to_dataset(
         self, product: str, other_element: [list, str] = None
@@ -618,7 +624,7 @@ class GFPMXData:
             # Note: trend and stock elasticity are defined for the World only
             # and could be stored as an attribute, we keep them as a 1D array
             # for now.
-            coef_keywords = "elast|const|marginal|stock|trend"
+            coef_keywords = "elast|const|marginal|rate|stock|trend"
             coefficients = df.columns[df.columns.str.contains(coef_keywords)]
             for col in coefficients:
                 # coerce to a numeric value
@@ -632,12 +638,17 @@ class GFPMXData:
         ds["c"] = ~ds.region.isnull()
         return ds
 
-    def run_and_compare_to_ref(self, rtol=1e-2):
+    def run_and_compare_to_ref(self, rtol: float = None):
         """Takes a gpfmx_data object, remove data after the base year
         run the model and compare it to the reference dataset
-
         # TODO: decrease tolerance
         """
+        self.run(compare=True, rtol=rtol)
+
+    def run(self, compare: bool = False, rtol: float = 1e-2):
+        """Run the model for many time steps from base_year + 1 to last_time_step."""
+        if rtol is None:
+            rtol = 1e-2
 
         # Add GDP projections to secondary products datasets.
         # GDP are projected to the future and `self.gdp` might be changed by
@@ -647,7 +658,7 @@ class GFPMXData:
         self.fuel["gdp"] = self.gdp
         self.paper["gdp"] = self.gdp
 
-        for this_year in range(self.base_year + 1, 2051):
+        for this_year in range(self.base_year + 1, self.last_time_step + 1):
             print(this_year)
             compute_one_time_step(
                 self.indround,
@@ -659,11 +670,21 @@ class GFPMXData:
                 self.other,
                 this_year,
             )
-            ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
-            compare_to_ref(self.sawn, self.sawn_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(self.panel, self.panel_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(self.paper, self.paper_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(self.pulp, self.pulp_ref, ciepp_vars, this_year, rtol=rtol)
-            compare_to_ref(
-                self.indround, self.indround_ref, ciepp_vars, this_year, rtol=rtol
-            )
+            # TODO: move this comparison outside the run funcion
+            if compare:
+                ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
+                compare_to_ref(
+                    self.sawn, self.sawn_ref, ciepp_vars, this_year, rtol=rtol
+                )
+                compare_to_ref(
+                    self.panel, self.panel_ref, ciepp_vars, this_year, rtol=rtol
+                )
+                compare_to_ref(
+                    self.paper, self.paper_ref, ciepp_vars, this_year, rtol=rtol
+                )
+                compare_to_ref(
+                    self.pulp, self.pulp_ref, ciepp_vars, this_year, rtol=rtol
+                )
+                compare_to_ref(
+                    self.indround, self.indround_ref, ciepp_vars, this_year, rtol=rtol
+                )
