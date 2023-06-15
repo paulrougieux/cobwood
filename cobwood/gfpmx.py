@@ -184,3 +184,19 @@ class GFPMX:
                     rtol=rtol,
                     strict=strict,
                 )
+                compare_to_ref(
+                    self.fuel,
+                    self.fuel_ref,
+                    ciepp_vars,
+                    this_year,
+                    rtol=rtol,
+                    strict=strict,
+                )
+                compare_to_ref(
+                    self.other,
+                    self.other_ref,
+                    ["stock"],
+                    this_year,
+                    rtol=rtol,
+                    strict=strict,
+                )
