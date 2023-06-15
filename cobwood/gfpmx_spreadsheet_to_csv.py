@@ -88,12 +88,12 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path):
             df = extract_world_price_parameter(df, "unnamed_3", "trend", "trend")
             df = extract_world_price_parameter(df, "unnamed_4", "stock", "stock_elast")
         if key == "IndroundExp":
-            if "constant" not in df.columns:
-                df.rename(columns={"unnamed_5": "constant"}, inplace=True)
             if "marginal_propensity_to_export" not in df.columns:
                 df.rename(
-                    columns={"unnamed_6": "marginal_propensity_to_export"}, inplace=True
+                    columns={"unnamed_5": "marginal_propensity_to_export"}, inplace=True
                 )
+            if "constant" not in df.columns:
+                df.rename(columns={"unnamed_6": "constant"}, inplace=True)
 
         # This applies to product sheets, which have a "faostat_name" column
         if "faostat_name" in df.columns:
