@@ -5,15 +5,20 @@ version (with different base years)
 
     >>> from cobwood.gfpmx import GFPMX
     >>> # Base 2018
-    >>> gfpmx_base_2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
-    >>> gfpmx_base_2018.run(compare=True)
-    >>> print(gfpmx_base_2018.indround)
+    >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+    >>> # Run and stop when the result diverges from the reference spreadsheet
+    >>> gfpmxb2018.run(compare=True)
+    >>> # Run and continue when the result diverges (just print the missmatch message)
+    >>> gfpmxb2021.run(compare=True, strict=False)
+    >>> # Just run, without comparison (default is compare=False)
+    >>> gfpmxb2021.run()
+    >>> print(gfpmxb2018.indround)
     >>> # Base 2020
-    >>> gfpmx_base_2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
-    >>> gfpmx_base_2020.run_and_compare_to_ref()
+    >>> gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
+    >>> gfpmxb2020.run_and_compare_to_ref()
     >>> # Base 2021
-    >>> gfpmx_base_2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
-    >>> gfpmx_base_2021.run_and_compare_to_ref()
+    >>> gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
+    >>> gfpmxb2021.run_and_compare_to_ref()
 
 You can debug data issues by creating the data object only as follows:
 
@@ -29,14 +34,14 @@ You can debug equations for the different model versions as follows:
 `convert_sheets_to_dataset()` method:
 
     >>> from cobwood.gfpmx_data import GFPMXData
-    >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
-    >>> print(gfpmx_base_2018.other_ref)
-    >>> print(gfpmx_base_2018.indround_ref)
-    >>> print(gfpmx_base_2018.sawn_ref)
-    >>> print(gfpmx_base_2018.panel_ref)
-    >>> print(gfpmx_base_2018.pulp_ref)
-    >>> print(gfpmx_base_2018.paper_ref)
-    >>> print(gfpmx_base_2018.gdp)
+    >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+    >>> print(gfpmxb2018.other_ref)
+    >>> print(gfpmxb2018.indround_ref)
+    >>> print(gfpmxb2018.sawn_ref)
+    >>> print(gfpmxb2018.panel_ref)
+    >>> print(gfpmxb2018.pulp_ref)
+    >>> print(gfpmxb2018.paper_ref)
+    >>> print(gfpmxb2018.gdp)
 
 """
 
@@ -112,7 +117,7 @@ class GFPMX:
         """
         self.run(compare=True, rtol=rtol)
 
-    def run(self, compare: bool = False, rtol: float = 1e-2):
+    def run(self, compare: bool = False, rtol: float = 1e-2, strict: bool = True):
         """Run the model for many time steps from base_year + 1 to last_time_step."""
         if rtol is None:
             rtol = 1e-2
@@ -140,17 +145,42 @@ class GFPMX:
             if compare:
                 ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
                 compare_to_ref(
-                    self.sawn, self.sawn_ref, ciepp_vars, this_year, rtol=rtol
+                    self.sawn,
+                    self.sawn_ref,
+                    ciepp_vars,
+                    this_year,
+                    rtol=rtol,
+                    strict=strict,
                 )
                 compare_to_ref(
-                    self.panel, self.panel_ref, ciepp_vars, this_year, rtol=rtol
+                    self.panel,
+                    self.panel_ref,
+                    ciepp_vars,
+                    this_year,
+                    rtol=rtol,
+                    strict=strict,
                 )
                 compare_to_ref(
-                    self.paper, self.paper_ref, ciepp_vars, this_year, rtol=rtol
+                    self.paper,
+                    self.paper_ref,
+                    ciepp_vars,
+                    this_year,
+                    rtol=rtol,
+                    strict=strict,
                 )
                 compare_to_ref(
-                    self.pulp, self.pulp_ref, ciepp_vars, this_year, rtol=rtol
+                    self.pulp,
+                    self.pulp_ref,
+                    ciepp_vars,
+                    this_year,
+                    rtol=rtol,
+                    strict=strict,
                 )
                 compare_to_ref(
-                    self.indround, self.indround_ref, ciepp_vars, this_year, rtol=rtol
+                    self.indround,
+                    self.indround_ref,
+                    ciepp_vars,
+                    this_year,
+                    rtol=rtol,
+                    strict=strict,
                 )

@@ -10,6 +10,8 @@ Before using this object, the Excel file needs to be exported to csv files with:
 
     >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
+    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
 The data will then be available in a sub directory of `cobweb.data_dir` with
 the same name as the spreadsheet file (except that it will be in snake case
@@ -185,6 +187,7 @@ def compare_to_ref(
     variable: [list, str],
     t: int,
     rtol: int = None,
+    strict: bool = True,
 ):
     """Compare the computed dataset to the reference dataset for the given t
     Example use:
@@ -195,6 +198,7 @@ def compare_to_ref(
         rtol = 1e-6
     if isinstance(variable, str):
         variable = [variable]
+    final_message = "OK"
     for var in variable:
         # Production requires a different tolerance for some reason
         if var == "prod":
@@ -208,8 +212,12 @@ def compare_to_ref(
         except AssertionError as e:
             first_line_of_error = "".join(str(e).split("\n")[:3])
             msg = f"{ds.product}, {var}, {t}: {first_line_of_error}"
-            raise AssertionError(msg) from e
-    print(f"Check {ds.product} {', '.join(variable)}: OK")
+            if strict:
+                raise AssertionError(msg) from e
+            else:
+                final_message = "There were errors."
+                print(e, msg)
+    print(f"Check {ds.product} {', '.join(variable)}: {final_message}")
 
 
 class GFPMXData:
