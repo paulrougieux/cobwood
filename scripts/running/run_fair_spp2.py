@@ -1,8 +1,33 @@
 """ Run the pik FAIR and ssp2 scenarios
+The purpose of this script is to use the GDP Fair scenario of Bodirsky et al 2022 as an
+input to the GFPMx forest sector model
 
 Usage:
 
     ipython -i ~/repos/cobwood/scripts/running/run_fair_spp2.py
+
+Steps for the run:
+
+1 Load GFPMX data
+2 Load GDP Fair scenario data and readjust to the same GDP level as the
+  historical series so that there is no discontinuity at the base year.
+3 Create a GFPMX object with GFPMx data and GDP Fair data
+4 Run the model with that GDP scenario
+5 Save output to netcdf files. The GFPMX class should have a method that stores
+  each dataset to a scenario output folder  :
+
+    ds.to_netcdf("path/to/file.nc")
+
+- Read the output later to plot the model results, starting with an overview of
+  industrial roundwood and fuelwood harvest at EU level
+
+    ds = xarray.open_dataset("path/to/file.nc")
+
+Note: in CBM, the base year is the first year of the simulation, as illustrated
+  by the condition `if self.year < self.country.base_year` (in
+  `eu_cbm_hat/cbm/dynamic.py`) which governs the start of the harvest allocation
+  tool.
+
 
 """
 
@@ -41,7 +66,6 @@ gdp_pik_fair = (
     .assign(year=lambda x: x["year"] * 3)
     .pivot(index="country", columns="year", values="gdp")
 )
-
 
 # The GDP added before the run is self.gdp
 # In the __init__ method, self.gdp is created from the sheet in wide format.
