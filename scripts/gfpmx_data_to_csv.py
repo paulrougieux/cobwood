@@ -1,50 +1,37 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 The script to save all sheets of the GFPMX Excel implementation to csv files
-has been moved to cobwood/gfpmx_spreadsheet_to_csv.py
+has been moved to a function inside cobwood/gfpmx_spreadsheet_to_csv.py
+
+Usage:
+
+    ipython  -i  ~/repos/cobwood/scripts/gfpmx_data_to_csv.py
 
 This script might remain useful to investigate issues with column names or sheet names.
 
 """
-# Built-in modules #
-from pathlib import Path
-import re
-import shutil
 
-# Third party modules #
+import re
 import pandas
 
-# First party modules #
+import cobwood
+from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
 
-# Internal modules #
+#########################################
+# Convert the Excel spreadsheets to CSV #
+#########################################
+gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
+gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
-gfpmx_data_dir = None
+
+###############################
+# Investigate unnamed columns #
+###############################
+gfpmx_data_dir = cobwood.data_dir
 gfpmx_excel_file = None
 
-# Paste files to libcbm_data for the forest dynamics model
-if False:
-    dest_dir = Path.home() / "repos/eu_cbm/eu_cbm_data/domestic_harvest/cobwood"
-    dest_dir.mkdir(exist_ok=True)
-    # Renames those primary product files to "harvest"
-    shutil.copy(gfpmx_data_dir / "fuelprod.csv", dest_dir / "fw_harvest.csv")
-    shutil.copy(gfpmx_data_dir / "indroundprod.csv", dest_dir / "irw_harvest.csv")
-    # Copy secondary product files
-    production_files = [
-        "panelprod.csv",
-        "paperprod.csv",
-        "pulpprod.csv",
-        "roundprod.csv",
-        "sawnprod.csv",
-    ]
-    for prod_file in production_files:
-        shutil.copy(gfpmx_data_dir / prod_file, dest_dir / prod_file)
-
-    print(f"Copied from {gfpmx_data_dir} to {dest_dir}")
-
-
-# Investigate unnamed columns
 # key = "IndroundProd"
 if False:
     for key in gfpmx_excel_file.keys():
