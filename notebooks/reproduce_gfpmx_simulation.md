@@ -13,7 +13,7 @@ jupyter:
 ---
 
 ```python
-from cobwood.gfpmx_data import GFPMXData
+from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_plot import plot_da_by_region
 from cobwood.gfpmx_plot import plot_ds_by_davar
 
@@ -40,18 +40,16 @@ Before using this object, the Excel file needs to be exported to csv files with:
 
 
 ```python
-gfpmxb2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
-gfpmxb2020 = GFPMXData(data_dir="gfpmx_base2020", base_year=2020)
-gfpmxb2021 = GFPMXData(data_dir="gfpmx_base2021", base_year=2021)
+gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
+gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
 ```
 
 # Run
 
 
 ```python
-# gfpmx_base_2018.run_and_compare_to_ref()
-gfpmxb2020.run_and_compare_to_ref()
-# gfpmx_base_2021.run_and_compare_to_ref()
+gfpmxb2021.run()
 ```
 
 # Issues
@@ -96,66 +94,43 @@ ds["sawnprice"] = gfpmxb2020.sawn.price.loc["WORLD"]
 print(ds)
 ```
 
-# Destat and plots
+# Base year 2018
 
 
-## By continents
-
-```python
-plot_da_by_region(gfpmxb2020.indround, "prod")
-```
+## Destat and plots
 
 ```python
-plot_da_by_region(gfpmxb2020.indround, "cons")
-```
-
-```python
-plot_da_by_region(gfpmxb2020.indround, "imp")
-```
-
-```python
-plot_da_by_region(gfpmxb2020.indround, "exp")
-```
-
-```python
-gfpmxb2020.indround
+for ds in [gfpmxb2018.indround, gfpmxb2018.sawn, gfpmxb2018.panel, gfpmxb2018.pulp, gfpmxb2018.paper, gfpmxb2020.fuel]:
+    plot_ds_by_davar(ds)
 ```
 
 ```python
 
 ```
 
+# Base year 2021
+
+## Destat and plots
+
 ```python
-import seaborn
-indround = gfpmxb2020.indround.loc[{"country":~gfpmxb2020.indround.c}][["cons", "imp", "exp", "prod", "price"]].to_dataframe()
-indround = indround.reset_index().melt(id_vars=["country", "year"])
-indround
-g = seaborn.relplot(
-    data=indround, x="year", y="value", col="variable",
-    hue="country", kind="line",
-    col_wrap=5, height=3,
-    facet_kws={'sharey': False, 'sharex': False}
-)
-g.fig.supylabel("Quantity in 1000 m3, price in USD/m3")
-g.fig.subplots_adjust(left=0.28)
-g.set(ylim=(0, None))
+da_vars = ["cons", "imp", "exp", "prod", "price"]
+ds = gfpmxb2021.sawn
+df = ds.loc[{"country": ~ds.c}][da_vars].to_dataframe()
+df = df.reset_index().melt(id_vars=["country", "year"])
+df.query("year==2023") 
 ```
 
 ```python
-type(g)
+for ds in [gfpmxb2021.indround, gfpmxb2021.sawn, gfpmxb2021.panel, gfpmxb2021.pulp, gfpmxb2021.paper, gfpmxb2021.fuel]:
+    plot_ds_by_davar(ds)
 ```
 
 ```python
-plot_ds_by_davars(gfpmxb2020)
+plot_ds_by_davar(gfpmxb2021.other, ["area", "stock"], ylabel="Area in 1000ha and stock in million m3")
+
 ```
 
-```python
-plot_ds_by_davar(gfpmxb2020.indround)
-```
-
-```python
-plot_ds_by_davar(gfpmxb2020.sawn)
-```
+## EU countries only
 
 ```python
 

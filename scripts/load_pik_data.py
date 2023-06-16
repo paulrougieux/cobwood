@@ -76,15 +76,16 @@ Paul Rougieux
 
 from pathlib import Path
 import pandas
-
-# import gdxpds
-import cobwood
-from cobwood.gfpmx_data import gfpmx_data
+import re
 
 # To get country ISO codes
 from biotrade.faostat import faostat
 from biotrade.world_bank import world_bank
-import re
+
+# import gdxpds
+import cobwood
+from cobwood.gfpmx_data import GFPMXData
+
 
 country_iso_codes = faostat.country_groups.df[["fao_table_name", "iso3_code"]].rename(
     columns={"fao_table_name": "country", "iso3_code": "country_iso"}
@@ -152,12 +153,27 @@ fair_gdp = load_pik_gdp(incomes_path / "fair_gdp_ppp_iso.csv", "pik_fair")
 # Load GFPMX GDP data #
 #######################
 # Expressed in 1000 USD of 2017
-gfpm_gdp = gfpmx_data.get_sheet_long("gdp").merge(
-    country_iso_codes, on="country", how="left"
+
+gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021")
+gfpmx_data_b2021 = GFPMXData(data_dir="gfpmx_base2021")
+
+
+def load_gfpmx_gdp(gfpmx_data: GFPMXData, col_name):
+    """Load GFPMX GDP data and give it a column name"""
+    df = gfpmx_data.get_sheet_long("gdp").merge(
+        country_iso_codes, on="country", how="left"
+    )
+    # Convert from 1000 USD to million USD
+    df["gdp"] = df["gdp"] / 1e3
+    df.rename(columns={"gdp": col_name}, inplace=True)
+    df.drop(columns="gdp_unnamed_0", inplace=True)
+    return df
+
+
+index = ["country", "country_iso", "year"]
+gfpm_gdp = load_gfpmx_gdp(gfpmx_data_b2018, "gfpm_gdp_b2018").merge(
+    load_gfpmx_gdp(gfpmx_data_b2021, "gfpm_gdp_b2021"), on=index, how="outer"
 )
-# Convert from 1000 USD to million USD
-gfpm_gdp["gdp"] = gfpm_gdp["gdp"] / 1e3
-gfpm_gdp.rename(columns={"gdp": "gfpm_gdp"}, inplace=True)
 
 # Divide
 # wb["i"] = wb["wb_gdp_cst"] /
@@ -178,7 +194,7 @@ assert not any(gfpm_gdp[selector]["country_iso"].isna())
 # Merge GFPM, Magpie and world bank data and compare the GDP of EU countries in 2030
 index = ["country_iso", "year"]
 comp = (
-    gfpm_gdp[index + ["country", "gfpm_gdp"]]
+    gfpm_gdp[index + ["country", "gfpm_gdp_b2018", "gfpm_gdp_b2021"]]
     .merge(bau_gdp[index + ["pik_bau"]], on=index, how="left")
     .merge(fair_gdp[index + ["pik_fair"]], on=index, how="left")
     .merge(wb[index + ["wb_gdp_cst", "wb_gdp_cur"]], on=index, how="left")
@@ -189,9 +205,9 @@ comp_long = comp.melt(
     id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
 )
 
-###################################
-# Rescale PIK to a 2017 base year #
-###################################
+###############################################
+# Rescale PIK to a 2017 or a 2021 base year # #
+###############################################
 #
 # https://datahelpdesk.worldbank.org/knowledgebase/articles/114946-how-can-i-rescale-a-series-to-a-different-base-yea
 #
@@ -212,62 +228,71 @@ comp["pik_bau_i"] = comp.groupby("country_iso")["pik_bau"].transform(
 comp["pik_fair_i"] = comp.groupby("country_iso")["pik_fair"].transform(
     pandas.Series.interpolate, "linear"
 )
-selector = {
-    "gfpm_gdp": "gfpm_gdp_2017",
+column_names_2017 = {
+    "gfpm_gdp_b2018": "gfpm_gdp_2017",
     "wb_gdp_cur": "wb_gdp_2017",
     "pik_bau_i": "pik_bau_2017",
     "pik_fair_i": "pik_fair_2017",
 }
 gdp_2017 = (
-    comp.loc[comp["year"] == 2017, ["country_iso", *selector.keys()]]
-    .rename(columns=selector)
+    comp.loc[comp["year"] == 2017, ["country_iso", *column_names_2017.keys()]]
+    .rename(columns=column_names_2017)
     # Remove NA values in country
     .query("country_iso == country_iso")
     .copy()
 )
+column_names_2021 = {
+    "gfpm_gdp_b2021": "gfpm_gdp_2021",
+    "pik_bau_i": "pik_bau_2021",
+    "pik_fair_i": "pik_fair_2021",
+}
+gdp_2021 = (
+    comp.loc[comp["year"] == 2021, ["country_iso", *column_names_2021.keys()]]
+    .rename(columns=column_names_2021)
+    .query("country_iso == country_iso")
+    .copy()
+)
 
+code_continent = faostat.country_groups.df[["iso3_code", "continent"]].rename(
+    columns={"iso3_code": "country_iso"}
+)
 index = ["country_iso", "year"]
 gdp_comp = (
-    comp.merge(gdp_2017, on="country_iso")  # [index + ["pik_bau_i"]]
-    # Scale to one in 2017
-    # .assign(pik_bau_scale_2017 = lambda x: x["pik_bau_i"] / x["pik_bau_2017"])
-    # Multiply by the current value in 2017
+    comp.merge(gdp_2017, on="country_iso")
+    .merge(gdp_2021, on="country_iso")
     .assign(
+        # Scale PIK GDP to World bank GDP 2017
         pik_bau_adjwb2017=lambda x: (x["pik_bau_i"] / x["pik_bau_2017"])
         * x["wb_gdp_2017"],
         pik_fair_adjwb2017=lambda x: (x["pik_fair_i"] / x["pik_fair_2017"])
         * x["wb_gdp_2017"],
+        # Scale PIK GDP to GFPMX GDP 2017
         pik_bau_adjgfpm2017=lambda x: (x["pik_bau_i"] / x["pik_bau_2017"])
         * x["gfpm_gdp_2017"],
         pik_fair_adjgfpm2017=lambda x: (x["pik_fair_i"] / x["pik_fair_2017"])
         * x["gfpm_gdp_2017"],
-    ).drop(columns=["pik_bau_2017", "pik_fair_2017", "wb_gdp_2017"])
+        # Scale PIK GDP to GFPMX GDP 2021
+        pik_bau_adjgfpm2021=lambda x: (x["pik_bau_i"] / x["pik_bau_2021"])
+        * x["gfpm_gdp_2021"],
+        pik_fair_adjgfpm2021=lambda x: (x["pik_fair_i"] / x["pik_fair_2021"])
+        * x["gfpm_gdp_2021"],
+    )
+    .drop(columns=list(column_names_2017.values()) + list(column_names_2021.values()))
+    .merge(code_continent, on="country_iso")
 )
-
-# TODO: adjust to GFPM 2020
-
 
 # Shift by 5 years
 gdp_comp["pik_fair_shift_5"] = gdp_comp.groupby("country_iso")[
-    "pik_fair_adjgfpm2017"
+    "pik_fair_adjgfpm2021"
 ].shift(periods=5)
 
-
-#   # Join 2017 constant values from the world bank
-#   .merge(wb[index + ["wb_gdp_cst"]], on=index, how="left")
-#   )
-
-
 # Reshape to long format
+index = ["country_iso", "year", "country", "continent"]
 gdp_comp_long = gdp_comp.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
-    id_vars=["country_iso", "year", "country"], var_name="source", value_name="gdp"
+    id_vars=index, var_name="source", value_name="gdp"
 )
 
-# Now use 2017 constant GDP as a new reference value
-# compute forward
-# compute backward
-
-# TODO plot comparison between rescaled and original data
+# See plot comparison between rescaled and original data in the notebook
 
 
 # Create data frames for EU countries only
@@ -290,6 +315,7 @@ comp_eu_2005 = comp_eu.query("year == 2005 and pik_bau == pik_bau")
 ###################################################
 # Keep only selected year for comparison purposes #
 ###################################################
+eu_countries = faostat.country_groups.eu_country_names
 gdp_comp_eu = gdp_comp.query("country in @faostat.country_groups.eu_country_names")
 # Keep only ssp2 and adjusted pik fair scenario
 gdp_comp_long_agg_eu_2 = (
@@ -323,11 +349,9 @@ gdp_comp_eu_selected.to_csv("/tmp/gdp_comp_eu_selected.csv")
 #####################
 # Store output data #
 #####################
-# Write to parquet files
-pik_data_dir = cobwood.data_dir / "pik"
-if not pik_data_dir.exists():
-    pik_data_dir.mkdir()
+pik_data_dir = cobwood.create_data_dir("pik")
 
+# Write EU GDP to a parquet file
 (
     # Remove interpolated data
     comp_eu.drop(columns=["pik_bau_i", "pik_fair_i"]).to_parquet(
@@ -335,6 +359,7 @@ if not pik_data_dir.exists():
     )
 )
 
+# Write GDP comparison to a parquet file
 gdp_comp.to_parquet(pik_data_dir / "gdp_comp.parquet")
 
 # Write to a compressed csv file

@@ -18,3 +18,19 @@ if os.environ.get("COBWOOD_DATA"):
 # For backward compatibility
 # TODO: remove when it is replaced everywhere by cobwood.data_dir
 cobwood_data_dir = data_dir
+
+
+def create_data_dir(path: str):
+    """Create small sub directory of datadir to store output
+
+    Example:
+
+        >>> import cobwood
+        >>> test_sub_dir = cobwood.create_data_dir("test")
+        >>> print(test_sub_dir)
+
+    """
+    sub_dir = data_dir / path
+    if not sub_dir.exists():
+        sub_dir.mkdir()
+    return sub_dir

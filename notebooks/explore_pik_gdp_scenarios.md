@@ -33,11 +33,9 @@ The purpose of this notebook is to explore GDP scenarios from the paper:
 
 ```python
 eu_countries = faostat.country_groups.eu_country_names
-code_continent = faostat.country_groups.df[["iso3_code", "continent"]].rename(columns={"iso3_code":"country_iso"})
 comp_eu = pandas.read_parquet(cobwood.data_dir / "pik" / "comp_eu.parquet")
 gdp_comp = (
     pandas.read_parquet(cobwood.data_dir / "pik" / "gdp_comp.parquet")
-    .merge(code_continent, on="country_iso")
 )
 
 # Reshape to long format
@@ -47,6 +45,10 @@ comp_eu_long = comp_eu.melt(
 gdp_comp_long = gdp_comp.drop(columns=["pik_bau_i", "pik_fair_i"]).melt(
       id_vars=["country_iso", "year", "country", "continent"], var_name="source", value_name="gdp"
 )
+```
+
+```python
+comp_eu.columns
 ```
 
 # Comparison plots
@@ -64,7 +66,7 @@ g = seaborn.FacetGrid(
     sharex=False,
     sharey=False,
 )  # , height=6)
-g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp", y="pik_bau", hue="country")
+g.map_dataframe(seaborn.scatterplot, x="gfpm_gdp_b2018", y="pik_bau", hue="country")
 # From https://stackoverflow.com/questions/54390054/how-to-add-a-comparison-line-to-all-plots-when-using-seaborns-facetgrid
 def const_line(*args, **kwargs):
     x = np.arange(0, 1e7, 1e6)
@@ -110,7 +112,7 @@ comp_eu_long_agg = (
     .copy()
 )
 
-selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair"]
+selected_sources = ["gfpm_gdp_b2018", "gfpm_gdp_b2021", "pik_bau", "pik_fair"]
 p = seaborn.lineplot(
     x="year",
     y="gdp_b",
@@ -122,7 +124,7 @@ plt.show()
 # plt.savefig("/tmp/comp_gdp_eu_aggregate.png")
 ```
 
-## GDP rescaled to 2017 values
+## GDP rescaled to 2017 or 2021 values
 
 ```python
 gdp_comp_long["gdp"]
@@ -130,6 +132,7 @@ gdp_comp_long["gdp"]
 
 ```python
 # With rescaled values
+
 gdp_comp_long["gdp_b"] = gdp_comp_long["gdp"] / 1e3
 g = seaborn.relplot(
     data=gdp_comp_long.query("country in @eu_countries"),
@@ -163,8 +166,11 @@ gdp_comp_long_agg_eu = (
     .copy()
 )
 
-selected_sources = ["gfpm_gdp", "pik_bau", "pik_fair",
-                    "pik_bau_adjwb2017", "pik_fair_adjwb2017", "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017",
+selected_sources = ["gfpm_gdp",
+                    "pik_bau", "pik_fair",
+                    "pik_bau_adjwb2017", "pik_fair_adjwb2017",
+                    "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017",
+                    "pik_bau_adjgfpm2021", "pik_fair_adjgfpm2021",
                     "wb_gdp_cst"]
 p = seaborn.lineplot(
     x="year",
@@ -253,17 +259,7 @@ gdp_comp.columns
 ## Shift forward by 5 years
 
 ```python
-
-
-```
-
-```python
-
-```
-
-```python
 gdp_comp
-
 ```
 
 ```python
@@ -271,7 +267,6 @@ gdp_comp
 gdp_comp["pik_fair_shift_5"] = gdp_comp.groupby("country_iso")["pik_fair_adjgfpm2017"].shift(periods=5)
 
 # Whole EU
-
 gdp_comp_long_agg_eu_2 = (
     gdp_comp
     .melt(id_vars=["country_iso", "year", "country", "continent"], var_name="source", value_name="gdp")
@@ -284,7 +279,7 @@ gdp_comp_long_agg_eu_2 = (
     .copy()
 )
 
-selected_sources = ["gfpm_gdp", "pik_bau_adjgfpm2017", "pik_fair_adjgfpm2017", "pik_fair_shift_5"]
+selected_sources = ["gfpm_gdp_b2021", "pik_bau_adjgfpm2021", "pik_fair_adjgfpm2021", "pik_fair_shift_5"]
 p = seaborn.lineplot(
     x="year",
     y="gdp",
@@ -297,11 +292,22 @@ plt.show()
 ```
 
 ```python
-(
-        gdp_comp_long_agg_eu_2
-        .query("source in @cols_plot.keys()")
-        .assign(source = lambda x: x["source"].replace(cols_plot))
-    )
+p = seaborn.lineplot(
+    x="year",
+    y="gdp",
+    hue="source",
+    data=gdp_comp_long_agg_eu_2.query("source in @selected_sources and year>=2020 and year<=2030"),
+)
+p.set(ylabel="GDP in billion USD", title="EU GDP scenarios (zoom 2020-2030)")
+plt.show()
+```
+
+```python
+# (
+#         gdp_comp_long_agg_eu_2
+#         .query("source in @cols_plot.keys()")
+#         .assign(source = lambda x: x["source"].replace(cols_plot))
+#     )
 ```
 
 ```python
