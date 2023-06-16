@@ -69,7 +69,7 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
     value_cols = cols[df.columns.str.contains("value")]
     da = xarray.DataArray(df.set_index("country")[value_cols], dims=["country", "year"])
     # Change year to an integer
-    da["year"] = da["year"].str.replace("value", "").astype(int)
+    da["year"] = da["year"].str.replace("value_", "").astype(int)
     if "unit" in df.columns:
         # Store the unit as an attribute
         da.attrs["unit"] = df["unit"].unique()[0]
@@ -370,7 +370,7 @@ class GFPMXData:
         df_wide = self.get_sheet_wide(sheet_name=sheet_name)
         # Reshape year columns to long format
         index = [x for x in df_wide.columns if not re.search("value", x)]
-        df = pandas.wide_to_long(df_wide, stubnames="value", i=index, j="year")
+        df = pandas.wide_to_long(df_wide, stubnames="value_", i=index, j="year")
         df.reset_index(inplace=True)
         # Rename the value column according to the shorter element part of the
         # file name. Note there is also an element column which we don't use

@@ -67,7 +67,7 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path):
         # Rename columns to snake case, replace all non alphanumeric characters by an underscore
         df.rename(columns=lambda x: re.sub(r"\W+", "_", str(x)).lower(), inplace=True)
         # Add "value" prefix to year columns in preparation for a reshape from wide to long
-        df.rename(columns=lambda x: re.sub(r"^(\d{4})$", r"value\1", x), inplace=True)
+        df.rename(columns=lambda x: re.sub(r"^(\d{4})$", r"value_\1", x), inplace=True)
         # Rename element and unit columns
         df.rename(columns={"unnamed_1": "element", "unnamed_2": "unit"}, inplace=True)
         # Rename the column that contains the world price elasticity of the input
