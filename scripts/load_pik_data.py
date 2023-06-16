@@ -87,8 +87,10 @@ import cobwood
 from cobwood.gfpmx_data import GFPMXData
 
 
-country_iso_codes = faostat.country_groups.df[["fao_table_name", "iso3_code"]].rename(
-    columns={"fao_table_name": "country", "iso3_code": "country_iso"}
+country_iso_codes = (
+    faostat.country_groups.df[["fao_table_name", "iso3_code"]]
+    .rename(columns={"fao_table_name": "country", "iso3_code": "country_iso"})
+    .replace("China mainland and Taiwan", "China")
 )
 
 # Requires a working version of GAMMS

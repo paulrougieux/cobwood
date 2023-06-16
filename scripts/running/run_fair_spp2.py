@@ -37,41 +37,73 @@ import cobwood
 from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_data import convert_to_2d_array
 
+#######################
+# Create GFTMX copies #
+#######################
 gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
 # Create deep copies with different GDP scenario
 # SSP2 - Bodirstky model
-gfpmpikssp2 = copy.deepcopy(gfpmxb2021)
+gfpmxpikbau = copy.deepcopy(gfpmxb2021)
 # Degrowth model, PIK FAIR GDP scenario
-gfpmpikfair = copy.deepcopy(gfpmxb2021)
+gfpmxpikfair = copy.deepcopy(gfpmxb2021)
 
-# Load GDP data, the country comes from the gfpmx country name
+#############################
+# Load and prepare GDP data #
+#############################
+# The country comes from the gfpmx country name
 # See the many merges in scripts/load_pik_data.py
 gdp_comp = pandas.read_parquet(cobwood.data_dir / "pik" / "gdp_comp.parquet")
 
-selected_sources = [
-    "gfpm_gdp_b2021",
-    "pik_bau_adjgfpm2021",
-    "pik_fair_adjgfpm2021",
-    "pik_fair_shift_5",
-]
 
-# Prepare PIK GDP so it has country, year and gdp columns
-index = ["country", "year"]
-column_names = {"pik_bau_adjgfpm2021": "gdp"}
-gdp_pik_bau = gdp_comp[index + [*column_names.keys()]].rename(columns=column_names)
-column_names = {"pik_fair_adjgfpm2021": "gdp"}
-gdp_pik_fair = (
-    gdp_comp[index + [*column_names.keys()]]
-    .rename(columns=column_names)
-    .assign(year=lambda x: x["year"] * 3)
-    .pivot(index="country", columns="year", values="gdp")
-)
+def get_gdp_wide(df: pandas.DataFrame, column_name: str, year_min: int = 1995):
+    """Transform the given GDP column into wide format for transformation into
+    a 2 dimensional data array"""
+    index = ["country", "year"]
+    return (
+        df[index + [column_name]]
+        .loc[df["year"] >= year_min]
+        .assign(year=lambda x: "value_" + x["year"].astype(str))
+        .pivot(index="country", columns="year", values=column_name)
+        .reset_index()
+    )
+
+
+pik_fair = get_gdp_wide(gdp_comp, "pik_fair_adjgfpm2021")
+pik_bau = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
+
+# 3 different forms of GDP dataset inside the GFPMX object
+# gfpmxb2021.data.get_sheet_wide("gdp")
+# gfpmxb2021.data["gdp"]
+# gfpmxb2021.gdp
 
 # The GDP added before the run is self.gdp
 # In the __init__ method, self.gdp is created from the sheet in wide format.
 # self.gdp = convert_to_2d_array(self.data.get_sheet_wide("gdp")).
-gfpmxb2021.data["gdp"]
-gfpmxb2021.data.get_sheet_wide("gdp")
-gfpmxb2021.gdp
 
-convert_to_2d_array(gdp_pik_fair)
+# Assign new GDP values to the GFTMX objects, reindex them like the existing gdp array
+# so that they get empty values for the country aggregates
+gfpmxpikbau.gdp = convert_to_2d_array(pik_bau).reindex_like(gfpmxb2021.gdp)
+gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp)
+
+# Issue with missing GDP
+selector = gfpmxpikfair.gdp.loc[:, 2022].isnull()
+print(gfpmxpikfair.gdp["country"][selector])
+
+# selector = pik_fair["country"].str.contains("ina|uyana|ntill")
+# pik_fair.loc[selector]
+# selector = gdp_comp["country"].str.contains("ina|uyana|ntill")
+# gdp_comp.loc[selector].query("year == 2020")
+# gdp_comp.query("country_iso == 'CHN'")
+
+# Set values of 'Netherlands Antilles (former)', 'French Guyana',
+# To the same as the existing GDP projections in GFPMX 2021
+selected_countries = ["Netherlands Antilles (former)", "French Guyana"]
+gfpmxpikbau.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
+gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
+
+
+#######
+# Run #
+#######
+gfpmxpikbau.run()
+gfpmxpikfair.run()

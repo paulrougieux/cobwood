@@ -17,6 +17,9 @@ import copy
 import pandas
 import cobwood
 from cobwood.gfpmx import GFPMX
+from cobwood.gfpmx_data import convert_to_2d_array
+from cobwood.gfpmx_plot import plot_ds_by_davar
+from cobwood.gfpmx_equations import compute_country_aggregates
 ```
 
 # Introduction
@@ -31,26 +34,154 @@ The purpose of this notebook is to run the SSP2 and degrowth scenarios.
 
 
 ```python
+#######################
+# Create GFTMX copies #
+#######################
 gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
+# Create deep copies with different GDP scenario
+# SSP2 - Bodirstky model
+gfpmxpikbau = copy.deepcopy(gfpmxb2021)
+# Degrowth model, PIK FAIR GDP scenario
+gfpmxpikfair = copy.deepcopy(gfpmxb2021)
 ```
 
 ```python
 # Load GDP data
-gdp_comp = (
-    pandas.read_parquet(cobwood.data_dir / "pik" / "gdp_comp.parquet")
-)
-```
+gdp_comp = pandas.read_parquet(cobwood.data_dir / "pik" / "gdp_comp.parquet")
 
-```python
-# Create a deep copy with different gdp scenario
-# SSP2 - Bodirstky model
-gfpmpikssp2 = copy.deepcopy(gfpmxb2021)
-# Degrowth model, PIK FAIR GDP scenario
-gfpmpikfair = copy.deepcopy(gfpmxb2021)
+def get_gdp_wide(df:pandas.DataFrame, column_name:str, year_min:int=1995):
+    """Transform the given GDP column into wide format for transformation into
+    a 2 dimensional data array"""
+    index = ["country", "year"]
+    return (
+        df[index + [column_name]]
+        .loc[df["year"]>=year_min]
+        .assign(year=lambda x: "value_" + x["year"].astype(str))
+        .pivot(index="country", columns="year", values=column_name)
+        .reset_index()
+    )
+pik_fair = get_gdp_wide(gdp_comp, "pik_fair_adjgfpm2021")
+pik_bau = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
+
+# Assign new GDP values to the GFTMX objects, reindex them like the existing gdp array
+# so that they get empty values for the country aggregatesgfpmxb2021
+# Convert from million USD to 1000 USD
+gfpmxpikbau.gdp = convert_to_2d_array(pik_bau).reindex_like(gfpmxb2021.gdp) * 1e3
+gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp) * 1e3
+
+
+# Set values of 'Netherlands Antilles (former)', 'French Guyana',
+# To the same as the existing GDP projections in GFPMX 2021
+selected_countries = ['Netherlands Antilles (former)', 'French Guyana']
+gfpmxpikbau.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
+gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
+
 ```
 
 # Run
 
+
+```python
+gfpmxb2021.run()
+```
+
+```python
+gfpmxpikfair.run()
+```
+
+```python
+gfpmxpikbau.run()
+```
+
+## Recompute historical aggregates
+
+```python
+# Re-compute the aggregates for the historical period 
+# There seems to be an issue in the GFPMX spreadsheet where some continents get inverted
+for year in range(1995,2022):
+    compute_country_aggregates(gfpmxb2021.indround, year)
+    compute_country_aggregates(gfpmxpikbau.indround, year)
+    compute_country_aggregates(gfpmxpikfair.indround, year)
+
+    compute_country_aggregates(gfpmxb2021.fuel, year)
+    compute_country_aggregates(gfpmxpikbau.fuel, year)
+    compute_country_aggregates(gfpmxpikfair.fuel, year)
+
+    compute_country_aggregates(gfpmxb2021.sawn, year)
+    compute_country_aggregates(gfpmxpikbau.sawn, year)
+    compute_country_aggregates(gfpmxpikfair.sawn, year)
+
+    compute_country_aggregates(gfpmxb2021.panel, year)
+    compute_country_aggregates(gfpmxpikbau.panel, year)
+    compute_country_aggregates(gfpmxpikfair.panel, year)
+
+    compute_country_aggregates(gfpmxb2021.paper, year)
+    compute_country_aggregates(gfpmxpikbau.paper, year)
+    compute_country_aggregates(gfpmxpikfair.paper, year)
+
+    compute_country_aggregates(gfpmxb2021.pulp, year)
+    compute_country_aggregates(gfpmxpikbau.pulp, year)
+    compute_country_aggregates(gfpmxpikfair.pulp, year)
+```
+
+# Plot output
+
+
+## GFPMX base 2021
+
+```python
+for ds in [gfpmxb2021.indround, gfpmxb2021.sawn, gfpmxb2021.panel, gfpmxb2021.pulp, gfpmxb2021.paper, gfpmxb2021.fuel]:
+    plot_ds_by_davar(ds)
+```
+
+## Pik BAU
+
+```python
+for ds in [gfpmxpikbau.indround, gfpmxpikbau.sawn, gfpmxpikbau.panel, gfpmxpikbau.pulp, gfpmxpikbau.paper, gfpmxpikbau.fuel]:
+    plot_ds_by_davar(ds)
+```
+
+## Pik FAIR
+
+
+```python
+for ds in [gfpmxpikfair.indround, gfpmxpikfair.sawn, gfpmxpikfair.panel, gfpmxpikfair.pulp, gfpmxpikfair.paper, gfpmxpikfair.fuel]:
+    plot_ds_by_davar(ds)
+```
+
+```python
+# GDP
+```
+
+```python
+plot_ds_by_davar(gfpmxb2021.sawn, ["gdp"], ylabel="1000 USD")
+```
+
+```python
+plot_ds_by_davar(gfpmxpikbau.sawn, ["gdp"], ylabel="GDP")
+```
+
+# Issues
+
+
+## Curve inversion issue
+
+```python
+gfpmxpikbau.indround["cons"]
+```
+
+```python
+# Mapping table
+gfpmxb2021.data.country_groups.query("region == 'EUROPE'")
+```
+
+```python
+gfpmxb2021.data.country_groups.query("region == 'SOUTH AMERICA'")
+```
+
+```python
+plot_ds_by_davar(gfpmxpikbau.indround, "cons")
+```
 
 ```python
 

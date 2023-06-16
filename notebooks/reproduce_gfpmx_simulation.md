@@ -113,14 +113,6 @@ for ds in [gfpmxb2018.indround, gfpmxb2018.sawn, gfpmxb2018.panel, gfpmxb2018.pu
 ## Destat and plots
 
 ```python
-da_vars = ["cons", "imp", "exp", "prod", "price"]
-ds = gfpmxb2021.sawn
-df = ds.loc[{"country": ~ds.c}][da_vars].to_dataframe()
-df = df.reset_index().melt(id_vars=["country", "year"])
-df.query("year==2023") 
-```
-
-```python
 for ds in [gfpmxb2021.indround, gfpmxb2021.sawn, gfpmxb2021.panel, gfpmxb2021.pulp, gfpmxb2021.paper, gfpmxb2021.fuel]:
     plot_ds_by_davar(ds)
 ```
@@ -128,6 +120,14 @@ for ds in [gfpmxb2021.indround, gfpmxb2021.sawn, gfpmxb2021.panel, gfpmxb2021.pu
 ```python
 plot_ds_by_davar(gfpmxb2021.other, ["area", "stock"], ylabel="Area in 1000ha and stock in million m3")
 
+```
+
+```python
+da_vars = ["cons", "imp", "exp", "prod", "price"]
+ds = gfpmxb2021.sawn
+df = ds.loc[{"country": ~ds.c}][da_vars].to_dataframe()
+df = df.reset_index().melt(id_vars=["country", "year"])
+df.query("year==2023") 
 ```
 
 ## EU countries only
