@@ -368,9 +368,13 @@ class GFPMXData:
 
         """
         df_wide = self.get_sheet_wide(sheet_name=sheet_name)
+        # Remove the underscore otherwise pandas.wide_to_long doesn't work
+        df_wide.rename(
+            columns=lambda x: re.sub(r"value_", "value", str(x)), inplace=True
+        )
         # Reshape year columns to long format
         index = [x for x in df_wide.columns if not re.search("value", x)]
-        df = pandas.wide_to_long(df_wide, stubnames="value_", i=index, j="year")
+        df = pandas.wide_to_long(df_wide, stubnames="value", i=index, j="year")
         df.reset_index(inplace=True)
         # Rename the value column according to the shorter element part of the
         # file name. Note there is also an element column which we don't use
