@@ -28,14 +28,16 @@ Note: in CBM, the base year is the first year of the simulation, as illustrated
   `eu_cbm_hat/cbm/dynamic.py`) which governs the start of the harvest allocation
   tool.
 
-
 """
 
+import pathlib
 import copy
 import pandas
 import cobwood
 from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_data import convert_to_2d_array
+from cobwood.gfpmx_equations import compute_country_aggregates
+from eu_cbm_hat import eu_cbm_data_dir
 
 #######################
 # Create GFTMX copies #
@@ -86,8 +88,8 @@ gfpmxpikbau.gdp = convert_to_2d_array(pik_bau).reindex_like(gfpmxb2021.gdp)
 gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp)
 
 # Issue with missing GDP
-selector = gfpmxpikfair.gdp.loc[:, 2022].isnull()
-print(gfpmxpikfair.gdp["country"][selector])
+# selector = gfpmxpikfair.gdp.loc[:, 2022].isnull()
+# print(gfpmxpikfair.gdp["country"][selector])
 
 # selector = pik_fair["country"].str.contains("ina|uyana|ntill")
 # pik_fair.loc[selector]
@@ -107,3 +109,83 @@ gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries
 #######
 gfpmxpikbau.run()
 gfpmxpikfair.run()
+
+# Re-compute the aggregates for the historical period
+# There seems to be an issue in the GFPMX spreadsheet where some continents get
+# inverted
+
+for year in range(1995, 2022):
+    compute_country_aggregates(gfpmxpikbau.indround, year)
+    compute_country_aggregates(gfpmxpikfair.indround, year)
+    compute_country_aggregates(gfpmxpikbau.fuel, year)
+    compute_country_aggregates(gfpmxpikfair.fuel, year)
+    compute_country_aggregates(gfpmxpikbau.sawn, year)
+    compute_country_aggregates(gfpmxpikfair.sawn, year)
+    compute_country_aggregates(gfpmxpikbau.panel, year)
+    compute_country_aggregates(gfpmxpikfair.panel, year)
+    compute_country_aggregates(gfpmxpikbau.paper, year)
+    compute_country_aggregates(gfpmxpikfair.paper, year)
+    compute_country_aggregates(gfpmxpikbau.pulp, year)
+    compute_country_aggregates(gfpmxpikfair.pulp, year)
+    compute_country_aggregates(gfpmxpikbau.other, year, ["area", "stock"])
+    compute_country_aggregates(gfpmxpikfair.other, year, ["area", "stock"])
+
+#############################
+# Save output data to files #
+#############################
+# gfpmxpikfair.datasets
+# A dictionary of datasets which we can use to loop or store results
+fair_dir = cobwood.create_data_dir("pikfair")
+for ds in [
+    gfpmxpikfair.indround,
+    gfpmxpikfair.sawn,
+    gfpmxpikfair.panel,
+    gfpmxpikfair.pulp,
+    gfpmxpikfair.paper,
+    gfpmxpikfair.fuel,
+    gfpmxpikfair.other,
+]:
+    # If a data array is 2 dimensional, write it to disk
+    for this_var in ds.data_vars:
+        if ds[this_var].ndim == 2:
+            df = ds[this_var].to_pandas()
+            df.rename(columns=lambda x: "value_" + str(x), inplace=True)
+            df.reset_index(inplace=True)
+            file_name = ds.product + this_var + ".csv"
+            df.to_csv(fair_dir / file_name, index=False)
+            print(file_name, "\n", df.columns[[0, 1, -1]], "\n")
+
+
+##############################
+# Save output to eu_cbm_data #
+##############################
+def da_to_csv(da, file_path, faostat_name):
+    """Data set to eu_cbm_data csv file"""
+    df = da.to_pandas()
+    df.rename(columns=lambda x: "value_" + str(x), inplace=True)
+    df.reset_index(inplace=True)
+    # Add columns
+    # faostat_name,element,unit
+    # Industrial roundwood,Production,1000m3
+    df["faostat_name"] = faostat_name
+    df["element"] = "Production"
+    df["unit"] = "1000m3"
+    df.to_csv(file_path, index=False)
+    print(file_name, "\n", df.columns[[0, 1, -1]], "\n")
+
+
+# PIK Fair
+eu_cbm_fair_dir = pathlib.Path(eu_cbm_data_dir) / "domestic_harvest" / "pikfair"
+eu_cbm_fair_dir.mkdir(exist_ok=True)
+da_to_csv(
+    gfpmxpikfair.indround["prod"],
+    eu_cbm_fair_dir / "irw_harvest.csv",
+    "Industrial roundwood",
+)
+da_to_csv(gfpmxpikfair.fuel["prod"], eu_cbm_fair_dir / "fw_harvest.csv", "Fuelwood")
+
+# PIK Bau
+eu_cbm_bau_dir = pathlib.Path(eu_cbm_data_dir) / "domestic_harvest" / "pikbau"
+eu_cbm_bau_dir.mkdir(exist_ok=True)
+da_to_csv(gfpmxpikbau.indround["prod"], eu_cbm_bau_dir / "irw_harvest.csv")
+da_to_csv(gfpmxpikbau.fuel["prod"], eu_cbm_bau_dir / "fw_harvest.csv")
