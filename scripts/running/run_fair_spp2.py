@@ -44,9 +44,9 @@ from eu_cbm_hat import eu_cbm_data_dir
 #######################
 gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
 # Create deep copies with different GDP scenario
-# SSP2 - Bodirstky model
+# BAU SSP2 GDP projections from Bodirstky et al 2022
 gfpmxpikbau = copy.deepcopy(gfpmxb2021)
-# Degrowth model, PIK FAIR GDP scenario
+# FAIR GDP projections from Bodirstky et al 2022
 gfpmxpikfair = copy.deepcopy(gfpmxb2021)
 
 #############################
@@ -107,6 +107,8 @@ gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries
 #######
 # Run #
 #######
+gfpmxpikbau.last_time_step = 2070
+gfpmxpikfair.last_time_step = 2070
 gfpmxpikbau.run()
 gfpmxpikfair.run()
 
@@ -130,9 +132,9 @@ for year in range(1995, 2022):
     compute_country_aggregates(gfpmxpikbau.other, year, ["area", "stock"])
     compute_country_aggregates(gfpmxpikfair.other, year, ["area", "stock"])
 
-#############################
-# Save output data to files #
-#############################
+############################################
+# Save output to csv files in cobwood_data #
+############################################
 # gfpmxpikfair.datasets
 # A dictionary of datasets which we can use to loop or store results
 fair_dir = cobwood.create_data_dir("pikfair")
@@ -164,13 +166,17 @@ def da_to_csv(da, file_path, faostat_name):
     df = da.to_pandas()
     df.rename(columns=lambda x: "value_" + str(x), inplace=True)
     df.reset_index(inplace=True)
-    # Add columns
-    # faostat_name,element,unit
-    # Industrial roundwood,Production,1000m3
+    # Add columns required by eu_cbm_hat
     df["faostat_name"] = faostat_name
     df["element"] = "Production"
     df["unit"] = "1000m3"
+    # Place the last 3 columns first
+    cols = list(df.columns)
+    cols = cols[-3:] + cols[:-3]
+    df = df[cols]
+    # Write to CSV
     df.to_csv(file_path, index=False)
+    print(df.head(2))
     print(file_name, "\n", df.columns[[0, 1, -1]], "\n")
 
 
@@ -187,5 +193,9 @@ da_to_csv(gfpmxpikfair.fuel["prod"], eu_cbm_fair_dir / "fw_harvest.csv", "Fuelwo
 # PIK Bau
 eu_cbm_bau_dir = pathlib.Path(eu_cbm_data_dir) / "domestic_harvest" / "pikbau"
 eu_cbm_bau_dir.mkdir(exist_ok=True)
-da_to_csv(gfpmxpikbau.indround["prod"], eu_cbm_bau_dir / "irw_harvest.csv")
-da_to_csv(gfpmxpikbau.fuel["prod"], eu_cbm_bau_dir / "fw_harvest.csv")
+da_to_csv(
+    gfpmxpikbau.indround["prod"],
+    eu_cbm_bau_dir / "irw_harvest.csv",
+    "Industrial roundwood",
+)
+da_to_csv(gfpmxpikbau.fuel["prod"], eu_cbm_bau_dir / "fw_harvest.csv", "Fuelwood")
