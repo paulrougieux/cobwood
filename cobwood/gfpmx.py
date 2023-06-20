@@ -85,7 +85,7 @@ class GFPMX:
     def __init__(self, data_dir, base_year):
         self.data_dir = cobwood.data_dir / data_dir
         self.base_year = base_year
-        self.last_time_step = 2050
+        self.last_time_step = 2070
         # Data
         self.data = GFPMXData(data_dir=data_dir)
 
