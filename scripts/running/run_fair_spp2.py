@@ -83,9 +83,10 @@ pik_bau = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
 # self.gdp = convert_to_2d_array(self.data.get_sheet_wide("gdp")).
 
 # Assign new GDP values to the GFTMX objects, reindex them like the existing gdp array
-# so that they get empty values for the country aggregates
-gfpmxpikbau.gdp = convert_to_2d_array(pik_bau).reindex_like(gfpmxb2021.gdp)
-gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp)
+# so that they get empty values for the country aggregatesgfpmxb2021
+# Convert from million USD to 1000 USD
+gfpmxpikbau.gdp = convert_to_2d_array(pik_bau).reindex_like(gfpmxb2021.gdp) * 1e3
+gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp) * 1e3
 
 # Issue with missing GDP
 # selector = gfpmxpikfair.gdp.loc[:, 2022].isnull()
@@ -177,7 +178,7 @@ def da_to_csv(da, file_path, faostat_name):
     # Write to CSV
     df.to_csv(file_path, index=False)
     print(df.head(2))
-    print(file_name, "\n", df.columns[[0, 1, -1]], "\n")
+    print(file_path, "\n", df.columns[[0, 1, -1]], "\n")
 
 
 # PIK Fair
