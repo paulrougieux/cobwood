@@ -131,7 +131,7 @@ class GFPMX:
         self.paper["gdp"] = self.gdp
 
         for this_year in range(self.base_year + 1, self.last_time_step + 1):
-            print(this_year)
+            print(f"Computing: {this_year}", end="\r")
             compute_one_time_step(
                 self.indround,
                 self.fuel,
