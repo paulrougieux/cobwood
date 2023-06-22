@@ -16,10 +16,12 @@ jupyter:
 import copy
 import pandas
 import cobwood
+import seaborn
 from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_plot import plot_ds_by_davar
 from cobwood.gfpmx_equations import compute_country_aggregates
+from biotrade.faostat import faostat
 ```
 
 # Introduction
@@ -32,6 +34,13 @@ The purpose of this notebook is to run the SSP2 and degrowth scenarios.
 
 ## Load data
 
+
+```python
+eu_countries = faostat.country_groups.eu_country_names
+
+# TODO: load output of the model runs
+
+```
 
 ```python
 #######################
@@ -141,24 +150,49 @@ for ds in [gfpmxpikbau.indround, gfpmxpikbau.sawn, gfpmxpikbau.panel, gfpmxpikba
     plot_ds_by_davar(ds)
 ```
 
+### EU
+
+```python
+selector = gfpmxpikbau.indround["prod"]["country"].isin(faostat.country_groups.eu_country_names)
+df = (gfpmxpikbau.indround["prod"]
+      .loc[selector]
+      .to_pandas()
+      .reset_index()
+      .melt(id_vars='country', var_name='year', value_name='prod')
+     )
+
+seaborn.relplot(data=df, kind="line", col="country", col_wrap=6, x='year', y='prod', facet_kws={'sharey': False})
+```
+
 ## Pik FAIR
 
+
+```python
+for ds in [gfpmxpikfair.indround, gfpmxpikfair.sawn, gfpmxpikfair.panel, gfpmxpikfair.pulp, gfpmxpikfair.paper, gfpmxpikfair.fuel]:
+    print(type(ds))
+```
 
 ```python
 for ds in [gfpmxpikfair.indround, gfpmxpikfair.sawn, gfpmxpikfair.panel, gfpmxpikfair.pulp, gfpmxpikfair.paper, gfpmxpikfair.fuel]:
     plot_ds_by_davar(ds)
 ```
 
+### EU
+
 ```python
-# GDP
+selector = gfpmxpikfair.indround["prod"]["country"].isin(faostat.country_groups.eu_country_names)
+df = (gfpmxpikfair.indround["prod"]
+      .loc[selector]
+      .to_pandas()
+      .reset_index()
+      .melt(id_vars='country', var_name='year', value_name='prod')
+     )
+
+seaborn.relplot(data=df, kind="line", col="country", col_wrap=6, x='year', y='prod', facet_kws={'sharey': False})
 ```
 
 ```python
-plot_ds_by_davar(gfpmxb2021.sawn, ["gdp"], ylabel="1000 USD")
-```
-
-```python
-plot_ds_by_davar(gfpmxpikbau.sawn, ["gdp"], ylabel="GDP")
+gfpmxpikfair.indround["prod"].loc[{"country":"Austria"}].to_pandas()
 ```
 
 # Issues
@@ -166,17 +200,15 @@ plot_ds_by_davar(gfpmxpikbau.sawn, ["gdp"], ylabel="GDP")
 
 ## Curve inversion issue
 
+- Issue was fixed by recomputing aggregates.
+
 ```python
-gfpmxpikbau.indround["cons"]
+# Mapping tables between continents and countries
+# gfpmxb2021.data.country_groups.query("region == 'EUROPE'")
 ```
 
 ```python
-# Mapping table
-gfpmxb2021.data.country_groups.query("region == 'EUROPE'")
-```
-
-```python
-gfpmxb2021.data.country_groups.query("region == 'SOUTH AMERICA'")
+# gfpmxb2021.data.country_groups.query("region == 'SOUTH AMERICA'")
 ```
 
 ```python
