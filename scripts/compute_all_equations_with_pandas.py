@@ -59,7 +59,7 @@ from cobwood.gfpmx_qaqc import (
 )
 
 # Load data
-gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
 indround_agg = gfpmx_data.get_agg_rows("indround")
 pulp_agg = gfpmx_data.get_agg_rows("pulp")
 pulp = gfpmx_data.get_country_rows("pulp", ["gdp"])
