@@ -577,6 +577,8 @@ class GFPMXData:
         ds.attrs["product"] = product
         # Load all sheets for this product
         for this_sheet in sheets.index:
+            if this_sheet in ["author", "names", "notes", "worldprice"]:
+                continue
             try:
                 df = self.get_sheet_wide(this_sheet)
             except pandas.errors.EmptyDataError:

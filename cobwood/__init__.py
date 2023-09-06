@@ -21,7 +21,7 @@ cobwood_data_dir = data_dir
 
 
 def create_data_dir(path: str):
-    """Create small sub directory of datadir to store output
+    """Create a sub directory of `data_dir`
 
     Example:
 
