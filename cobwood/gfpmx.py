@@ -2,7 +2,6 @@
 
 """
 
-import cobwood
 from cobwood.gfpmx_data import compare_to_ref
 from cobwood.gfpmx_data import GFPMXData
 from cobwood.gfpmx_data import remove_after_base_year_and_copy
@@ -23,7 +22,7 @@ class GFPMX:
 
         >>> from cobwood.gfpmx import GFPMX
         >>> # Base 2018
-        >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+        >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018, scenario_name="test")
         >>> # Run and stop when the result diverges from the reference spreadsheet
         >>> gfpmxb2018.run(compare=True)
         >>> # Run and continue when the result diverges (just print the missmatch message)
@@ -62,11 +61,11 @@ class GFPMX:
         >>> print(gfpmxb2018.gdp)
     """
 
-    def __init__(self, data_dir, base_year):
-        self.input_data_dir = cobwood.data_dir / data_dir
+    def __init__(self, data_dir, base_year, scenario_name):
+        self.input_data = GFPMXData(data_dir=data_dir)
         self.base_year = base_year
         self.last_time_step = 2070
-        self.input_data = GFPMXData(data_dir=data_dir)
+        self.scenario_name = scenario_name
         self.products = ["indround", "fuel", "sawn", "panel", "pulp", "paper"]
 
         # Load reference data
@@ -139,3 +138,12 @@ class GFPMX:
                     rtol=rtol,
                     strict=strict,
                 )
+
+    def write_datasets_to_netcdf(self):
+        """Write datasets to netcdf files
+
+        This should be performed after the simulation run, to
+        preserve the output of a given scenario"""
+
+        # for product in self.products + ["other"]:
+        #     self[product]

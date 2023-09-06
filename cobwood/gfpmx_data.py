@@ -254,7 +254,7 @@ class GFPMXData:
         return self.get_sheet_long(sheet_name)
 
     def __init__(self, data_dir):
-        self.data_dir = cobwood.data_dir / data_dir
+        self.data_dir = cobwood.data_dir / "gfpmx_input" / data_dir
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
         self.index = ["year", "country"]
