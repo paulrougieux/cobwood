@@ -50,10 +50,19 @@ def extract_world_price_parameter(df, col_name, contains, var_name):
 
 
 def gfpmx_spreadsheet_to_csv(spreadsheet_path):
-    """Convert GFTMX data to csv files and store them inside the cobweb_data directory"""
+    """Convert GFTMX data to csv files and store them inside the cobweb_data directory
+
+    Usage:
+
+        >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+        >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+        >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
+        >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
+
+    """
     # Output folder
     gfpmx_data_dir = re.sub(r"\W+", "_", Path(spreadsheet_path).stem).lower()
-    gfpmx_data_dir = cobwood.data_dir / gfpmx_data_dir
+    gfpmx_data_dir = cobwood.data_dir / "gfpmx_input" / gfpmx_data_dir
     if not gfpmx_data_dir.exists():
         gfpmx_data_dir.mkdir(parents=True)
     print(f"\nLoad the Excel file {spreadsheet_path} in a dictionary of data frames.")
@@ -97,7 +106,6 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path):
 
         # This applies to product sheets, which have a "faostat_name" column
         if "faostat_name" in df.columns:
-
             # Harmonize product names
             if df["faostat_name"].unique().tolist() == ["Sawnwood"]:
                 df["faostat_name"] = "Sawnwood+sleepers"
