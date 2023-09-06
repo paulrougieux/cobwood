@@ -12,59 +12,54 @@ from cobwood.gfpmx_equations import compute_one_time_step
 
 class GFPMX:
     """
-     GFPMX model simulation object.
+    GFPMX model simulation object.
 
-     - Reads data from the GFPMXData object
-     - Runs the model
-     - Saves the model output in NETCDF files
+    - Reads data from the GFPMXData object
+    - Runs the model
+    - Saves the model output in NETCDF files
 
-     Run with xarray and compare to the reference dataset for each available model
-     version (with different base years)
+    Run with xarray and compare to the reference dataset for each available model
+    version (with different base years)
 
-         >>> from cobwood.gfpmx import GFPMX
-         >>> # Base 2018
-         >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
-         >>> # Run and stop when the result diverges from the reference spreadsheet
-         >>> gfpmxb2018.run(compare=True)
-         >>> # Run and continue when the result diverges (just print the missmatch message)
-         >>> gfpmxb2018.run(compare=True, strict=False)
-         >>> # Just run, without comparison (default is compare=False)
-         >>> gfpmxb2021.run()
-         >>> print(gfpmxb2018.indround)
-         >>> # Base 2020
-         >>> gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
-         >>> gfpmxb2020.run_and_compare_to_ref() # Fails
-         >>> # Base 2021
-         >>> gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
-         >>> gfpmxb2021.run_and_compare_to_ref()
+        >>> from cobwood.gfpmx import GFPMX
+        >>> # Base 2018
+        >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+        >>> # Run and stop when the result diverges from the reference spreadsheet
+        >>> gfpmxb2018.run(compare=True)
+        >>> # Run and continue when the result diverges (just print the missmatch message)
+        >>> gfpmxb2018.run(compare=True, strict=False)
+        >>> # Just run, without comparison (default is compare=False)
+        >>> gfpmxb2021.run()
+        >>> print(gfpmxb2018.indround)
+        >>> # Base 2020
+        >>> gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
+        >>> gfpmxb2020.run_and_compare_to_ref() # Fails
+        >>> # Base 2021
+        >>> gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
+        >>> gfpmxb2021.run_and_compare_to_ref()
 
-     You can debug data issues by creating the data object only as follows:
+    You can debug data issues by creating the data object only as follows:
 
-         >>> from cobwood.gfpmx_data import GFPMXData
-         >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+        >>> from cobwood.gfpmx_data import GFPMXData
+        >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
 
-     You can debug equations for the different model versions as follows:
+    You can debug equations for the different model versions as follows:
 
-         >>> from cobwood.gfpmx_equations import world_price
-         >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
+        >>> from cobwood.gfpmx_equations import world_price
+        >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
 
-      You will then be able to load Xarray datasets with the
-     `convert_sheets_to_dataset()` method:
+     You will then be able to load Xarray datasets with the
+    `convert_sheets_to_dataset()` method:
 
-         >>> from cobwood.gfpmx_data import GFPMXData
-         >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
-         >>> print(gfpmxb2018.other_ref)
-         >>> print(gfpmxb2018.indround_ref)
-         >>> print(gfpmxb2018.sawn_ref)
-         >>> print(gfpmxb2018.panel_ref)
-         >>> print(gfpmxb2018.pulp_ref)
-         >>> print(gfpmxb2018.paper_ref)
-         >>> print(gfpmxb2018.gdp)
-
-    Dynamic Attributes:
-         sawn: Sawnwood data
-         fuel: Fuelwood data
-
+        >>> from cobwood.gfpmx_data import GFPMXData
+        >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+        >>> print(gfpmxb2018.other_ref)
+        >>> print(gfpmxb2018.indround_ref)
+        >>> print(gfpmxb2018.sawn_ref)
+        >>> print(gfpmxb2018.panel_ref)
+        >>> print(gfpmxb2018.pulp_ref)
+        >>> print(gfpmxb2018.paper_ref)
+        >>> print(gfpmxb2018.gdp)
     """
 
     def __init__(self, data_dir, base_year):
