@@ -150,7 +150,7 @@ for ds in [gfpmxpikbau.indround, gfpmxpikbau.sawn, gfpmxpikbau.panel, gfpmxpikba
     plot_ds_by_davar(ds)
 ```
 
-### EU
+### EU countries
 
 ```python
 selector = gfpmxpikbau.indround["prod"]["country"].isin(faostat.country_groups.eu_country_names)
@@ -169,15 +169,10 @@ seaborn.relplot(data=df, kind="line", col="country", col_wrap=6, x='year', y='pr
 
 ```python
 for ds in [gfpmxpikfair.indround, gfpmxpikfair.sawn, gfpmxpikfair.panel, gfpmxpikfair.pulp, gfpmxpikfair.paper, gfpmxpikfair.fuel]:
-    print(type(ds))
-```
-
-```python
-for ds in [gfpmxpikfair.indround, gfpmxpikfair.sawn, gfpmxpikfair.panel, gfpmxpikfair.pulp, gfpmxpikfair.paper, gfpmxpikfair.fuel]:
     plot_ds_by_davar(ds)
 ```
 
-### EU
+### EU Countries
 
 ```python
 selector = gfpmxpikfair.indround["prod"]["country"].isin(faostat.country_groups.eu_country_names)
@@ -197,6 +192,69 @@ gfpmxpikfair.indround["prod"].loc[{"country":"Austria"}].to_pandas()
 
 # Issues
 
+
+## France
+
+
+
+### Pik bau
+
+```python
+for ds in [gfpmxpikbau.indround, gfpmxpikbau.fuel]:
+    plot_ds_by_davar(ds, countries=["France", "Greece", "Germany"])
+```
+
+### Pik Fair
+
+```python
+for ds in [gfpmxpikfair.indround, gfpmxpikfair.fuel]:
+    plot_ds_by_davar(ds, countries=["France", "Greece", "Germany"])
+```
+
+```python
+def plot_ds_by_country(ds, countries):
+    """Plot one facet per country"""
+    ylabel = "Quantity in 1000 m3"
+    da_vars = ["cons", "imp", "exp", "prod"]
+    df = ds.loc[{"country": countries}][da_vars].to_dataframe()
+    df = df.reset_index().melt(id_vars=["country", "year"])
+    g = seaborn.relplot(
+      data=df,
+      x="year",
+      y="value",
+      col="country",
+      hue="variable",
+      kind="line",
+      col_wrap=5,
+      height=3,
+      facet_kws={"sharey": False, "sharex": False},
+    )
+    g.set(ylim=(0, None))
+    g.fig.supylabel(ylabel)
+    g.fig.suptitle(ds.product)
+    g.fig.subplots_adjust(left=0.09, top=0.85)
+    return g
+
+plot_ds_by_country(gfpmxpikfair.indround, ["France", "Germany", "Greece"])
+```
+
+```python
+plot_ds_by_country(gfpmxpikfair.fuel, ["France", "Germany", "Greece"])
+```
+
+```python
+gfpmxpikfair.fuel.cons_gdp_elasticity.loc[{"country":["Germany", "Italy", "France"]}]
+```
+
+```python
+gfpmxpikbau.fuel.cons_gdp_elasticity.loc[{"country":["Germany", "Italy", "France"]}]
+```
+
+## Greece
+
+```python
+
+```
 
 ## Curve inversion issue
 
