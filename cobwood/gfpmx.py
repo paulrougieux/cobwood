@@ -72,15 +72,15 @@ class GFPMX:
         self.base_year = base_year
         self.last_time_step = 2070
         self.input_data = GFPMXData(data_dir=data_dir)
-        self.products = ["other", "indround", "fuel", "sawn", "panel", "pulp", "paper"]
+        self.products = ["indround", "fuel", "sawn", "panel", "pulp", "paper"]
 
         # Load reference data
-        for product in self.products:
+        for product in self.products + ["other"]:
             self[product + "_ref"] = self.input_data.convert_sheets_to_dataset(product)
         self["gdp"] = convert_to_2d_array(self.input_data.get_sheet_wide("gdp"))
 
         # Keep only data before the base year
-        for product in self.products:
+        for product in self.products + ["other"]:
             self[product] = remove_after_base_year_and_copy(
                 self[product + "_ref"], self.base_year
             )
@@ -127,54 +127,15 @@ class GFPMX:
             )
             if compare:
                 ciepp_vars = ["cons", "imp", "exp", "prod", "price"]
-                compare_to_ref(
-                    self.sawn,
-                    self.sawn_ref,
-                    ciepp_vars,
-                    this_year,
-                    rtol=rtol,
-                    strict=strict,
-                )
-                compare_to_ref(
-                    self.panel,
-                    self.panel_ref,
-                    ciepp_vars,
-                    this_year,
-                    rtol=rtol,
-                    strict=strict,
-                )
-                compare_to_ref(
-                    self.paper,
-                    self.paper_ref,
-                    ciepp_vars,
-                    this_year,
-                    rtol=rtol,
-                    strict=strict,
-                )
-                compare_to_ref(
-                    self.pulp,
-                    self.pulp_ref,
-                    ciepp_vars,
-                    this_year,
-                    rtol=rtol,
-                    strict=strict,
-                )
-                compare_to_ref(
-                    self.indround,
-                    self.indround_ref,
-                    ciepp_vars,
-                    this_year,
-                    rtol=rtol,
-                    strict=strict,
-                )
-                compare_to_ref(
-                    self.fuel,
-                    self.fuel_ref,
-                    ciepp_vars,
-                    this_year,
-                    rtol=rtol,
-                    strict=strict,
-                )
+                for product in self.products:
+                    compare_to_ref(
+                        self[product],
+                        self[product + "_ref"],
+                        ciepp_vars,
+                        this_year,
+                        rtol=rtol,
+                        strict=strict,
+                    )
                 compare_to_ref(
                     self.other,
                     self.other_ref,
