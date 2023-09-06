@@ -1,47 +1,4 @@
-"""Run the GFPMX model
-
-Run with xarray and compare to the reference dataset for each available model
-version (with different base years)
-
-    >>> from cobwood.gfpmx import GFPMX
-    >>> # Base 2018
-    >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
-    >>> # Run and stop when the result diverges from the reference spreadsheet
-    >>> gfpmxb2018.run(compare=True)
-    >>> # Run and continue when the result diverges (just print the missmatch message)
-    >>> gfpmxb2018.run(compare=True, strict=False)
-    >>> # Just run, without comparison (default is compare=False)
-    >>> gfpmxb2021.run()
-    >>> print(gfpmxb2018.indround)
-    >>> # Base 2020
-    >>> gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
-    >>> gfpmxb2020.run_and_compare_to_ref()
-    >>> # Base 2021
-    >>> gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
-    >>> gfpmxb2021.run_and_compare_to_ref()
-
-You can debug data issues by creating the data object only as follows:
-
-    >>> from cobwood.gfpmx_data import GFPMXData
-    >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
-
-You can debug equations for the different model versions as follows:
-
-    >>> from cobwood.gfpmx_equations import world_price
-    >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
-
- You will then be able to load Xarray datasets with the
-`convert_sheets_to_dataset()` method:
-
-    >>> from cobwood.gfpmx_data import GFPMXData
-    >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
-    >>> print(gfpmxb2018.other_ref)
-    >>> print(gfpmxb2018.indround_ref)
-    >>> print(gfpmxb2018.sawn_ref)
-    >>> print(gfpmxb2018.panel_ref)
-    >>> print(gfpmxb2018.pulp_ref)
-    >>> print(gfpmxb2018.paper_ref)
-    >>> print(gfpmxb2018.gdp)
+"""Run the GFPMX model and store output data
 
 """
 
@@ -55,60 +12,86 @@ from cobwood.gfpmx_equations import compute_one_time_step
 
 class GFPMX:
     """
-    Read data from the GFTMX data set.
+     GFPMX model simulation object.
 
-    The GFTMX dataset was converted to csv files one for each sheet in the
-    original Excel Spreadsheet. This singleton gives access to each file.
+     - Reads data from the GFPMXData object
+     - Runs the model
+     - Saves the model output in NETCDF files
 
-    Load sawnwood consumption data in long format:
+     Run with xarray and compare to the reference dataset for each available model
+     version (with different base years)
 
-    :param data_dir Location of the csv files
-    :param base_year Simulation base year i.e. last year of historical data
-           available in the spreadsheet
+         >>> from cobwood.gfpmx import GFPMX
+         >>> # Base 2018
+         >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+         >>> # Run and stop when the result diverges from the reference spreadsheet
+         >>> gfpmxb2018.run(compare=True)
+         >>> # Run and continue when the result diverges (just print the missmatch message)
+         >>> gfpmxb2018.run(compare=True, strict=False)
+         >>> # Just run, without comparison (default is compare=False)
+         >>> gfpmxb2021.run()
+         >>> print(gfpmxb2018.indround)
+         >>> # Base 2020
+         >>> gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
+         >>> gfpmxb2020.run_and_compare_to_ref() # Fails
+         >>> # Base 2021
+         >>> gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
+         >>> gfpmxb2021.run_and_compare_to_ref()
 
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year = 2018)
-        >>> swd_cons = gfpmx_data['sawncons']
-        >>> swd_cons
+     You can debug data issues by creating the data object only as follows:
 
-    The GFPMX dataset is useful to:
+         >>> from cobwood.gfpmx_data import GFPMXData
+         >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
 
-        1. Verify the reproducibility of results given in the spreadsheet
+     You can debug equations for the different model versions as follows:
 
-        2. Reuse elasticities, tariffs, constants and other coefficients that cannot be
-           estimated easily
+         >>> from cobwood.gfpmx_equations import world_price
+         >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
 
-    See also the script that moves data from the original Excel spreadsheet to CSV files:
-    `scripts/gfpmx_spreadsheet_to_csv.py`
+      You will then be able to load Xarray datasets with the
+     `convert_sheets_to_dataset()` method:
+
+         >>> from cobwood.gfpmx_data import GFPMXData
+         >>> gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+         >>> print(gfpmxb2018.other_ref)
+         >>> print(gfpmxb2018.indround_ref)
+         >>> print(gfpmxb2018.sawn_ref)
+         >>> print(gfpmxb2018.panel_ref)
+         >>> print(gfpmxb2018.pulp_ref)
+         >>> print(gfpmxb2018.paper_ref)
+         >>> print(gfpmxb2018.gdp)
+
+    Dynamic Attributes:
+         sawn: Sawnwood data
+         fuel: Fuelwood data
+
     """
 
     def __init__(self, data_dir, base_year):
-        self.data_dir = cobwood.data_dir / data_dir
+        self.input_data_dir = cobwood.data_dir / data_dir
         self.base_year = base_year
         self.last_time_step = 2070
-        # Data
-        self.data = GFPMXData(data_dir=data_dir)
+        self.input_data = GFPMXData(data_dir=data_dir)
+        self.products = ["other", "indround", "fuel", "sawn", "panel", "pulp", "paper"]
 
         # Load reference data
-        self.other_ref = self.data.convert_sheets_to_dataset("other")
-        self.indround_ref = self.data.convert_sheets_to_dataset("indround")
-        self.fuel_ref = self.data.convert_sheets_to_dataset("fuel")
-        self.sawn_ref = self.data.convert_sheets_to_dataset("sawn")
-        self.panel_ref = self.data.convert_sheets_to_dataset("panel")
-        self.pulp_ref = self.data.convert_sheets_to_dataset("pulp")
-        self.paper_ref = self.data.convert_sheets_to_dataset("paper")
-        self.gdp = convert_to_2d_array(self.data.get_sheet_wide("gdp"))
+        for product in self.products:
+            self[product + "_ref"] = self.input_data.convert_sheets_to_dataset(product)
+        self["gdp"] = convert_to_2d_array(self.input_data.get_sheet_wide("gdp"))
 
         # Keep only data before the base year
-        self.other = remove_after_base_year_and_copy(self.other_ref, self.base_year)
-        self.fuel = remove_after_base_year_and_copy(self.fuel_ref, self.base_year)
-        self.indround = remove_after_base_year_and_copy(
-            self.indround_ref, self.base_year
-        )
-        self.sawn = remove_after_base_year_and_copy(self.sawn_ref, self.base_year)
-        self.panel = remove_after_base_year_and_copy(self.panel_ref, self.base_year)
-        self.pulp = remove_after_base_year_and_copy(self.pulp_ref, self.base_year)
-        self.paper = remove_after_base_year_and_copy(self.paper_ref, self.base_year)
+        for product in self.products:
+            self[product] = remove_after_base_year_and_copy(
+                self[product + "_ref"], self.base_year
+            )
+
+    def __getitem__(self, key):
+        """Get a dataset from the data dictionary"""
+        return getattr(self, key, None)
+
+    def __setitem__(self, key, value):
+        """Set a dataset from the data dictionary"""
+        setattr(self, key, value)
 
     def run_and_compare_to_ref(self, rtol: float = None):
         """Takes a gpfmx_data object, remove data after the base year
