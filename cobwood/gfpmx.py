@@ -24,7 +24,7 @@ class GFPMX:
 
         >>> from cobwood.gfpmx import GFPMX
         >>> # Base 2018
-        >>> gfpmxb2018 = GFPMX(input_data_dir="gfpmx_8_6_2021", base_year=2018, scenario_name="base_2018")
+        >>> gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018, scenario_name="base_2018")
         >>> # Run and stop when the result diverges from the reference spreadsheet
         >>> gfpmxb2018.run(compare=True)
         >>> # Run and continue when the result diverges (just print the missmatch message)
@@ -33,11 +33,11 @@ class GFPMX:
         >>> gfpmxb2021.run()
         >>> print(gfpmxb2018.indround)
         >>> # Base 2020
-        >>> gfpmxb2020 = GFPMX(input_data_dir="gfpmx_base2020", base_year=2020, scenario_name="base_2020")
+        >>> gfpmxb2020 = GFPMX(input_dir="gfpmx_base2020", base_year=2020, scenario_name="base_2020")
         >>> gfpmxb2020.run_and_compare_to_ref() # Fails
         >>> # Base 2021
-        >>> gfpmxb2021 = GFPMX(input_data_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021")
-        >>> gfpmxb2021 = GFPMX(input_data_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True)
+        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021")
+        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True)
         >>> gfpmxb2021.run_and_compare_to_ref()
         >>> gfpmxb2021.run()
 
@@ -55,7 +55,7 @@ class GFPMX:
     `convert_sheets_to_dataset()` method:
 
         >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmxb2018 = GFPMX(input_data_dir="gfpmx_8_6_2021", base_year=2018)
+        >>> gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018)
         >>> print(gfpmxb2018.other_ref)
         >>> print(gfpmxb2018.indround_ref)
         >>> print(gfpmxb2018.sawn_ref)
@@ -65,8 +65,8 @@ class GFPMX:
         >>> print(gfpmxb2018.gdp)
     """
 
-    def __init__(self, input_data_dir, base_year, scenario_name, rerun=False):
-        self.input_data = GFPMXData(data_dir=input_data_dir)
+    def __init__(self, input_dir, base_year, scenario_name, rerun=False):
+        self.input_data = GFPMXData(data_dir=input_dir)
         self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario_name
         self.combined_netcdf_file_path = self.output_dir / "combined_datasets.nc"
         self.base_year = base_year
