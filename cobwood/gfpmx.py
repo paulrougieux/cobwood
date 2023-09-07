@@ -68,7 +68,7 @@ class GFPMX:
     def __init__(self, input_data_dir, base_year, scenario_name, rerun=False):
         self.input_data = GFPMXData(data_dir=input_data_dir)
         self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario_name
-        self.combined_netcdf_file_path = self.output_dir / "datasets.nc"
+        self.combined_netcdf_file_path = self.output_dir / "combined_datasets.nc"
         self.base_year = base_year
         self.last_time_step = 2070
         self.scenario_name = scenario_name
@@ -175,7 +175,7 @@ class GFPMX:
         datasets_to_combine = []
         attributes_dict = {}
 
-        for product in self.products + ["other"]:
+        for product in self.products:
             # Assign a new coordinate 'product' to each Dataset
             ds = self[product].assign_coords(product=product)
             # Expand dimensions to include 'product'
@@ -192,6 +192,9 @@ class GFPMX:
 
         # Save combined Dataset to NetCDF
         combined_ds.to_netcdf(self.combined_netcdf_file_path)
+
+        # Save other dataset to NETCDF
+        self.other.to_netcdf(self.output_dir / "other.nc")
 
     def read_datasets_from_netcdf(self):
         """Read datasets from a single netcdf file and populate GFPMX object attributes.
@@ -211,9 +214,12 @@ class GFPMX:
         )
         attributes_dict = json.loads(attributes_json_str)
 
-        for product in self.products + ["other"]:
+        for product in self.products:
             # Select data corresponding to each product and drop 'product' coordinate
             ds = combined_ds.sel(product=product).drop("product")
             # Restore attributes
             ds.attrs = attributes_dict.get(product, {})
             self[product] = ds
+
+        # Read the other dataset that doesn't have a product dimension
+        self["other"] = xarray.open_dataset(self.output_dir / "other.nc")
