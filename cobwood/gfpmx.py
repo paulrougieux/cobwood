@@ -1,6 +1,7 @@
 """Run the GFPMX model and store output data
 
 """
+import json
 import xarray
 import cobwood
 from cobwood.gfpmx_data import compare_to_ref
@@ -67,6 +68,7 @@ class GFPMX:
     def __init__(self, input_data_dir, base_year, scenario_name, rerun=False):
         self.input_data = GFPMXData(data_dir=input_data_dir)
         self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario_name
+        self.combined_netcdf_file_path = self.output_dir / "datasets.nc"
         self.base_year = base_year
         self.last_time_step = 2070
         self.scenario_name = scenario_name
@@ -83,9 +85,13 @@ class GFPMX:
             print(f"Loading simulation output from netcdf files in {self.output_dir}.")
             self.read_datasets_from_netcdf()
         else:
-            # Keep only data before the base year
-            msg = f"Reset input data to base year {self.base_year}"
-            msg += "before simulation start."
+            msg = ""
+            # If asked to rerun this message should not appear
+            if not rerun:
+                msg = "There is no output from a previous run for this scenario "
+                msg += f"'{self.scenario_name}'.\n"
+            msg += "Load input data and reset time series to base year "
+            msg += f"{self.base_year} before simulation start."
             print(msg)
             for product in self.products + ["other"]:
                 self[product] = remove_after_base_year_and_copy(
@@ -154,26 +160,60 @@ class GFPMX:
         self.write_datasets_to_netcdf()
 
     def write_datasets_to_netcdf(self):
-        """Write datasets to netcdf files
+        """Write all datasets to a single netcdf file with an extra 'product'
+        dimension.
 
-        This should be performed after the simulation run, to
-        preserve the output of a given scenario"""
+        This should be performed after the simulation run, to preserve the
+        output of a given scenario. The GFPMX class contains one dataset for
+        each product. This method combines them into one combined dataset with
+        a new product dimension. It then saves that combined dataset to a
+        NetCDF file.
+        """
         if not self.output_dir.exists():
             self.output_dir.mkdir(parents=True)
+
+        datasets_to_combine = []
+        attributes_dict = {}
+
         for product in self.products + ["other"]:
-            self[product].to_netcdf(self.output_dir / f"{product}.nc")
+            # Assign a new coordinate 'product' to each Dataset
+            ds = self[product].assign_coords(product=product)
+            # Expand dimensions to include 'product'
+            ds = ds.expand_dims("product")
+            datasets_to_combine.append(ds)
+            # Save attributes
+            attributes_dict[product] = ds.attrs
+
+        # Concatenate along the new 'product' dimension
+        combined_ds = xarray.concat(datasets_to_combine, dim="product")
+        # Store attributes as a global attribute in the combined dataset
+        attributes_json_str = json.dumps(attributes_dict)
+        combined_ds.attrs["individual_dataset_attributes"] = attributes_json_str
+
+        # Save combined Dataset to NetCDF
+        combined_ds.to_netcdf(self.combined_netcdf_file_path)
 
     def read_datasets_from_netcdf(self):
-        """Read datasets from netcdf files and populate GFPMX object attributes.
+        """Read datasets from a single netcdf file and populate GFPMX object attributes.
 
-        This should be performed to restore the GFPMX object from saved scenarios."""
-        if not self.output_dir.exists():
+        This should be performed to restore the GFPMX object from saved scenarios.
+        """
+        if not self.combined_netcdf_file_path.exists():
             raise FileNotFoundError(
-                f"Output directory {self.output_dir} does not exist."
+                f"File {self.combined_netcdf_file_path} does not exist."
             )
 
+        # Read the combined dataset from the NetCDF file
+        combined_ds = xarray.open_dataset(self.combined_netcdf_file_path)
+        # Retrieve stored attributes and deserialize from JSON string
+        attributes_json_str = combined_ds.attrs.get(
+            "individual_dataset_attributes", "{}"
+        )
+        attributes_dict = json.loads(attributes_json_str)
+
         for product in self.products + ["other"]:
-            file_path = self.output_dir / f"{product}.nc"
-            if not file_path.exists():
-                raise FileNotFoundError(f"File {file_path} does not exist.")
-            self[product] = xarray.open_dataset(file_path)
+            # Select data corresponding to each product and drop 'product' coordinate
+            ds = combined_ds.sel(product=product).drop("product")
+            # Restore attributes
+            ds.attrs = attributes_dict.get(product, {})
+            self[product] = ds
