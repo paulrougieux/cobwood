@@ -154,7 +154,7 @@ gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries
 # The ISO 3 codes are present in the PIK csv files, why do they get dropped?
 
 
-# Assign fuelwood elasticities 1 scenario the same GDP as the other fair and bau
+# Assign fuelwood elasticities 1 scenarios the same GDP as the other fair and bau
 gfpmxpikbau_fel1.gdp = gfpmxpikbau.gdp
 gfpmxpikfair_fel1.gdp = gfpmxpikfair.gdp
 
@@ -164,6 +164,31 @@ gfpmxpikfair_fel1.gdp = gfpmxpikfair.gdp
 # Change fuel wood demand elasticities to 1
 gfpmxpikfair_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikfair_fel1.fuel.c] = 1
 gfpmxpikbau_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikbau_fel1.fuel.c] = 1
+
+
+def cons_constant(ds, t):
+    """Compute back the constant given the historical consumption"""
+    return ds["cons"].loc[ds.c, t] / (
+        pow(ds["price"].loc[ds.c, t - 1], ds["cons_price_elasticity"])
+        * pow(ds["gdp"].loc[ds.c, t], ds["cons_gdp_elasticity"])
+    )
+
+
+# Add GDP projections to secondary products datasets.
+gfpmxpikfair_fel1.fuel["gdp"] = gfpmxpikfair_fel1.gdp
+gfpmxpikbau_fel1.fuel["gdp"] = gfpmxpikbau_fel1.gdp
+
+# Calibrate the constant so that it reproduces the value in 2021
+gfpmxpikfair_fel1.fuel["cons_constant"].loc[gfpmxpikfair_fel1.fuel.c] = cons_constant(
+    gfpmxpikfair_fel1.fuel, 2021
+)
+gfpmxpikbau_fel1.fuel["cons_constant"].loc[gfpmxpikbau_fel1.fuel.c] = cons_constant(
+    gfpmxpikbau_fel1.fuel, 2021
+)
+
+# gfpmxpikfair_fel1.fuel["cons_constant"].to_pandas().reset_index().query("country in ['Germany','France']")
+# cons_constant(gfpmxpikfair_fel1.fuel,2021).to_pandas().reset_index().query("country in ['Germany','France']")
+
 
 #######
 # Run #
