@@ -328,7 +328,7 @@ gdp_comp_long_agg_eu_2 = (
     )
     .query("country in @eu_countries")
     .groupby(["year", "source"])
-    .agg(sum)
+    .agg("sum")
     .reset_index()
     # TODO: fix this in a more elegant way
     .query("gdp>0.1")
