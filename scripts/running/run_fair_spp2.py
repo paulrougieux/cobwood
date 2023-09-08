@@ -70,6 +70,20 @@ gfpmxpikbau_fel1 = GFPMX(
     input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikbau_fel1", rerun=True
 )
 
+# Re-compute the aggregates for the historical period
+# There seems to be an issue in the GFPMX spreadsheet where some continents get
+# inverted
+for model in [
+    gfpmxb2021,
+    gfpmxpikbau,
+    gfpmxpikfair,
+    gfpmxpikbau_fel1,
+    gfpmxpikfair_fel1,
+]:
+    for this_product in model.products:
+        for year in range(1995, 2022):
+            compute_country_aggregates(model[this_product], year)
+            compute_country_aggregates(model.other, year, ["area", "stock"])
 
 # TODO: Remove, deep copies are probably not needed any more after the change
 # to the GFPMX object that adds a scenario name to it.
@@ -157,19 +171,12 @@ gfpmxpikbau_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikbau_fel1.fuel.c] = 1
 print("Run")
 gfpmxpikbau.last_time_step = 2070
 gfpmxpikfair.last_time_step = 2070
+gfpmxb2021.run()
 gfpmxpikbau.run()
 gfpmxpikfair.run()
 gfpmxpikbau_fel1.run()
 gfpmxpikfair_fel1.run()
 
-# Re-compute the aggregates for the historical period
-# There seems to be an issue in the GFPMX spreadsheet where some continents get
-# inverted
-for model in [gfpmxpikbau, gfpmxpikfair, gfpmxpikbau_fel1, gfpmxpikfair_fel1]:
-    for this_product in model.products:
-        for year in range(1995, 2022):
-            compute_country_aggregates(model[this_product], year)
-            compute_country_aggregates(model.other, year, ["area", "stock"])
 
 # Note: this loop could be vectorized on years to speed it up.
 # This aggregation function is an attempt from Chat GPT that fails with a
