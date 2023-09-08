@@ -6,6 +6,10 @@ Usage:
 
     ipython -i ~/repos/cobwood/scripts/running/run_fair_spp2.py
 
+Dependency this script should be run to prepare the PIK GDP data:
+
+    ipython -i ~/repos/cobwood/scripts/load_pik_data.py
+
 Steps for the run:
 
 1 Load GFPMX data
@@ -31,7 +35,6 @@ Note: in CBM, the base year is the first year of the simulation, as illustrated
 """
 
 import pathlib
-import copy
 import pandas
 import cobwood
 from cobwood.gfpmx import GFPMX
@@ -39,19 +42,48 @@ from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_equations import compute_country_aggregates
 from eu_cbm_hat import eu_cbm_data_dir
 
-#######################
-# Create GFTMX copies #
-#######################
-gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
-# Create deep copies with different GDP scenario
+##############################
+# Create GFTMX model objects #
+##############################
+print("Create GFTMX model objects.")
+msg = "Do you want to erase output and re-run the scenarios?"
+if input(msg + "\nPlease confirm [y/n]:") != "y":
+    raise ValueError("Cancelled.")
+
+gfpmxb2021 = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True
+)
 # BAU SSP2 GDP projections from Bodirstky et al 2022
-gfpmxpikbau = copy.deepcopy(gfpmxb2021)
+gfpmxpikbau = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikbau", rerun=True
+)
 # FAIR GDP projections from Bodirstky et al 2022
-gfpmxpikfair = copy.deepcopy(gfpmxb2021)
+gfpmxpikfair = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair", rerun=True
+)
+
+# Scenario for a fuel wood demand elasticity of 1 fel1
+gfpmxpikfair_fel1 = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair_fel1", rerun=True
+)
+gfpmxpikbau_fel1 = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikbau_fel1", rerun=True
+)
+
+
+# TODO: Remove, deep copies are probably not needed any more after the change
+# to the GFPMX object that adds a scenario name to it.
+# # Create deep copies with different GDP scenario
+# # BAU SSP2 GDP projections from Bodirstky et al 2022
+# gfpmxpikbau = copy.deepcopy(gfpmxb2021)
+# # FAIR GDP projections from Bodirstky et al 2022
+# gfpmxpikfair = copy.deepcopy(gfpmxb2021)
+
 
 #############################
 # Load and prepare GDP data #
 #############################
+print("Prepare GDP data")
 # The country comes from the gfpmx country name
 # See the many merges in scripts/load_pik_data.py
 gdp_comp = pandas.read_parquet(cobwood.data_dir / "pik" / "gdp_comp.parquet")
@@ -104,64 +136,83 @@ selected_countries = ["Netherlands Antilles (former)", "French Guyana"]
 gfpmxpikbau.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
 gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
 
+# Missing PIK GDP for China (CHN) and Netherlands (NLD)
+# The ISO 3 codes are present in the PIK csv files, why do they get dropped?
+
+
+# Assign fuelwood elasticities 1 scenario the same GDP as the other fair and bau
+gfpmxpikbau_fel1.gdp = gfpmxpikbau.gdp
+gfpmxpikfair_fel1.gdp = gfpmxpikfair.gdp
+
+########################################
+# Change fuel wood demand elasticities #
+########################################
+# Change fuel wood demand elasticities to 1
+gfpmxpikfair_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikfair_fel1.fuel.c] = 1
+gfpmxpikbau_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikbau_fel1.fuel.c] = 1
 
 #######
 # Run #
 #######
+print("Run")
 gfpmxpikbau.last_time_step = 2070
 gfpmxpikfair.last_time_step = 2070
 gfpmxpikbau.run()
 gfpmxpikfair.run()
+gfpmxpikbau_fel1.run()
+gfpmxpikfair_fel1.run()
 
 # Re-compute the aggregates for the historical period
 # There seems to be an issue in the GFPMX spreadsheet where some continents get
 # inverted
+for model in [gfpmxpikbau, gfpmxpikfair, gfpmxpikbau_fel1, gfpmxpikfair_fel1]:
+    for this_product in model.products:
+        for year in range(1995, 2022):
+            compute_country_aggregates(model[this_product], year)
+            compute_country_aggregates(model.other, year, ["area", "stock"])
 
-for year in range(1995, 2022):
-    compute_country_aggregates(gfpmxpikbau.indround, year)
-    compute_country_aggregates(gfpmxpikfair.indround, year)
-    compute_country_aggregates(gfpmxpikbau.fuel, year)
-    compute_country_aggregates(gfpmxpikfair.fuel, year)
-    compute_country_aggregates(gfpmxpikbau.sawn, year)
-    compute_country_aggregates(gfpmxpikfair.sawn, year)
-    compute_country_aggregates(gfpmxpikbau.panel, year)
-    compute_country_aggregates(gfpmxpikfair.panel, year)
-    compute_country_aggregates(gfpmxpikbau.paper, year)
-    compute_country_aggregates(gfpmxpikfair.paper, year)
-    compute_country_aggregates(gfpmxpikbau.pulp, year)
-    compute_country_aggregates(gfpmxpikfair.pulp, year)
-    compute_country_aggregates(gfpmxpikbau.other, year, ["area", "stock"])
-    compute_country_aggregates(gfpmxpikfair.other, year, ["area", "stock"])
+# Note: this loop could be vectorized on years to speed it up.
+# This aggregation function is an attempt from Chat GPT that fails with a
+#     KeyError: "not all values found in index 'country'. Try setting the
+#     `method` keyword argument (example: method='nearest')."
 
-############################################
-# Save output to csv files in cobwood_data #
-############################################
+
+####################
+# Save output data #
+####################
+# print("Save output data to CSV")
+# Note: the model run instruction already saves the output in NetCDF files
+# under cobwood_data/gfpmx_output
+#
+
+# Save output to csv files in cobwood_data
+# print("Save output to csv")
 # gfpmxpikfair.datasets
 # A dictionary of datasets which we can use to loop or store results
-fair_dir = cobwood.create_data_dir("pikfair")
-for ds in [
-    gfpmxpikfair.indround,
-    gfpmxpikfair.sawn,
-    gfpmxpikfair.panel,
-    gfpmxpikfair.pulp,
-    gfpmxpikfair.paper,
-    gfpmxpikfair.fuel,
-    gfpmxpikfair.other,
-]:
-    # If a data array is 2 dimensional, write it to disk
-    for this_var in ds.data_vars:
-        if ds[this_var].ndim == 2:
-            df = ds[this_var].to_pandas()
-            df.rename(columns=lambda x: "value_" + str(x), inplace=True)
-            df.reset_index(inplace=True)
-            file_name = ds.product + this_var + ".csv"
-            df.to_csv(fair_dir / file_name, index=False)
-            print(file_name, "\n", df.columns[[0, 1, -1]], "\n")
+# fair_dir = cobwood.create_data_dir("pikfair")
+# for ds in [
+#     gfpmxpikfair.indround,
+#     gfpmxpikfair.sawn,
+#     gfpmxpikfair.panel,
+#     gfpmxpikfair.pulp,
+#     gfpmxpikfair.paper,
+#     gfpmxpikfair.fuel,
+#     gfpmxpikfair.other,
+# ]:
+#     # If a data array is 2 dimensional, write it to disk
+#     for this_var in ds.data_vars:
+#         if ds[this_var].ndim == 2:
+#             df = ds[this_var].to_pandas()
+#             df.rename(columns=lambda x: "value_" + str(x), inplace=True)
+#             df.reset_index(inplace=True)
+#             file_name = ds.product + this_var + ".csv"
+#             df.to_csv(fair_dir / file_name, index=False)
+#             print(file_name, "\n", df.columns[[0, 1, -1]], "\n")
 
 
-##############################
-# Save output to eu_cbm_data #
-##############################
+###################################
+# Save output data to eu_cbm_data #
+###################################
 def da_to_csv(da, file_path, faostat_name):
     """Data set to eu_cbm_data csv file"""
     df = da.to_pandas()
@@ -181,22 +232,25 @@ def da_to_csv(da, file_path, faostat_name):
     print(file_path, "\n", df.columns[[0, 1, -1]], "\n")
 
 
-# PIK Fair
-eu_cbm_fair_dir = pathlib.Path(eu_cbm_data_dir) / "domestic_harvest" / "pikfair"
-eu_cbm_fair_dir.mkdir(exist_ok=True)
-da_to_csv(
-    gfpmxpikfair.indround["prod"],
-    eu_cbm_fair_dir / "irw_harvest.csv",
-    "Industrial roundwood",
-)
-da_to_csv(gfpmxpikfair.fuel["prod"], eu_cbm_fair_dir / "fw_harvest.csv", "Fuelwood")
+def save_harvest_demand_to_eu_cbm_hat(model):
+    """Save harvest demand to eu_cbm_hat"""
+    eu_cbm_harvest_dir = pathlib.Path(eu_cbm_data_dir) / "domestic_harvest"
+    eu_cbm_harvest_dir = eu_cbm_harvest_dir / model.scenario_name
+    eu_cbm_harvest_dir.mkdir(exist_ok=True)
+    da_to_csv(
+        model.indround["prod"],
+        eu_cbm_harvest_dir / "irw_harvest.csv",
+        "Industrial roundwood",
+    )
+    da_to_csv(model.fuel["prod"], eu_cbm_harvest_dir / "fw_harvest.csv", "Fuelwood")
 
-# PIK Bau
-eu_cbm_bau_dir = pathlib.Path(eu_cbm_data_dir) / "domestic_harvest" / "pikbau"
-eu_cbm_bau_dir.mkdir(exist_ok=True)
-da_to_csv(
-    gfpmxpikbau.indround["prod"],
-    eu_cbm_bau_dir / "irw_harvest.csv",
-    "Industrial roundwood",
-)
-da_to_csv(gfpmxpikbau.fuel["prod"], eu_cbm_bau_dir / "fw_harvest.csv", "Fuelwood")
+
+save_harvest_demand_to_eu_cbm_hat(gfpmxpikbau)
+save_harvest_demand_to_eu_cbm_hat(gfpmxpikfair)
+save_harvest_demand_to_eu_cbm_hat(gfpmxpikbau_fel1)
+save_harvest_demand_to_eu_cbm_hat(gfpmxpikfair_fel1)
+
+
+#########
+# Plots #
+#########
