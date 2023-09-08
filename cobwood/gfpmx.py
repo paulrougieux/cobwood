@@ -85,13 +85,13 @@ class GFPMX:
             print(f"Loading simulation output from netcdf files in {self.output_dir}.")
             self.read_datasets_from_netcdf()
         else:
+            # If asked to rerun the first message should not appear
             msg = ""
-            # If asked to rerun this message should not appear
             if not rerun:
                 msg = "There is no output from a previous run for this scenario "
                 msg += f"'{self.scenario_name}'.\n"
-            msg += "Load input data and reset time series to base year "
-            msg += f"{self.base_year} before simulation start."
+            msg += f"Load input data from {input_dir} and reset time series to a "
+            msg += f"base year {self.base_year} before simulation start."
             print(msg)
             for product in self.products + ["other"]:
                 self[product] = remove_after_base_year_and_copy(
