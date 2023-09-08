@@ -87,10 +87,15 @@ import cobwood
 from cobwood.gfpmx_data import GFPMXData
 
 
+country_iso_codes = faostat.country_groups.df[["fao_table_name", "iso3_code"]].rename(
+    columns={"fao_table_name": "country", "iso3_code": "country_iso"}
+)
+# Correct mapping of China and Netherlands to the names used in GFPMX
 country_iso_codes = (
-    faostat.country_groups.df[["fao_table_name", "iso3_code"]]
-    .rename(columns={"fao_table_name": "country", "iso3_code": "country_iso"})
-    .replace("China mainland and Taiwan", "China")
+    country_iso_codes.query("country != 'China'")  # Remove existing China
+    .copy()
+    .replace("China, mainland", "China")
+    .replace("Netherlands (Kingdom of the)", "Netherlands")
 )
 
 # Requires a working version of GAMMS
@@ -189,6 +194,7 @@ bau_gdp.query("country_iso=='FRA'")
 # Check that there are no NA values for EU country ISO codes
 selector = gfpm_gdp["country"].isin(faostat.country_groups.eu_country_names)
 assert not any(gfpm_gdp[selector]["country_iso"].isna())
+
 
 ##############################
 # Merge data frames together #
