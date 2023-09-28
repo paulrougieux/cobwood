@@ -54,8 +54,8 @@ gfpmxb2021 = GFPMX(
     input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True
 )
 # BAU SSP2 GDP projections from Bodirstky et al 2022
-gfpmxpikbau = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikbau", rerun=True
+gfpmxpikssp2 = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2", rerun=True
 )
 # FAIR GDP projections from Bodirstky et al 2022
 gfpmxpikfair = GFPMX(
@@ -66,8 +66,8 @@ gfpmxpikfair = GFPMX(
 gfpmxpikfair_fel1 = GFPMX(
     input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair_fel1", rerun=True
 )
-gfpmxpikbau_fel1 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikbau_fel1", rerun=True
+gfpmxpikssp2_fel1 = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1", rerun=True
 )
 
 # Re-compute the aggregates for the historical period
@@ -75,9 +75,9 @@ gfpmxpikbau_fel1 = GFPMX(
 # inverted
 for model in [
     gfpmxb2021,
-    gfpmxpikbau,
+    gfpmxpikssp2,
     gfpmxpikfair,
-    gfpmxpikbau_fel1,
+    gfpmxpikssp2_fel1,
     gfpmxpikfair_fel1,
 ]:
     for this_product in model.products:
@@ -89,7 +89,7 @@ for model in [
 # to the GFPMX object that adds a scenario name to it.
 # # Create deep copies with different GDP scenario
 # # BAU SSP2 GDP projections from Bodirstky et al 2022
-# gfpmxpikbau = copy.deepcopy(gfpmxb2021)
+# gfpmxpikssp2 = copy.deepcopy(gfpmxb2021)
 # # FAIR GDP projections from Bodirstky et al 2022
 # gfpmxpikfair = copy.deepcopy(gfpmxb2021)
 
@@ -117,7 +117,7 @@ def get_gdp_wide(df: pandas.DataFrame, column_name: str, year_min: int = 1995):
 
 
 pik_fair = get_gdp_wide(gdp_comp, "pik_fair_adjgfpm2021")
-pik_bau = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
+pik_ssp2 = get_gdp_wide(gdp_comp, "pik_ssp2_adjgfpm2021")
 
 # 3 different forms of GDP dataset inside the GFPMX object
 # gfpmxb2021.data.get_sheet_wide("gdp")
@@ -131,7 +131,7 @@ pik_bau = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
 # Assign new GDP values to the GFTMX objects, reindex them like the existing gdp array
 # so that they get empty values for the country aggregatesgfpmxb2021
 # Convert from million USD to 1000 USD
-gfpmxpikbau.gdp = convert_to_2d_array(pik_bau).reindex_like(gfpmxb2021.gdp) * 1e3
+gfpmxpikssp2.gdp = convert_to_2d_array(pik_ssp2).reindex_like(gfpmxb2021.gdp) * 1e3
 gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp) * 1e3
 
 # Issue with missing GDP
@@ -147,7 +147,7 @@ gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp) * 
 # Set values of 'Netherlands Antilles (former)', 'French Guyana',
 # To the same as the existing GDP projections in GFPMX 2021
 selected_countries = ["Netherlands Antilles (former)", "French Guyana"]
-gfpmxpikbau.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
+gfpmxpikssp2.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
 gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries]
 
 # Missing PIK GDP for China (CHN) and Netherlands (NLD)
@@ -155,7 +155,7 @@ gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries
 
 
 # Assign fuelwood elasticities 1 scenarios the same GDP as the other fair and bau
-gfpmxpikbau_fel1.gdp = gfpmxpikbau.gdp
+gfpmxpikssp2_fel1.gdp = gfpmxpikssp2.gdp
 gfpmxpikfair_fel1.gdp = gfpmxpikfair.gdp
 
 ########################################
@@ -163,7 +163,7 @@ gfpmxpikfair_fel1.gdp = gfpmxpikfair.gdp
 ########################################
 # Change fuel wood demand elasticities to 1
 gfpmxpikfair_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikfair_fel1.fuel.c] = 1
-gfpmxpikbau_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikbau_fel1.fuel.c] = 1
+gfpmxpikssp2_fel1.fuel["cons_gdp_elasticity"].loc[gfpmxpikssp2_fel1.fuel.c] = 1
 
 
 def cons_constant(ds, t):
@@ -176,14 +176,14 @@ def cons_constant(ds, t):
 
 # Add GDP projections to secondary products datasets.
 gfpmxpikfair_fel1.fuel["gdp"] = gfpmxpikfair_fel1.gdp
-gfpmxpikbau_fel1.fuel["gdp"] = gfpmxpikbau_fel1.gdp
+gfpmxpikssp2_fel1.fuel["gdp"] = gfpmxpikssp2_fel1.gdp
 
 # Calibrate the constant so that it reproduces the value in 2021
 gfpmxpikfair_fel1.fuel["cons_constant"].loc[gfpmxpikfair_fel1.fuel.c] = cons_constant(
     gfpmxpikfair_fel1.fuel, 2021
 )
-gfpmxpikbau_fel1.fuel["cons_constant"].loc[gfpmxpikbau_fel1.fuel.c] = cons_constant(
-    gfpmxpikbau_fel1.fuel, 2021
+gfpmxpikssp2_fel1.fuel["cons_constant"].loc[gfpmxpikssp2_fel1.fuel.c] = cons_constant(
+    gfpmxpikssp2_fel1.fuel, 2021
 )
 
 # gfpmxpikfair_fel1.fuel["cons_constant"].to_pandas().reset_index().query("country in ['Germany','France']")
@@ -194,12 +194,12 @@ gfpmxpikbau_fel1.fuel["cons_constant"].loc[gfpmxpikbau_fel1.fuel.c] = cons_const
 # Run #
 #######
 print("Run")
-gfpmxpikbau.last_time_step = 2070
+gfpmxpikssp2.last_time_step = 2070
 gfpmxpikfair.last_time_step = 2070
 gfpmxb2021.run()
-gfpmxpikbau.run()
+gfpmxpikssp2.run()
 gfpmxpikfair.run()
-gfpmxpikbau_fel1.run()
+gfpmxpikssp2_fel1.run()
 gfpmxpikfair_fel1.run()
 
 
@@ -277,9 +277,9 @@ def save_harvest_demand_to_eu_cbm_hat(model):
     da_to_csv(model.fuel["prod"], eu_cbm_harvest_dir / "fw_harvest.csv", "Fuelwood")
 
 
-save_harvest_demand_to_eu_cbm_hat(gfpmxpikbau)
+save_harvest_demand_to_eu_cbm_hat(gfpmxpikssp2)
 save_harvest_demand_to_eu_cbm_hat(gfpmxpikfair)
-save_harvest_demand_to_eu_cbm_hat(gfpmxpikbau_fel1)
+save_harvest_demand_to_eu_cbm_hat(gfpmxpikssp2_fel1)
 save_harvest_demand_to_eu_cbm_hat(gfpmxpikfair_fel1)
 
 
