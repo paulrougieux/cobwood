@@ -117,7 +117,10 @@ def get_gdp_wide(df: pandas.DataFrame, column_name: str, year_min: int = 1995):
 
 
 pik_fair = get_gdp_wide(gdp_comp, "pik_fair_adjgfpm2021")
-pik_ssp2 = get_gdp_wide(gdp_comp, "pik_ssp2_adjgfpm2021")
+# This is the place where we rename PIK BAU to PIK SSP2, because BAU has a
+# different meaning in the forest dynamics scenarios (it means the business as
+# usual in terms of other wood components removals)
+pik_ssp2 = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
 
 # 3 different forms of GDP dataset inside the GFPMX object
 # gfpmxb2021.data.get_sheet_wide("gdp")
