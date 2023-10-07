@@ -36,11 +36,13 @@ Note: in CBM, the base year is the first year of the simulation, as illustrated
 
 import pathlib
 import pandas
+import numpy as np
 import cobwood
 from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_equations import compute_country_aggregates
 from eu_cbm_hat import eu_cbm_data_dir
+from biotrade.faostat import faostat  # only for an EU diagnostic plot
 
 ##############################
 # Create GFTMX model objects #
@@ -137,6 +139,17 @@ pik_ssp2 = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
 gfpmxpikssp2.gdp = convert_to_2d_array(pik_ssp2).reindex_like(gfpmxb2021.gdp) * 1e3
 gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp) * 1e3
 
+# GDP diagnostic plot
+df = pik_fair.set_index("country").transpose()
+eu_countries = faostat.country_groups.eu_country_names
+cols = [col for col in df.columns if col in eu_countries]
+# df[cols].plot()
+selector = df.index.str.contains("1990|2020|2050")
+# Relative difference
+df.loc[selector, cols].diff() / df.loc[selector, cols]
+df.loc[selector, cols].sum(axis=1).diff() / df.loc[selector, cols].sum(axis=1)
+
+
 # Issue with missing GDP
 # selector = gfpmxpikfair.gdp.loc[:, 2022].isnull()
 # print(gfpmxpikfair.gdp["country"][selector])
@@ -192,6 +205,62 @@ gfpmxpikssp2_fel1.fuel["cons_constant"].loc[gfpmxpikssp2_fel1.fuel.c] = cons_con
 # gfpmxpikfair_fel1.fuel["cons_constant"].to_pandas().reset_index().query("country in ['Germany','France']")
 # cons_constant(gfpmxpikfair_fel1.fuel,2021).to_pandas().reset_index().query("country in ['Germany','France']")
 
+
+###########
+# Czechia #
+###########
+# Between 2016 and 2021, there was a massive bark beetle attack followed by
+# salvage logging that represents several times the yearly harvest and large
+# amounts of exports. Looking at Czechia's consumption, production and trade of
+# all products
+#     >>> products = ["sawn", "panel", "fuel", "paper", "indround", "pulp"]
+#     >>> ds_fair = [gfpmxpikfair[x] for x in products]
+#     >>> for ds in df_fair:
+#     >>>     plot_ds_by_davar(ds, countries=["Czechia"])
+# The scenario should reduce industrial roundwood and sawnwood exports for the period
+# To a value that corresponds to the average 2015-2020
+# This can be achieved by reducing the marginal propensity to export.
+
+
+def change_propensity_to_export(ds, country):
+    """Change Czechia's propensity to export. Based on the ratio between the
+    export value in 2021 and the mean export of 5 years before the bark beetle
+    salvage logging crisis. Note: this modifies the input dataset in place."""
+    mpte = "exp_marginal_propensity_to_export"
+    variables = ["imp", "cons", "exp", "prod", mpte, "exp_constant"]
+    df = ds.to_dataframe().loc[country][variables]
+    # 5 year average value between 2010 and 2014
+    df_mean = df.loc[range(2010, 2015)].mean()
+    # Check 2021 production == consumpion - import + export
+    df_2021 = df.loc[2021]
+    # Check that the marginal propensity to export of all countries sum to one
+    assert np.isclose(ds.exp_marginal_propensity_to_export.sum(), 1)
+    # Compute CZ propensity to export
+    old_mpte = df_2021[mpte]
+    world_imp = ds.imp.loc[ds.c, 2021].sum().values
+    new_mpte = (df_mean["exp"] - df_mean["exp_constant"]) / world_imp
+    # Change all other propensities
+    ds[mpte] = ds[mpte] / (1 - old_mpte) * (1 - new_mpte)
+    # Change cz propensity values
+    ds[mpte].loc[country] = new_mpte
+    # Check again that the marginal propensity to export of all countries sum to one
+    assert np.isclose(ds.exp_marginal_propensity_to_export.sum(), 1)
+
+
+selected_scenarios = [gfpmxpikssp2_fel1, gfpmxpikfair_fel1]
+for scenario in selected_scenarios:
+    change_propensity_to_export(scenario["indround"], "Czechia")
+    change_propensity_to_export(scenario["sawn"], "Czechia")
+
+# # Check resulting export values
+# from cobwood.gfpmx_equations import export_supply
+# export_supply(gfpmxpikssp2_fel1["indround"], 2021).loc["Czechia"]
+# export_supply(gfpmxpikssp2["indround"], 2021).loc["Czechia"]
+
+raise ValueError(
+    "World imports of irw looks plausible in SSP2, why is CZ import decreasing compaired to Fairfel1?"
+)
+# See notebook
 
 #######
 # Run #
