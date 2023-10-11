@@ -36,7 +36,6 @@ Note: in CBM, the base year is the first year of the simulation, as illustrated
 
 import pathlib
 import pandas
-import numpy as np
 import cobwood
 from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_data import convert_to_2d_array
@@ -222,35 +221,14 @@ gfpmxpikssp2_fel1.fuel["cons_constant"].loc[gfpmxpikssp2_fel1.fuel.c] = cons_con
 # This can be achieved by reducing the marginal propensity to export.
 
 
-def change_propensity_to_export(ds, country):
-    """Change Czechia's propensity to export. Based on the ratio between the
-    export value in 2021 and the mean export of 5 years before the bark beetle
-    salvage logging crisis. Note: this modifies the input dataset in place."""
-    mpte = "exp_marginal_propensity_to_export"
-    variables = ["imp", "cons", "exp", "prod", mpte, "exp_constant"]
-    df = ds.to_dataframe().loc[country][variables]
-    # 5 year average value between 2010 and 2014
-    df_mean = df.loc[range(2010, 2015)].mean()
-    # Check 2021 production == consumpion - import + export
-    df_2021 = df.loc[2021]
-    # Check that the marginal propensity to export of all countries sum to one
-    assert np.isclose(ds.exp_marginal_propensity_to_export.sum(), 1)
-    # Compute CZ propensity to export
-    old_mpte = df_2021[mpte]
-    world_imp = ds.imp.loc[ds.c, 2021].sum().values
-    new_mpte = (df_mean["exp"] - df_mean["exp_constant"]) / world_imp
-    # Change all other propensities
-    ds[mpte] = ds[mpte] / (1 - old_mpte) * (1 - new_mpte)
-    # Change cz propensity values
-    ds[mpte].loc[country] = new_mpte
-    # Check again that the marginal propensity to export of all countries sum to one
-    assert np.isclose(ds.exp_marginal_propensity_to_export.sum(), 1)
-
-
 selected_scenarios = [gfpmxpikssp2_fel1, gfpmxpikfair_fel1]
+# Estimates from cobwood/scripts/estimating/estimate_export_supply.py
 for scenario in selected_scenarios:
-    change_propensity_to_export(scenario["indround"], "Czechia")
-    change_propensity_to_export(scenario["sawn"], "Czechia")
+    scenario["indround"]["exp_constant"].loc["Czechia"] = -395.63598204559366
+    scenario["indround"]["exp_marginal_propensity_to_export"].loc[
+        "Czechia"
+    ] = 0.030772674789748013
+
 
 # # Check resulting export values
 # from cobwood.gfpmx_equations import export_supply
@@ -271,9 +249,6 @@ raise ValueError(msg)
 #######
 # Run #
 #######
-print("Run")
-gfpmxpikssp2.last_time_step = 2070
-gfpmxpikfair.last_time_step = 2070
 gfpmxb2021.run()
 gfpmxpikssp2.run()
 gfpmxpikfair.run()
