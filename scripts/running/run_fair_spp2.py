@@ -257,10 +257,16 @@ for scenario in selected_scenarios:
 # export_supply(gfpmxpikssp2_fel1["indround"], 2021).loc["Czechia"]
 # export_supply(gfpmxpikssp2["indround"], 2021).loc["Czechia"]
 
-raise ValueError(
-    "World imports of irw looks plausible in SSP2, why is CZ import decreasing compaired to Fairfel1?"
-)
-# See notebook
+msg = "World imports of irw looks plausible in SSP2, why is CZ import decreasing compaired to Fairfel1?"
+msg += "The sign is negative, so probably the constant should be changed as well."
+raise ValueError(msg)
+# See plots in notebook
+
+# for scenario in selected_scenarios:
+#     product = "indround"
+#     file_name = f"/tmp/{scenario.scenario_name}_{product}.csv"
+#     scenario[product].to_dataframe().loc[["WORLD", "Czechia"]].to_csv(file_name)
+
 
 #######
 # Run #
