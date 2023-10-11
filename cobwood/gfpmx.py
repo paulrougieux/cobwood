@@ -116,7 +116,7 @@ class GFPMX:
         """Run the model for many time steps from base_year + 1 to last_time_step."""
         if rtol is None:
             rtol = 1e-2
-
+        print(f"Running {self.scenario_name}")
         # Add GDP projections to secondary products datasets.
         # GDP are projected to the future and `self.gdp` might be changed by
         # the user before the model run. This is why it is added only at this time.
