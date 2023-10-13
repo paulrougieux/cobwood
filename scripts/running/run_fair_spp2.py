@@ -311,8 +311,8 @@ def da_to_csv(da, file_path, faostat_name):
     df = df[cols]
     # Write to CSV
     df.to_csv(file_path, index=False)
-    print("Writting:\n", df.head(2))
-    print("to: ", file_path, "\n", df.columns[[0, 1, -1]], "\n")
+    print(f"Writing {df.shape[0]} rows and {df.shape[1]} columns to:")
+    print("  ", file_path, "\n")
 
 
 def save_harvest_demand_to_eu_cbm_hat(model):
