@@ -62,7 +62,6 @@ gfpmxpikssp2 = GFPMX(
 gfpmxpikfair = GFPMX(
     input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair", rerun=True
 )
-
 # Scenario for a fuel wood demand elasticity of 1 fel1
 gfpmxpikfair_fel1 = GFPMX(
     input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair_fel1", rerun=True
@@ -71,28 +70,27 @@ gfpmxpikssp2_fel1 = GFPMX(
     input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1", rerun=True
 )
 
-# Re-compute the aggregates for the historical period
-# There seems to be an issue in the GFPMX spreadsheet where some continents get
-# inverted
-for model in [
-    gfpmxb2021,
+
+# Models that will be run here and transmitted for further processing to CBM
+models = [
     gfpmxpikssp2,
     gfpmxpikfair,
     gfpmxpikssp2_fel1,
     gfpmxpikfair_fel1,
-]:
+]
+
+
+#######################################################
+# Re-compute the aggregates for the historical period #
+#######################################################
+# There seems to be an issue in the GFPMX spreadsheet where some continents get
+# inverted
+print("Re-compute aggregates for the historical period.")
+for model in models + [gfpmxb2021]:
     for this_product in model.products:
         for year in range(1995, 2022):
             compute_country_aggregates(model[this_product], year)
             compute_country_aggregates(model.other, year, ["area", "stock"])
-
-# TODO: Remove, deep copies are probably not needed any more after the change
-# to the GFPMX object that adds a scenario name to it.
-# # Create deep copies with different GDP scenario
-# # BAU SSP2 GDP projections from Bodirstky et al 2022
-# gfpmxpikssp2 = copy.deepcopy(gfpmxb2021)
-# # FAIR GDP projections from Bodirstky et al 2022
-# gfpmxpikfair = copy.deepcopy(gfpmxb2021)
 
 
 #############################
@@ -173,6 +171,7 @@ gfpmxpikfair.gdp.loc[selected_countries] = gfpmxb2021.gdp.loc[selected_countries
 gfpmxpikssp2_fel1.gdp = gfpmxpikssp2.gdp
 gfpmxpikfair_fel1.gdp = gfpmxpikfair.gdp
 
+
 ########################################
 # Change fuel wood demand elasticities #
 ########################################
@@ -205,9 +204,9 @@ gfpmxpikssp2_fel1.fuel["cons_constant"].loc[gfpmxpikssp2_fel1.fuel.c] = cons_con
 # cons_constant(gfpmxpikfair_fel1.fuel,2021).to_pandas().reset_index().query("country in ['Germany','France']")
 
 
-###########
-# Czechia #
-###########
+##################################################################
+# Fix Czechia's high propensity to export due to Salvage logging #
+##################################################################
 # Between 2016 and 2021, there was a massive bark beetle attack followed by
 # salvage logging that represents several times the yearly harvest and large
 # amounts of exports. Looking at Czechia's consumption, production and trade of
@@ -228,6 +227,12 @@ for scenario in selected_scenarios:
     scenario["indround"]["exp_marginal_propensity_to_export"].loc[
         "Czechia"
     ] = 0.030772674789748013
+    scenario["sawn"]["exp_constant"].loc["Czechia"] = 1344.7487441529158
+    scenario["sawn"]["exp_marginal_propensity_to_export"].loc[
+        "Czechia"
+    ] = 0.0025397644268203446
+
+# See plots in notebook
 
 
 # # Check resulting export values
@@ -235,10 +240,6 @@ for scenario in selected_scenarios:
 # export_supply(gfpmxpikssp2_fel1["indround"], 2021).loc["Czechia"]
 # export_supply(gfpmxpikssp2["indround"], 2021).loc["Czechia"]
 
-msg = "World imports of irw looks plausible in SSP2, why is CZ import decreasing compaired to Fairfel1?"
-msg += "The sign is negative, so probably the constant should be changed as well."
-raise ValueError(msg)
-# See plots in notebook
 
 # for scenario in selected_scenarios:
 #     product = "indround"
@@ -249,11 +250,8 @@ raise ValueError(msg)
 #######
 # Run #
 #######
-gfpmxb2021.run()
-gfpmxpikssp2.run()
-gfpmxpikfair.run()
-gfpmxpikssp2_fel1.run()
-gfpmxpikfair_fel1.run()
+for model in models + [gfpmxb2021]:
+    model.run()
 
 
 # Note: this loop could be vectorized on years to speed it up.
@@ -313,8 +311,8 @@ def da_to_csv(da, file_path, faostat_name):
     df = df[cols]
     # Write to CSV
     df.to_csv(file_path, index=False)
-    print(df.head(2))
-    print(file_path, "\n", df.columns[[0, 1, -1]], "\n")
+    print("Writting:\n", df.head(2))
+    print("to: ", file_path, "\n", df.columns[[0, 1, -1]], "\n")
 
 
 def save_harvest_demand_to_eu_cbm_hat(model):
@@ -330,12 +328,5 @@ def save_harvest_demand_to_eu_cbm_hat(model):
     da_to_csv(model.fuel["prod"], eu_cbm_harvest_dir / "fw_harvest.csv", "Fuelwood")
 
 
-save_harvest_demand_to_eu_cbm_hat(gfpmxpikssp2)
-save_harvest_demand_to_eu_cbm_hat(gfpmxpikfair)
-save_harvest_demand_to_eu_cbm_hat(gfpmxpikssp2_fel1)
-save_harvest_demand_to_eu_cbm_hat(gfpmxpikfair_fel1)
-
-
-#########
-# Plots #
-#########
+for model in models:
+    save_harvest_demand_to_eu_cbm_hat(model)
