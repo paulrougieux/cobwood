@@ -10,19 +10,19 @@ Run this script at the command line with:
 
 """
 
-import pathlib
 import numpy as np
 import pandas
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from biotrade.faostat import faostat
 from cobwood.gfpmx_data import GFPMXData
+from eu_cbm_hat import eu_cbm_data_pathlib
 
 
-gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
 
 # Path to Valerio's EU Net Annual Increment data
-nai_path = pathlib.Path.home() / "repos/eu_cbm/eu_cbm_explore/scenarios"
+nai_path = eu_cbm_data_pathlib.parent / "eu_cbm_explore/scenarios/avitabile_nai"
 
 # Load GFTMx data
 round_ = gfpmx_data.get_country_rows("round")
@@ -107,12 +107,12 @@ np.testing.assert_allclose(
     agg_eu["roundprod"], agg_eu["indroundprod"] + agg_eu["fuelprod"]
 )
 # Note: Time series start in 1992
-agg_selected = agg_eu.query("year in [1992,2000,2010,2015,2020,2030,2050]").transpose()
+agg_selected = agg_eu.query("year in [1992,2000,2010,2020,2030,2050,2070]").transpose()
 # Divide by 1000 and write to a csv file
 # Forest area in 1000 ha -> million ha
 # Stock in Million M3 -> billion m3
 # Harvest in 1000 m3 -> million m3
-# (agg_selected / 1e3).to_csv("/tmp/gfpmxeuagg_selected.csv")
+(agg_selected / 1e3).round().to_csv("/tmp/gfpmxeuagg_selected.csv")
 
 # Add Net Annual Increment to the harvest data
 # Set the index so that it is passed on as an index
