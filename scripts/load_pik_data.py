@@ -75,8 +75,9 @@ Paul Rougieux
 # Search "world bank change constant USD reference year"
 
 from pathlib import Path
-import pandas
 import re
+
+import pandas
 
 # To get country ISO codes
 from biotrade.faostat import faostat
@@ -326,6 +327,8 @@ comp_eu_2005 = comp_eu.query("year == 2005 and pik_bau == pik_bau")
 eu_countries = faostat.country_groups.eu_country_names
 gdp_comp_eu = gdp_comp.query("country in @faostat.country_groups.eu_country_names")
 # Keep only ssp2 and adjusted pik fair scenario
+# Keep country iso to check we only have EU countries
+agg = {"country_iso": lambda x: "".join(x.unique()), "gdp": "sum"}
 gdp_comp_long_agg_eu_2 = (
     gdp_comp.melt(
         id_vars=["country_iso", "year", "country", "continent"],
@@ -334,25 +337,50 @@ gdp_comp_long_agg_eu_2 = (
     )
     .query("country in @eu_countries")
     .groupby(["year", "source"])
-    .agg("sum")
+    .agg(agg)
     .reset_index()
     # TODO: fix this in a more elegant way
     .query("gdp>0.1")
     .copy()
 )
+print(gdp_comp_long_agg_eu_2["country_iso"].unique())
+gdp_comp_long_agg_eu_2.value_counts(["source", "country_iso"])
 
-# Aggregate for EU
-selected_sources = ["gfpm_gdp", "pik_fair_adjgfpm2017", "pik_bau_adjgfpm2017"]
-selected_years = [1992, 2000, 2010, 2015, 2020, 2030, 2050]
-
+####################
+# Aggregate EU GDP #
+####################
+# For a summary table in the technical report
+selected_sources = ["gfpm_gdp_b2021", "pik_fair_adjgfpm2021", "pik_bau_adjgfpm2021"]
+selected_years = [1992, 2000, 2010, 2020, 2030, 2050, 2070]
 gdp_comp_eu_selected = (
     gdp_comp_long_agg_eu_2
-    # Convert frmo million USD to billion USD
+    # Convert from million USD to billion USD
     .assign(gdp_bil=lambda x: x["gdp"] / 1e3)
     .query("year in @selected_years and source in @selected_sources")
     .pivot(index="source", columns="year", values="gdp_bil")
 )
-gdp_comp_eu_selected.to_csv("/tmp/gdp_comp_eu_selected.csv")
+# Year 1992 is only available in GFPM base 2018
+# Compare GFPM GDP base 2018 and base 2021
+gdp_b2018_b2021 = (
+    gdp_comp_long_agg_eu_2.query("source in ['gfpm_gdp_b2018', 'gfpm_gdp_b2021']")
+    # Keep this index on year please it is needed for the plot and the loc selection
+    .pivot(columns="source", index="year", values="gdp")
+)
+# Linear interpolation of 1992
+gdp_b2018_b2021["gfpm_gdp_b2021_i"] = gdp_b2018_b2021["gfpm_gdp_b2021"].interpolate(
+    method="linear", limit_direction="both"
+)
+# gdp_b2018_b2021.plot()
+gdp_comp_eu_selected.loc["gfpm_gdp_b2021", "1992"] = (
+    float(gdp_b2018_b2021.loc[1992, "gfpm_gdp_b2021_i"]) / 1e3
+)
+
+
+gdp_comp_eu_selected.round().to_csv("/tmp/gdp_comp_eu_selected.csv")
+
+# Use a simple ratio to compute back GFPM GDP 1992 from GFPMx GDP b 2018
+gdp_comp_long_agg_eu_2.query("year in [1992, 2000]")
+
 
 #####################
 # Store output data #
