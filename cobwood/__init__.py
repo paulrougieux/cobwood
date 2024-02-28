@@ -10,14 +10,14 @@ import os
 
 # Where is the data, default case #
 data_dir = Path("~/repos/cobwood_data/")
+# TODO: remove when it is replaced everywhere by cobwood.data_dir. Maybe it's
+# better to keep it that way explicitly in case we import data_dir from another
+# package?
+cobwood_data_dir = data_dir
 
 # But you can override that with an environment variable #
 if os.environ.get("COBWOOD_DATA"):
     data_dir = Path(os.environ["COBWOOD_DATA"])
-
-# For backward compatibility
-# TODO: remove when it is replaced everywhere by cobwood.data_dir
-cobwood_data_dir = data_dir
 
 
 def create_data_dir(path: str):
