@@ -5,7 +5,7 @@ Load historical population data, load population projections, merge them togethe
 Usage:
 
     >>> from cobwood.eurostat.population import load_hist_population_and_proj
-    >>> popt = load_hist_population_and_proj()
+    >>> popt = load_hist_population_and_proj("eurostat_tps00001_page.tsv", "eurostat_proj_23np.tsv")
 
 Separate low level functions for information and debugging:
 
@@ -90,10 +90,10 @@ def combine_hist_population_to_proj(df_hist, df_proj):
     return df
 
 
-def load_hist_population_and_proj():
+def load_hist_population_and_proj(file_hist, file_proj):
     """Load historical population and population projection total EU"""
-    pop_hist = load_eurostat("eurostat_tps00001_page.tsv")
-    pop_proj_23 = load_eurostat("eurostat_proj_23np.tsv")
+    pop_hist = load_eurostat(file_hist)
+    pop_proj = load_eurostat(file_proj)
     # combine them in one data frame
-    df = combine_hist_population_to_proj(pop_hist, pop_proj_23)
+    df = combine_hist_population_to_proj(pop_hist, pop_proj)
     return df
