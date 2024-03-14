@@ -12,6 +12,7 @@ Separate low level functions for information and debugging:
     >>> from cobwood.eurostat.population import load_eurostat
     >>> from cobwood.eurostat.population import combine_hist_population_to_proj
     >>> # Load Eurostat historical population
+    >>> from cobwood.eurostat.population import load_hist_population_and_proj
     >>> pop_hist = load_eurostat("eurostat_tps00001_page.tsv")
     >>> # Load Eurostat population projection
     >>> pop_proj_23 = load_eurostat("eurostat_proj_23np.tsv")

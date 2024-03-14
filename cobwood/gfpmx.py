@@ -23,6 +23,27 @@ class GFPMX:
     version (with different base years)
 
         >>> from cobwood.gfpmx import GFPMX
+        >>> # Base 2021
+        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True)
+        >>> gfpmxb2021.run_and_compare_to_ref()
+        >>> gfpmxb2021.run()
+
+    Load output data, after a run has already been completed
+
+        >>> gfpmx_pikssp2 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1")
+
+    You can debug data issues by creating the data object only as follows:
+
+        >>> from cobwood.gfpmx_data import GFPMXData
+        >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+
+    You can debug equations for the different model versions as follows:
+
+        >>> from cobwood.gfpmx_equations import world_price
+        >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
+
+    Run other base years and compare GFPMx Excel results with the one from the cobwood
+
         >>> # Base 2018
         >>> gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018, scenario_name="base_2018")
         >>> # Run and stop when the result diverges from the reference spreadsheet
@@ -35,23 +56,9 @@ class GFPMX:
         >>> # Base 2020
         >>> gfpmxb2020 = GFPMX(input_dir="gfpmx_base2020", base_year=2020, scenario_name="base_2020")
         >>> gfpmxb2020.run_and_compare_to_ref() # Fails
-        >>> # Base 2021
         >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021")
-        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True)
-        >>> gfpmxb2021.run_and_compare_to_ref()
-        >>> gfpmxb2021.run()
 
-    You can debug data issues by creating the data object only as follows:
-
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
-
-    You can debug equations for the different model versions as follows:
-
-        >>> from cobwood.gfpmx_equations import world_price
-        >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
-
-     You will then be able to load Xarray datasets with the
+    You will then be able to load Xarray datasets with the
     `convert_sheets_to_dataset()` method:
 
         >>> from cobwood.gfpmx_data import GFPMXData
@@ -66,6 +73,10 @@ class GFPMX:
     """
 
     def __init__(self, input_dir, base_year, scenario_name, rerun=False):
+        # TODO: change this so that it is initialised with a scenario_name only
+        # The input_dir and base_year parameters should be in a yaml configuration
+        # file associated with that scenario_name inside cobwood_data
+        # See https://gitlab.com/bioeconomy/cobwood/cobwood/-/issues/10
         self.input_data = GFPMXData(data_dir=input_dir)
         self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario_name
         self.combined_netcdf_file_path = self.output_dir / "combined_datasets.nc"
