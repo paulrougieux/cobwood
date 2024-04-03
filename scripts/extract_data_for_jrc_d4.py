@@ -46,7 +46,7 @@ warnings.warn(msg)
 def extract_for_d4(gfpmx_scenario, product):
     """Extract data for EU countries for d4"""
     df = (
-        gfpmx_pikssp2["paper"][SELECTED_VARIABLES]
+        gfpmx_scenario["paper"][SELECTED_VARIABLES]
         .to_dataframe()
         .reset_index()
         .sort_values(["country", "year"])
