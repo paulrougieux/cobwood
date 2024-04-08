@@ -14,6 +14,7 @@ Usage:
 
 import sys
 import warnings
+import numpy as np
 from cobwood.gfpmx import GFPMX
 from biotrade.faostat import faostat
 import cobwood
@@ -27,8 +28,7 @@ scenario_dir = (
 # Load data and plotting functions from the prepare script in the same directory
 sys.path.append(str(scenario_dir))
 from ssp2_fair_owc_prepare_data import hexprovft_wide  # noqa: E402
-
-# from ssp2_fair_owc_prepare_data import hexprov_wide
+from ssp2_fair_owc_prepare_data import hexprov_wide  # noqa: E402
 
 
 hwp_dir = cobwood.data_dir / "gfpmx_output" / "hwp"
@@ -85,13 +85,13 @@ def get_gfpmx_df(gfpmx_scenario, product):
 
 
 # For example
-round_fair = get_gfpmx_df(gfpmx_pikfair, "round")
+indround_fair = get_gfpmx_df(gfpmx_pikfair, "indround")
 
 ###########
 # Rescale #
 ###########
 # Aggregate harvest by combo_name, country, year and con_broad
-index = ["combo_name", "iso2_code", "country", "year", "con_broad"]
+index = ["combo_name", "iso2_code", "country", "year"]
 cols = [
     "irw_need",
     "fw_colat",
@@ -103,7 +103,37 @@ cols = [
     "harvest_prov_ub",
     "harvest_prov_ob",
 ]
-hexprov_cb = hexprovft_wide.groupby(index)[cols].agg("sum").reset_index()
+hexprov_cb = (
+    hexprovft_wide.groupby(index + ["con_broad"])[cols].agg("sum").reset_index()
+)
+hexprov_cb["con_broad"] = "harvest_prov_ub_" + hexprov_cb["con_broad"]
+# Reshape to wider format to get harvest_prov_ub_broad and harvest_prov_ub_con
+hexprov_cb = hexprov_cb.pivot(
+    columns="con_broad", index=index, values="harvest_prov_ub"
+).reset_index()
+
+# Convert data from the economic model from 1000 m3 ub to m3 ub
+vars_to_convert = ["rw_demand", "fw_demand", "irw_demand"]
+hexprov_wide[vars_to_convert] *= 1e3
+
+# Merge annual harvest with harvest by con and broad
+hexprov_cb_2 = hexprov_cb.merge(hexprov_wide, on=index)
+
+# Check irw demand is equal to irw_need + irw_predetermined
+locator = hexprov_wide["irw_need"] > 0
+np.testing.assert_allclose(
+    hexprov_wide.loc[locator, ["irw_need", "irw_predetermined"]].sum(axis=1),
+    hexprov_wide.loc[locator, "irw_demand"],
+    rtol=0.01,
+)
+
+# Check fw demand is equal to fw_colat + fw_need + fw_predetermined
+locator = hexprov_wide["fw_need"] > 0
+np.testing.assert_allclose(
+    hexprov_wide.loc[locator, ["fw_colat", "fw_need", "fw_predetermined"]].sum(axis=1),
+    hexprov_wide.loc[locator, "fw_demand"],
+    rtol=0.01,
+)
 
 
 #############################
