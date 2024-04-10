@@ -1,11 +1,14 @@
 """Load Eurostat population data
 
 Load historical population data, load population projections, merge them together.
+
 Sources:
 
-    - Historical data https://ec.europa.eu/eurostat/web/population-demography/demography-population-stock-balance/database
+    - Historical data
+    https://ec.europa.eu/eurostat/web/population-demography/demography-population-stock-balance/database
 
-    - Population projections https://ec.europa.eu/eurostat/web/population-demography/population-projections/database
+    - Population projections
+    https://ec.europa.eu/eurostat/web/population-demography/population-projections/database
 
 Usage:
 
