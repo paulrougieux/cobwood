@@ -1,6 +1,11 @@
 """Load Eurostat population data
 
 Load historical population data, load population projections, merge them together.
+Sources:
+
+    - Historical data https://ec.europa.eu/eurostat/web/population-demography/demography-population-stock-balance/database
+
+    - Population projections https://ec.europa.eu/eurostat/web/population-demography/population-projections/database
 
 Usage:
 
@@ -22,10 +27,19 @@ Separate low level functions for information and debugging:
     >>> for col in ["freq", "projection", "sex", "age", "unit", "geo", "year"]:
     >>>     print(col, ":", pop_proj_23[col].unique())
 
-Plot population data
+Plot the historical population data and baseline projection
 
     >>> from matplotlib import pyplot as plt
     >>> popt.set_index("year").plot()
+    >>> plt.show()
+
+Plot all projections
+
+    >>> selector = pop_proj_23["geo"] == "EU27_2020"
+    >>> selector &= pop_proj_23["sex"] == "T"
+    >>> pop_proj_23["value_m"] =  pop_proj_23["value"] / 1e6
+    >>> proj_wide = pop_proj_23.loc[selector].pivot(columns="projection", index="year", values="value_m")
+    >>> proj_wide.plot(title="EU population projection in million inhabitants")
     >>> plt.show()
 
 """
