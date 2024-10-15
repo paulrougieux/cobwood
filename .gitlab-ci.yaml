@@ -1,0 +1,53 @@
+image: "python:3.9"
+
+variables:
+  BIOTRADE_SKIP_CONFIRMATION: "True"
+  BIOTRADE_DATA: "$CI_PROJECT_DIR/biotrade_data"
+
+default:
+  before_script:
+    - python --version
+    - pip install .
+    - pip install pytest
+    - pip install pdoc
+    - echo $CI_PROJECT_DIR 
+    - pwd
+
+stages:
+  - document
+  - paper
+  - test
+
+md-to-pdf:
+  stage: paper
+  image:
+    name: openjournals/inara
+    entrypoint: [""]
+  before_script: []
+  script:
+    - inara -p -o pdf paper/paper.md
+  artifacts:
+    paths:
+      - paper/paper.pdf
+
+pages:
+  stage: document
+  script:
+  # GitLab Pages will only publish files in the public directory
+  - pdoc -o public ./cobwood
+  artifacts:
+    paths:
+    - public
+  only:
+  - main
+  interruptible: true
+
+
+pytest:
+  stage: test
+  script:
+    - pytest --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
