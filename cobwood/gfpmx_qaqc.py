@@ -9,7 +9,7 @@ import pandas
 from numpy.testing import assert_allclose
 from cobwood.gfpmx_data import GFPMXData
 
-gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
 
 
 def check_world_aggregates(df, df_agg, rtol=None):

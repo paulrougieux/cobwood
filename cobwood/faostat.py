@@ -31,7 +31,7 @@ import pandas
 from cobwood import cobwood_data_dir
 
 # Define a location to store data locally
-faostat_data_folder = cobwood_data_dir + "faostat"
+faostat_data_folder = cobwood_data_dir / "faostat"
 # Create the faostat data folder if it doesn't exist
 if not Path(faostat_data_folder).exists():
     Path(faostat_data_folder).mkdir(parents=True)
