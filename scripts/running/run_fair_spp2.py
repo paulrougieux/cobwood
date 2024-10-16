@@ -255,9 +255,6 @@ for model in models + [gfpmxb2021]:
 
 
 # Note: this loop could be vectorized on years to speed it up.
-# This aggregation function is an attempt from Chat GPT that fails with a
-#     KeyError: "not all values found in index 'country'. Try setting the
-#     `method` keyword argument (example: method='nearest')."
 
 
 ####################
