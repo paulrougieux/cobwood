@@ -5,4 +5,7 @@
 *.ipynb
 *-checkpoint.md
 
+# Auto generated documentation
+public
+
 *tags*
