@@ -16,13 +16,13 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from biotrade.faostat import faostat
 from cobwood.gfpmx_data import GFPMXData
-from eu_cbm_hat import eu_cbm_data_pathlib
-
+import cobwood
 
 gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
 
 # Path to Valerio's EU Net Annual Increment data
-nai_path = eu_cbm_data_pathlib.parent / "eu_cbm_explore/scenarios/avitabile_nai"
+eu_cbm_explore_path = cobwood.data_dir.parent / "eu_cbm" / "eu_cbm_explore"
+nai_path = eu_cbm_explore_path / "scenarios" / "avitabile_nai"
 
 # Load GFTMx data
 round_ = gfpmx_data.get_country_rows("round")

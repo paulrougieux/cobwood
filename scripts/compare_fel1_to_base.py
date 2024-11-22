@@ -1,21 +1,25 @@
 """Compare output where the fuel wood elasticity was set to one to the base model
+
+Run this script
+
+    penv
+    ipython -i /home/paul/rp/cobwood/scripts/compare_fel1_to_base.py
+
 """
 
 import sys
 import pandas
 import matplotlib.pyplot as plt
 from biotrade.faostat import faostat
-from eu_cbm_hat import eu_cbm_data_pathlib
-from cobwood.gfpmx import GFPMX
 import cobwood
+from cobwood.gfpmx import GFPMX
 
 eu_countries = faostat.country_groups.eu_country_names
 eu_countries += ["Netherlands"]
 
 # Load CBM output data
-scenario_dir = (
-    eu_cbm_data_pathlib.parent / "eu_cbm_explore" / "scenarios" / "ssp2_fair_degrowth"
-)
+eu_cbm_explore_path = cobwood.data_dir.parent / "eu_cbm" / "eu_cbm_explore"
+scenario_dir = eu_cbm_explore_path / "scenarios" / "ssp2_fair_degrowth"
 # Load data and plotting functions from the prepare script in the same directory
 sys.path.append(str(scenario_dir))
 
