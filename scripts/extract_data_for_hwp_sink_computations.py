@@ -20,11 +20,8 @@ from biotrade.faostat import faostat
 import cobwood
 
 # Load CBM output data
-from eu_cbm_hat import eu_cbm_data_pathlib
-
-scenario_dir = (
-    eu_cbm_data_pathlib.parent / "eu_cbm_explore" / "scenarios" / "ssp2_fair_degrowth"
-)
+eu_cbm_explore_path = cobwood.data_dir.parent / "eu_cbm" / "eu_cbm_explore"
+scenario_dir = eu_cbm_explore_path / "scenarios" / "ssp2_fair_degrowth"
 # Load data and plotting functions from the prepare script in the same directory
 sys.path.append(str(scenario_dir))
 from ssp2_fair_owc_prepare_data import hexprovft_wide  # noqa: E402

@@ -110,7 +110,6 @@ dependencies = [
   "xarray",
   "seaborn",
   "tqdm",
-  "eu_cbm_hat",
   "urllib",
 ]
 

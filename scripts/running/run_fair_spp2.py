@@ -40,8 +40,9 @@ import cobwood
 from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_equations import compute_country_aggregates
-from eu_cbm_hat import eu_cbm_data_dir
 from biotrade.faostat import faostat  # only for an EU diagnostic plot
+
+eu_cbm_data_dir = cobwood.data_dir.parent / "eu_cbm" / "eu_cbm_data"
 
 ##############################
 # Create GFTMX model objects #
