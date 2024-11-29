@@ -2,8 +2,8 @@
 # cd ~/rp/cobwood
 # python3 -m build
 [build-system]
-requires = ["setuptools"]  # REQUIRED if [build-system] table is used
-build-backend = "setuptools.build_meta"  # If not defined, then legacy behavior can happen.
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
 
 
 [project]
