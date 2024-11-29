@@ -8,4 +8,12 @@
 # Auto generated documentation
 public
 
+
+# Build artefacts
+cobwood.egg-info
+dist
+
+
+
+# Vim Tags
 *tags*

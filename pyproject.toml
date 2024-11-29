@@ -1,3 +1,6 @@
+# Build the package 
+# cd ~/rp/cobwood
+# python3 -m build
 [build-system]
 requires = ["setuptools"]  # REQUIRED if [build-system] table is used
 build-backend = "setuptools.build_meta"  # If not defined, then legacy behavior can happen.
@@ -22,7 +25,7 @@ name = "cobwood"  # REQUIRED, is the only field that cannot be marked as dynamic
 #
 # For a discussion on single-sourcing the version, see
 # https://packaging.python.org/guides/single-sourcing-package-version/
-version = "0.0.1"  # REQUIRED, although can be dynamic
+dynamic = ["version"]
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
@@ -150,6 +153,11 @@ tests = ["pytest"]
 # This is configuration specific to the `setuptools` build backend.
 # If you are using a different build backend, you will need to change this.
 [tool.setuptools]
+packages = ["cobwood"]
+
+[tool.setuptools_scm]
+# can be empty if no extra settings are needed, presence enables setuptools-scm
+
 # # If there are data files included in your packages that need to be
 # # installed, specify them here.
 # # package-data = {"sample" = ["*.dat"]}
