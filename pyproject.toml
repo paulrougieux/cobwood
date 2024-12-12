@@ -149,11 +149,14 @@ tests = ["pytest"]
 # [project.scripts]
 # sample = "sample:main"
 
-
 # This is configuration specific to the `setuptools` build backend.
 # If you are using a different build backend, you will need to change this.
 [tool.setuptools]
-packages = ["cobwood"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["cobwood", "cobwood.*"]
+namespaces = false
 
 [tool.setuptools_scm]
 # can be empty if no extra settings are needed, presence enables setuptools-scm
