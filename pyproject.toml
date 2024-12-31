@@ -89,7 +89,7 @@ classifiers = [
 
   # Indicate who your project is intended for
   "Intended Audience :: Science/Research",
-  "Topic :: Cobweb model :: Global forest sector",
+  "Topic :: Scientific/Engineering",
 
   # Pick your license as you wish
   "License :: OSI Approved :: MIT License",
