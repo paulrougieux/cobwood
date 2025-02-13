@@ -198,7 +198,7 @@ def compare_to_ref(
         rtol = 1e-6
     if isinstance(variable, str):
         variable = [variable]
-    final_message = "OK"
+    final_message = "."
     for var in variable:
         # Production requires a different tolerance for some reason
         if var == "prod":

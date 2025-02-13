@@ -2,18 +2,58 @@ Cobwood is a Python package designed to analyse global forest products markets.
 
 Key Features:
 
-- **Panel Data Structure**: The package employs panel data formatted with multiple years
-  and countries, enabling comprehensive time-series and cross-sectional analysis.
+- **Panel Data Structure**: The package represents international forest products market
+  data through 2 dimensional arrays with multiple years
+  and countries, enabling time-series and cross-sectional analysis.
 
-- **Data Handling with Xarray**: Utilizes Xarray datasets to efficiently manage and
-  manipulate multi-dimensional data structures.
+- **Data Handling with Xarray**: Utilizes Xarray datasets to efficiently manipulate
+  multi-dimensional data structures. X array is tightly integrated with pandas.
+  Conversion to and from pandas data frames is very straightforward. Xarray datasets are
+  saved on disk using the NetCDF format. This format has the advantage of providing good
+  metadata descriptors. NetCDF is a standard data format used in earth systems
+  modelling, that will just help this model become a component of a greater modelling
+  tool chain.
+
+
+# Installation
+
+Install from the python package index:
+
+    pip install cobwood
+
+
+# Run the model
+
+Only the GFFPMx model is available. The input data can be downloaded from the website of
+the university of Wisconsin and converted to CSV files. Convert data to CSV files:
+
+
+
+Load input data into a GFPMX model object and run the model. At each step compare with
+the run loaded from the Excel Sheet:
+
+    from cobwood.gfpmx import GFPMX
+    gfpmxb2021 = GFPMX(
+        input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True
+    )
+    gfpmxb2021.run(compare=True, strict=False)
+
+It's possible to change any input parameters in the GFPMX object after it has been
+created. For example, to change the GDP projections to an artificial 2% growth scenario.
+
+    gfpmx_2_percent = GFPMX(
+        input_dir="gfpmx_base2021", base_year=2021, scenario_name="2_percent",
+        rerun=True
+    )
+    gfpmx_2_percent.gdp
+
 
 
 # Model Formulation
 
 The core implementation serves as a foundation for developing various versions of global
-forest sector models. The data structure is intended to enable users to extend, or
-customize the model to fit specific research or policy questions.
+forest sector models. A panel data structure based on N dimensional arrays  enable users
+to extend, or customize the model to fit specific research questions.
 
 The first model formulation is based on GFPMX: "A Cobweb Model of the Global Forest
 Sector, with an Application to the Impact of the COVID-19 Pandemic" by Joseph Buongiorno
@@ -41,6 +81,7 @@ countries in the dataset) as follows:
             * pow(ds["price"].loc[ds.c, t - 1], ds["cons_price_elasticity"])
             * pow(ds["gdp"].loc[ds.c, t], ds["cons_gdp_elasticity"])
         )
+
 
 
 # Data

@@ -132,7 +132,7 @@ pik_ssp2 = get_gdp_wide(gdp_comp, "pik_bau_adjgfpm2021")
 # self.gdp = convert_to_2d_array(self.data.get_sheet_wide("gdp")).
 
 # Assign new GDP values to the GFTMX objects, reindex them like the existing gdp array
-# so that they get empty values for the country aggregatesgfpmxb2021
+# so that they get empty values for the country aggregates
 # Convert from million USD to 1000 USD
 gfpmxpikssp2.gdp = convert_to_2d_array(pik_ssp2).reindex_like(gfpmxb2021.gdp) * 1e3
 gfpmxpikfair.gdp = convert_to_2d_array(pik_fair).reindex_like(gfpmxb2021.gdp) * 1e3

@@ -26,12 +26,13 @@ from cobwood.gfpmx import GFPMX
 #############################
 # Instantiate model objects #
 #############################
-gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
-gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
-gfpmxb2021 = GFPMX(data_dir="gfpmx_base2021", base_year=2021)
+# gfpmxb2018 = GFPMX(data_dir="gfpmx_8_6_2021", base_year=2018)
+# gfpmxb2020 = GFPMX(data_dir="gfpmx_base2020", base_year=2020)
+gfpmxb2021 = GFPMX(
+    input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True
+)
 
 #######
 # Run #
 #######
 gfpmxb2021.run(compare=True, strict=False)
-g = gfpmxb2021

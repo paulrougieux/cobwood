@@ -34,7 +34,7 @@ The following comments will not appear in the paper.
 
 - Compile this paper to a pdf document with the script specified in .gitlab-ci.yml. JOSS
   uses the openjournals/inara docker image and compiles the document with the following
-  script:
+script:
 
         inara -p -o pdf paper/paper.md
 
