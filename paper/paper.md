@@ -104,14 +104,13 @@ wood products is implemented.
 
 Figure illustrating the following points
 
-- 2D panel data  countries x time
+- 2D panel data countries x time
 - 1D vector data elasticities
 - Arrow to the gfpmx_data model object which contains data only
 - Arrow to the gomx model object which contains the data and a modelling implementation
   in the form of equations.
 - illustration of the gfpmx["sawn"] dataset containing many data arrays
 - illustration of gfpmx["sawn"]["cons"] 2 dimensional data array
-
 
 
 # Representation of panel data with Xarray
@@ -175,24 +174,78 @@ before saving the datasets to netcdf files.
 
 # Model run
 
+Load the input data into a GFPMX model object and run the model. At each step compare
+with the other run inside the Excel Sheet:
 
+    from cobwood.gfpmx import GFPMX
+    gfpmxb2021 = GFPMX(
+        input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True
+    )
+    gfpmxb2021.run(compare=True, strict=False)
 
+It's possible to change any input parameters in the GFPMX object after it has been
+created. For example, to change the GDP projections to an artificial 2% growth scenario
+from a given start year:
+
+    start_year = 2025
+    gfpmx_2_percent = GFPMX(
+        input_dir="gfpmx_base2021", base_year=2021, scenario_name="2_percent",
+        rerun=True
+    )
+    countries = gfpmx_2_percent["sawn"].c
+    gfpmx_2_percent.gdp
 
 
 # Visualisation
 
-We can make use of Xarray's built-in visualisation capabilities to draw plots of the
-data contained in these panel datasets.
+The following code snippet draws a faceted plot of industrial roundwood variables:
+consumption, import, export, production and price. The first example draws one coloured
+line by continent. The second example draws one coloured line by country for a selection
+of countries.
 
-TODO Figure
+    from cobwood.gfpmx_plot import plot_ds_by_davar
+    # By default plot one line by continent
+    plot_ds_by_davar(gfpmxb2021.indround)
+    # The country argument can specify one line by country
+    plot_ds_by_davar(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
+
+The function `plot_ds_by_davar` returns a Seaborn facet grid object which has a
+savefig() method to save the plot as an image.
+
+![Figure 1](fig/indround_by_continent.png "Plot of industrial roundwood variables by
+continent")
+
+![Figure 2](fig/indround_by_country.png "Plot of industrial roundwood variables by
+country")
+
+The following code draws a plot of Forest area and forest stock.
+
+    plot_ds_by_davar(gfpmxb2021.other, ["area", "stock"],
+                     ylabel="Area in 1000ha and stock in million m3")
+
+Xarray objects have a plot method which provides built-in visualisation capabilities.
+
+<!-- Save plots as images to be inserted in the paper
+
+    from cobwood import data_dir
+    from cobwood.gfpmx_equations import compute_country_aggregates
+    print("Re-compute aggregates for the historical period.")
+    compute_country_aggregates(gfpmxb2021["indround"], year)
+    plot_dir = data_dir.parent / "cobwood/paper/fig"
+    g = plot_ds_by_davar(gfpmxb2021.indround)
+    g.savefig(plot_dir / "indround_by_continent.png")
+    g = plot_ds_by_davar(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
+    g.savefig(plot_dir / "indround_by_country.png")
+
+-->
 
 
 # Conclusion
 
-We have created a new representation of panel datasets using N dimensional labelled data
-arrays. The data structure enhances source code readability so that it can serve as the
-basis for further modelling improvement and will facilitate the implementation of
-different forest sector models re-using the cobwood framework.
+We have created a new representation of forest products markets panel datasets using N
+dimensional labelled data arrays. The data structure enhances source code readability so
+that it can serve as the basis for further modelling improvement and will facilitate the
+implementation of different forest sector models re-using the cobwood framework.
 
 
 # References
