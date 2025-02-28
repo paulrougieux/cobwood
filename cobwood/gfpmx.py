@@ -251,9 +251,13 @@ class GFPMX:
             >>> gfpmxb2021.facet_plot("indround")
             >>> # The country argument can specify one line by country
             >>> gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
+            >>> # The variable argument can specify one variable by facet
+            >>> gfpmxb2021.facet_plot("other", variables=["area", "stock"],
+            >>>                  ylabel="Area in 1000ha and stock in million m3")
+
 
         """
-        if product not in self.products:
-            raise ValueError(f"Product {product} not in {self.products}")
-        # By default plot one line by continent
+        accepted_products = self.products + ["other"]
+        if product not in accepted_products:
+            raise ValueError(f"Product {product} not in {accepted_products}")
         plot_ds_by_davar(self[product], *args, **kwargs)
