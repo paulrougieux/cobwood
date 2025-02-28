@@ -15,7 +15,7 @@ jupyter:
 ```python
 from cobwood.gfpmx import GFPMX
 from cobwood.gfpmx_plot import plot_da_by_region
-from cobwood.gfpmx_plot import plot_ds_by_davar
+from cobwood.gfpmx_plot import facet_plot_by_var
 
 # Equations only required for debugging
 from cobwood.gfpmx_equations import world_price_indround
@@ -101,7 +101,7 @@ print(ds)
 
 ```python
 for ds in [gfpmxb2018.indround, gfpmxb2018.sawn, gfpmxb2018.panel, gfpmxb2018.pulp, gfpmxb2018.paper, gfpmxb2020.fuel]:
-    plot_ds_by_davar(ds)
+    facet_plot_by_var(ds)
 ```
 
 ```python
@@ -114,11 +114,11 @@ for ds in [gfpmxb2018.indround, gfpmxb2018.sawn, gfpmxb2018.panel, gfpmxb2018.pu
 
 ```python
 for ds in [gfpmxb2021.indround, gfpmxb2021.sawn, gfpmxb2021.panel, gfpmxb2021.pulp, gfpmxb2021.paper, gfpmxb2021.fuel]:
-    plot_ds_by_davar(ds)
+    facet_plot_by_var(ds)
 ```
 
 ```python
-plot_ds_by_davar(gfpmxb2021.other, ["area", "stock"], ylabel="Area in 1000ha and stock in million m3")
+facet_plot_by_var(gfpmxb2021.other, ["area", "stock"], ylabel="Area in 1000ha and stock in million m3")
 
 ```
 

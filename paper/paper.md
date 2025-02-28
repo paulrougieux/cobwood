@@ -207,7 +207,7 @@ continents. The second example draws coloured lines by countries.
     # The country argument can specify one line by country
     gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
 
-The function `plot_ds_by_davar` returns a Seaborn facet grid object which has a
+The function `facet_plot_by_var` returns a Seaborn facet grid object which has a
 savefig() method to save the plot as an image.
 
 ![Figure 1](fig/indround_by_continent.png "Plot of industrial roundwood variables by
@@ -218,7 +218,7 @@ country")
 
 The following code draws a plot of Forest area and forest stock.
 
-    plot_ds_by_davar(gfpmxb2021.other, ["area", "stock"],
+    facet_plot_by_var(gfpmxb2021.other, ["area", "stock"],
                      ylabel="Area in 1000ha and stock in million m3")
 
 Xarray objects have a plot method which provides built-in visualisation capabilities.
@@ -226,7 +226,7 @@ Xarray objects have a plot method which provides built-in visualisation capabili
 <!-- Save plots as images to be inserted in the paper
 
 TODO: just wirte about the existing plot method.
-TODO: attach a plot method to gfpmxb2021 "facet_plot" which reuses plot_ds_by_davar
+TODO: attach a plot method to gfpmxb2021 "facet_plot" which reuses facet_plot_by_var
 show how to use the direct plot method
 
     from cobwood.gfpmx import GFPMX
@@ -239,9 +239,9 @@ show how to use the direct plot method
     print("Re-compute aggregates for the historical period.")
     compute_country_aggregates(gfpmxb2021["indround"], year)
     plot_dir = data_dir.parent / "cobwood/paper/fig"
-    g = plot_ds_by_davar(gfpmxb2021.indround)
+    g = facet_plot_by_var(gfpmxb2021.indround)
     g.savefig(plot_dir / "indround_by_continent.png")
-    g = plot_ds_by_davar(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
+    g = facet_plot_by_var(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
     g.savefig(plot_dir / "indround_by_country.png")
 
 Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.html

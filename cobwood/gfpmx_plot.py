@@ -24,7 +24,7 @@ def plot_da_by_region(
     return ds[da_name].loc[~ds.c].plot(col="country", col_wrap=4)
 
 
-def plot_ds_by_davar(
+def facet_plot_by_var(
     ds: xarray.Dataset,
     variables: list = None,
     countries: list = None,
@@ -37,16 +37,16 @@ def plot_ds_by_davar(
     Example:
 
         >>> from cobwood.gfpmx import GFPMX
-        >>> from cobwood.gfpmx_plot import plot_ds_by_davar
+        >>> from cobwood.gfpmx_plot import facet_plot_by_var
         >>> gfpmxb2021 = GFPMX(
         >>>     input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=False
         >>> )
         >>> # By default plot one line by continent
-        >>> plot_ds_by_davar(gfpmxb2021.indround)
+        >>> facet_plot_by_var(gfpmxb2021.indround)
         >>> # The country argument can specify one line by country
-        >>> plot_ds_by_davar(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
+        >>> facet_plot_by_var(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
         >>> # Plot Forest area and forest stock
-        >>> plot_ds_by_davar(gfpmxb2021.other, ["area", "stock"],
+        >>> facet_plot_by_var(gfpmxb2021.other, ["area", "stock"],
         >>>                  ylabel="Area in 1000ha and stock in million m3")
 
     """

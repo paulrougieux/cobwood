@@ -215,7 +215,7 @@ gfpmxpikssp2_fel1.fuel["cons_constant"].loc[gfpmxpikssp2_fel1.fuel.c] = cons_con
 #     >>> products = ["sawn", "panel", "fuel", "paper", "indround", "pulp"]
 #     >>> ds_fair = [gfpmxpikfair[x] for x in products]
 #     >>> for ds in df_fair:
-#     >>>     plot_ds_by_davar(ds, countries=["Czechia"])
+#     >>>     facet_plot_by_var(ds, countries=["Czechia"])
 # The scenario should reduce industrial roundwood and sawnwood exports for the period
 # To a value that corresponds to the average 2015-2020
 # This can be achieved by reducing the marginal propensity to export.

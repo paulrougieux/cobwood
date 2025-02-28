@@ -9,7 +9,7 @@ from cobwood.gfpmx_data import GFPMXData
 from cobwood.gfpmx_data import remove_after_base_year_and_copy
 from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_equations import compute_one_time_step
-from cobwood.gfpmx_plot import plot_ds_by_davar
+from cobwood.gfpmx_plot import facet_plot_by_var
 
 
 class GFPMX:
@@ -260,4 +260,4 @@ class GFPMX:
         accepted_products = self.products + ["other"]
         if product not in accepted_products:
             raise ValueError(f"Product {product} not in {accepted_products}")
-        plot_ds_by_davar(self[product], *args, **kwargs)
+        facet_plot_by_var(self[product], *args, **kwargs)
