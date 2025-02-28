@@ -9,6 +9,7 @@ from cobwood.gfpmx_data import GFPMXData
 from cobwood.gfpmx_data import remove_after_base_year_and_copy
 from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_equations import compute_one_time_step
+from cobwood.gfpmx_plot import plot_ds_by_davar
 
 
 class GFPMX:
@@ -234,3 +235,25 @@ class GFPMX:
 
         # Read the other dataset that doesn't have a product dimension
         self["other"] = xarray.open_dataset(self.output_dir / "other.nc")
+
+    def facet_plot(self, product, *args, **kwargs):
+        """Draw a facet plot of the given variables
+
+        Example use:
+
+            >>> from cobwood.gfpmx import GFPMX
+            >>> gfpmxb2021 = GFPMX(
+            ...     input_dir="gfpmx_base2021",
+            ...     base_year=2021,
+            ...     scenario_name="base_2021",
+            ...     rerun=False
+            ... )
+            >>> gfpmxb2021.facet_plot("indround")
+            >>> # The country argument can specify one line by country
+            >>> gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
+
+        """
+        if product not in self.products:
+            raise ValueError(f"Product {product} not in {self.products}")
+        # By default plot one line by continent
+        plot_ds_by_davar(self[product], *args, **kwargs)

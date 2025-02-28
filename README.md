@@ -24,13 +24,15 @@ Install from the python package index:
 
 # Run the model
 
-Only the GFFPMx model is available. The input data can be downloaded from the website of
-the university of Wisconsin and converted to CSV files. Convert data to CSV files:
+Currently, only the GFFPMx model is available. The input data can be downloaded from the
+website of the university of Wisconsin and converted to CSV files. Convert data to CSV
+files:
 
+    from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+    gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
-
-Load input data into a GFPMX model object and run the model. At each step compare with
-the run loaded from the Excel Sheet:
+Load the input data into a GFPMX model object and run the model. At each step compare
+with the other run inside the Excel Sheet:
 
     from cobwood.gfpmx import GFPMX
     gfpmxb2021 = GFPMX(

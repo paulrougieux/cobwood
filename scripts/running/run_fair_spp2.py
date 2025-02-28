@@ -1,6 +1,6 @@
-""" Run the pik FAIR and ssp2 scenarios
-The purpose of this script is to use the GDP Fair scenario of Bodirsky et al 2022 as an
-input to the GFPMx forest sector model
+""" Run the pik FAIR and ssp2 scenarios The purpose of this script is to use
+the GDP Fair scenario of Bodirsky et al 2022 as an input to the GFPMx forest
+sector model
 
 Usage:
 

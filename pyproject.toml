@@ -113,7 +113,7 @@ dependencies = [
   "xarray",
   "seaborn",
   "tqdm",
-  "urllib",
+  "pyxlsb", # To read input Excel files in binary format
 ]
 
 # List additional groups of dependencies here (e.g. development

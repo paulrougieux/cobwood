@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-A script to save all sheets of the GFPMX Excel implementation to csv files
+A script to save all sheets of a GFPMX Excel files into csv files.
+
 
 Usage example on all available GFPMX spreadsheets:
 
@@ -12,7 +13,7 @@ Usage example on all available GFPMX spreadsheets:
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
 Note the last file is an `xlsb` in binary format. You might get an ImportError:
-Missing optional dependency 'pyxlsb'.  Use pip or conda to install pyxlsb.
+Missing optional dependency 'pyxlsb'. Use pip or conda to install pyxlsb.
 
 It can also be used as a script directly to export the default spreadsheet to csv:
 
@@ -50,7 +51,13 @@ def extract_world_price_parameter(df, col_name, contains, var_name):
 
 
 def gfpmx_spreadsheet_to_csv(spreadsheet_path):
-    """Convert GFTMX data to csv files and store them inside the cobweb_data directory
+    """Convert GFTMX data to csv files and store them inside the cobwood_data directory
+
+    The function gfpmx_spreadsheet_to_csv loads a Excel file and writes all
+    sheets into individual CSV files. The CSV files are saved inside
+    gfpmx_data_dir under a subdirectory name that correspond to the input file
+    name converted to lower case. Different calls to this function can load 2
+    or more different input files  based on different input Excel files.
 
     Usage:
 
@@ -60,7 +67,7 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path):
         >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
     """
-    # Output folder
+    # Convert the input file name to snake case. Use this as the output directory name.
     gfpmx_data_dir = re.sub(r"\W+", "_", Path(spreadsheet_path).stem).lower()
     gfpmx_data_dir = cobwood.data_dir / "gfpmx_input" / gfpmx_data_dir
     if not gfpmx_data_dir.exists():
@@ -147,10 +154,5 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path):
 
 
 if __name__ == "__main__":
-    # TODO make this a method of gfpmx_data that can load a different Excel files
-    # and output it to a sub directory of gfpmx_data_dir with a directory name that
-    # correspond to the input file name. --> This will make it possible to have 2
-    # gfpmx_data objects one with the old Excel file and another one with the new
-    # Excel file
     # Input file from https://buongiorno.russell.wisc.edu/gfpm/
     gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")

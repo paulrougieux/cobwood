@@ -198,16 +198,14 @@ from a given start year:
 
 # Visualisation
 
-The following code snippet draws a faceted plot of industrial roundwood variables:
-consumption, import, export, production and price. The first example draws one coloured
-line by continent. The second example draws one coloured line by country for a selection
-of countries.
+The following code snippet draws a faceted plot of industrial roundwood consumption,
+import, export, production and price. The first example draws coloured lines by
+continents. The second example draws coloured lines by countries.
 
-    from cobwood.gfpmx_plot import plot_ds_by_davar
     # By default plot one line by continent
-    plot_ds_by_davar(gfpmxb2021.indround)
+    gfpmxb2021.facet_plot("indround")
     # The country argument can specify one line by country
-    plot_ds_by_davar(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
+    gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
 
 The function `plot_ds_by_davar` returns a Seaborn facet grid object which has a
 savefig() method to save the plot as an image.
@@ -227,8 +225,17 @@ Xarray objects have a plot method which provides built-in visualisation capabili
 
 <!-- Save plots as images to be inserted in the paper
 
+TODO: just wirte about the existing plot method.
+TODO: attach a plot method to gfpmxb2021 "facet_plot" which reuses plot_ds_by_davar
+show how to use the direct plot method
+
+    from cobwood.gfpmx import GFPMX
     from cobwood import data_dir
     from cobwood.gfpmx_equations import compute_country_aggregates
+    gfpmxb2021 = GFPMX(
+        input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021",
+        rerun=False
+    )
     print("Re-compute aggregates for the historical period.")
     compute_country_aggregates(gfpmxb2021["indround"], year)
     plot_dir = data_dir.parent / "cobwood/paper/fig"
@@ -237,15 +244,17 @@ Xarray objects have a plot method which provides built-in visualisation capabili
     g = plot_ds_by_davar(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
     g.savefig(plot_dir / "indround_by_country.png")
 
+Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.html
+
 -->
 
 
 # Conclusion
 
-We have created a new representation of forest products markets panel datasets using N
-dimensional labelled data arrays. The data structure enhances source code readability so
-that it can serve as the basis for further modelling improvement and will facilitate the
-implementation of different forest sector models re-using the cobwood framework.
+We have created a new representation of forest products markets datasets using N
+dimensional labelled data arrays based on Xarray. The data structure enhances source
+code readability so that it can serve as the basis for further modelling improvement.
+Cobwood can be used as a starting point to implement different forest sector models.
 
 
 # References
