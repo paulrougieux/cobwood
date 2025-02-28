@@ -26,7 +26,7 @@ def plot_da_by_region(
 
 def plot_ds_by_davar(
     ds: xarray.Dataset,
-    da_vars: list = None,
+    variables: list = None,
     countries: list = None,
     ylabel: str = None,
     title: str = None,
@@ -50,8 +50,8 @@ def plot_ds_by_davar(
         >>>                  ylabel="Area in 1000ha and stock in million m3")
 
     """
-    if da_vars is None:
-        da_vars = ["cons", "imp", "exp", "prod", "price"]
+    if variables is None:
+        variables = ["cons", "imp", "exp", "prod", "price"]
     if ylabel is None:
         ylabel = "Quantity in 1000 m3, price in USD/m3"
     if title is None:
@@ -59,10 +59,10 @@ def plot_ds_by_davar(
     # Keep only the selected variables
     if countries is None:
         # Select continents
-        df = ds.loc[{"country": ~ds.c}][da_vars].to_dataframe()
+        df = ds.loc[{"country": ~ds.c}][variables].to_dataframe()
     else:
         # Select countries
-        df = ds.loc[{"country": countries}][da_vars].to_dataframe()
+        df = ds.loc[{"country": countries}][variables].to_dataframe()
     df = df.reset_index().melt(id_vars=["country", "year"])
     g = seaborn.relplot(
         data=df,

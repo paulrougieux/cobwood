@@ -123,9 +123,9 @@ plot_ds_by_davar(gfpmxb2021.other, ["area", "stock"], ylabel="Area in 1000ha and
 ```
 
 ```python
-da_vars = ["cons", "imp", "exp", "prod", "price"]
+variables = ["cons", "imp", "exp", "prod", "price"]
 ds = gfpmxb2021.sawn
-df = ds.loc[{"country": ~ds.c}][da_vars].to_dataframe()
+df = ds.loc[{"country": ~ds.c}][variables].to_dataframe()
 df = df.reset_index().melt(id_vars=["country", "year"])
 df.query("year==2023") 
 ```
