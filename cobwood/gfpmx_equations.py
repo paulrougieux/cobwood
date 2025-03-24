@@ -235,7 +235,9 @@ def compute_country_aggregates(
     ! This function modifies its input data set `ds` for the given time step t.
     """
     regions = ds.region.to_series().unique()
-    regions = [x for x in regions if x != "WORLD" and not pandas.isna(x)]
+    regions = [
+        x for x in regions if x != "WORLD" and not pandas.isna(x) and not "" == x
+    ]
     if variable is None:
         variable = ["cons", "exp", "imp", "prod"]
     if isinstance(variable, str):
