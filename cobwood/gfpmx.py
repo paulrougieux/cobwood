@@ -4,12 +4,13 @@
 import json
 import xarray
 import cobwood
-from cobwood.gfpmx_data import compare_to_ref
 from cobwood.gfpmx_data import GFPMXData
-from cobwood.gfpmx_data import remove_after_base_year_and_copy
+from cobwood.gfpmx_data import compare_to_ref
 from cobwood.gfpmx_data import convert_to_2d_array
+from cobwood.gfpmx_data import remove_after_base_year_and_copy
 from cobwood.gfpmx_equations import compute_one_time_step
 from cobwood.gfpmx_plot import facet_plot_by_var
+from cobwood.scenario import parse_scenario_yaml
 
 
 class GFPMX:
@@ -25,13 +26,13 @@ class GFPMX:
 
         >>> from cobwood.gfpmx import GFPMX
         >>> # Base 2021
-        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True)
+        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=True)
         >>> gfpmxb2021.run_and_compare_to_ref()
         >>> gfpmxb2021.run()
 
     Load output data, after a run has already been completed
 
-        >>> gfpmx_pikssp2 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1")
+        >>> gfpmx_pikssp2 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1")
 
     You can debug data issues by creating the data object only as follows:
 
@@ -46,7 +47,7 @@ class GFPMX:
     Run other base years and compare GFPMx Excel results with the one from the cobwood
 
         >>> # Base 2018
-        >>> gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018, scenario_name="base_2018")
+        >>> gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018, scenario="base_2018")
         >>> # Run and stop when the result diverges from the reference spreadsheet
         >>> gfpmxb2018.run(compare=True)
         >>> # Run and continue when the result diverges (just print the missmatch message)
@@ -55,9 +56,9 @@ class GFPMX:
         >>> gfpmxb2021.run()
         >>> print(gfpmxb2018.indround)
         >>> # Base 2020
-        >>> gfpmxb2020 = GFPMX(input_dir="gfpmx_base2020", base_year=2020, scenario_name="base_2020")
+        >>> gfpmxb2020 = GFPMX(input_dir="gfpmx_base2020", base_year=2020, scenario="base_2020")
         >>> gfpmxb2020.run_and_compare_to_ref() # Fails
-        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021")
+        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021")
 
     You will then be able to load Xarray datasets with the
     `convert_sheets_to_dataset()` method:
@@ -73,17 +74,30 @@ class GFPMX:
         >>> print(gfpmxb2018.gdp)
     """
 
-    def __init__(self, input_dir, base_year, scenario_name, rerun=False):
-        # TODO: change this so that it is initialised with a scenario_name only
-        # The input_dir and base_year parameters should be in a yaml configuration
-        # file associated with that scenario_name inside cobwood_data
-        # See https://gitlab.com/bioeconomy/cobwood/cobwood/-/issues/10
+    def __init__(self, scenario, rerun=False):
+        """
+        Initialize the GFPMX model with the specified scenario.
+
+        Parameters:
+        -----------
+        scenario : str
+            Name of the scenario to load configuration from
+        rerun : bool, optional
+            Whether to rerun the model (default: False)
+        """
+        # Parse YAML scenario configuration file
+        config = parse_scenario_yaml(scenario)
+        input_dir = config["input_dir"]
+        base_year = config["base_year"]
         self.input_data = GFPMXData(data_dir=input_dir)
-        self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario_name
+        self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario
+        self.plot_dir = self.output_dir / "plot"
+        if not self.plot_dir.exists():
+            self.plot_dir.mkdir(parents=True)
         self.combined_netcdf_file_path = self.output_dir / "combined_datasets.nc"
         self.base_year = base_year
         self.last_time_step = 2070
-        self.scenario_name = scenario_name
+        self.scenario = scenario
         self.products = ["indround", "fuel", "sawn", "panel", "pulp", "paper"]
 
         # Load reference data
@@ -101,7 +115,7 @@ class GFPMX:
             msg = ""
             if not rerun:
                 msg = "There is no output from a previous run for this scenario "
-                msg += f"'{self.scenario_name}'.\n"
+                msg += f"'{self.scenario}'.\n"
             msg += f"Load input data from {input_dir} and reset time series to a "
             msg += f"base year {self.base_year} before simulation start."
             print(msg)
@@ -128,7 +142,7 @@ class GFPMX:
         """Run the model for many time steps from base_year + 1 to last_time_step."""
         if rtol is None:
             rtol = 1e-2
-        print(f"Running {self.scenario_name}")
+        print(f"Running {self.scenario}")
         # Add GDP projections to secondary products datasets.
         # GDP are projected to the future and `self.gdp` might be changed by
         # the user before the model run. This is why it is added only at this time.
@@ -236,8 +250,8 @@ class GFPMX:
         # Read the other dataset that doesn't have a product dimension
         self["other"] = xarray.open_dataset(self.output_dir / "other.nc")
 
-    def facet_plot(self, product, *args, **kwargs):
-        """Draw a facet plot of the given variables
+    def facet_plot_by_var(self, product, *args, **kwargs):
+        """Plot one variable for each facet for the given product
 
         Example use:
 
@@ -245,7 +259,7 @@ class GFPMX:
             >>> gfpmxb2021 = GFPMX(
             ...     input_dir="gfpmx_base2021",
             ...     base_year=2021,
-            ...     scenario_name="base_2021",
+            ...     scenario="base_2021",
             ...     rerun=False
             ... )
             >>> gfpmxb2021.facet_plot("indround")
@@ -255,9 +269,8 @@ class GFPMX:
             >>> gfpmxb2021.facet_plot("other", variables=["area", "stock"],
             >>>                  ylabel="Area in 1000ha and stock in million m3")
 
-
         """
         accepted_products = self.products + ["other"]
         if product not in accepted_products:
             raise ValueError(f"Product {product} not in {accepted_products}")
-        facet_plot_by_var(self[product], *args, **kwargs)
+        g = facet_plot_by_var(self[product], *args, **kwargs)

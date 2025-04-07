@@ -183,8 +183,12 @@ with the other run inside the Excel Sheet:
     )
     gfpmxb2021.run(compare=True, strict=False)
 
+After a model run, the scenario output data is automatically saved inside the model's
+`output_dir` directory. When re-loading the model later, specify the argument
+`rerun="False"` to load both input and output data without the need to run the model.
+
 It's possible to change any input parameters in the GFPMX object after it has been
-created. For example, to change the GDP projections to an artificial 2% growth scenario
+created. For example, to change the GDP projections to a hypothetical 2% growth scenario
 from a given start year:
 
     start_year = 2025
@@ -198,14 +202,27 @@ from a given start year:
 
 # Visualisation
 
-The following code snippet draws a faceted plot of industrial roundwood consumption,
-import, export, production and price. The first example draws coloured lines by
-continents. The second example draws coloured lines by countries.
+Once the model once the model has been run. The output data is Reusing the model object
+from above, the following code snippet draws a faceted plot of
+industrial roundwood consumption, import, export, production and price.
+
+Don't re-run the model this time. Reload the model's output data from the previous run
+above.
+
+    from cobwood.gfpmx import GFPMX
+    gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
+
+The first plot draws coloured lines by continents. The second plot draws coloured
+lines by countries.
 
     # By default plot one line by continent
-    gfpmxb2021.facet_plot("indround")
+    gfpmxb2021.facet_plot_by_var("indround")
     # The country argument can specify one line by country
-    gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
+    gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
+
+Plots are visible in the model's output directory `gfpmxb2021.output_dir`. Since the
+method returns a plot object, the plots can also be displayed directly in a Jupyter
+notebook.
 
 The function `facet_plot_by_var` returns a Seaborn facet grid object which has a
 savefig() method to save the plot as an image.
@@ -225,23 +242,29 @@ Xarray objects have a plot method which provides built-in visualisation capabili
 
 <!-- Save plots as images to be inserted in the paper
 
-TODO: just wirte about the existing plot method.
+TODO: just write about the existing plot method.
 TODO: attach a plot method to gfpmxb2021 "facet_plot" which reuses facet_plot_by_var
 show how to use the direct plot method
 
-    from cobwood.gfpmx import GFPMX
     from cobwood import data_dir
     from cobwood.gfpmx_equations import compute_country_aggregates
+    plot_dir = data_dir.parent / "cobwood/paper/fig"
     gfpmxb2021 = GFPMX(
         input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021",
         rerun=False
     )
     print("Re-compute aggregates for the historical period.")
-    compute_country_aggregates(gfpmxb2021["indround"], year)
-    plot_dir = data_dir.parent / "cobwood/paper/fig"
-    g = facet_plot_by_var(gfpmxb2021.indround)
+    for this_product in gfpmxb2021.products:
+        for year in range(1995, 2022):
+            compute_country_aggregates(gfpmxb2021[this_product], year)
+            compute_country_aggregates(gfpmxb2021.other, year, ["area", "stock"])
+
+    # Draw the default plot with one line by continent
+    g = gfpmxb2021.facet_plot("indround")
     g.savefig(plot_dir / "indround_by_continent.png")
-    g = facet_plot_by_var(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
+
+    # Use the countries argument to specify one line by country
+    g = gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
     g.savefig(plot_dir / "indround_by_country.png")
 
 Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.html
