@@ -16,10 +16,10 @@ eu_countries += ["Netherlands"]
 
 # Load output data, after a run has already been completed
 gfpmx_pikssp2 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1"
 )
 gfpmx_pikfair = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair_fel1"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikfair_fel1"
 )
 
 SELECTED_VARIABLES = [

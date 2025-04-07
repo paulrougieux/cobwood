@@ -36,7 +36,7 @@ with the other run inside the Excel Sheet:
 
     from cobwood.gfpmx import GFPMX
     gfpmxb2021 = GFPMX(
-        input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True
+        input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=True
     )
     gfpmxb2021.run(compare=True, strict=False)
 
@@ -44,7 +44,7 @@ It's possible to change any input parameters in the GFPMX object after it has be
 created. For example, to change the GDP projections to an artificial 2% growth scenario.
 
     gfpmx_2_percent = GFPMX(
-        input_dir="gfpmx_base2021", base_year=2021, scenario_name="2_percent",
+        input_dir="gfpmx_base2021", base_year=2021, scenario="2_percent",
         rerun=True
     )
     gfpmx_2_percent.gdp

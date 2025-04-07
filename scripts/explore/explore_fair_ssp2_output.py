@@ -16,13 +16,13 @@ from cobwood.gfpmx import GFPMX
 gfpmxpikfair_fel1 = GFPMX(
     input_dir="gfpmx_base2021",
     base_year=2021,
-    scenario_name="pikfair_fel1",
+    scenario="pikfair_fel1",
     rerun=False,
 )
 gfpmxpikssp2_fel1 = GFPMX(
     input_dir="gfpmx_base2021",
     base_year=2021,
-    scenario_name="pikssp2_fel1",
+    scenario="pikssp2_fel1",
     rerun=False,
 )
 

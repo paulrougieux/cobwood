@@ -32,16 +32,16 @@ eu_countries += ["Netherlands"]
 
 # Load output data, after a run has already been completed
 gfpmx_pikssp2_fel1 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1"
 )
 gfpmx_pikssp2_base = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2"
 )
 gfpmx_pikfair_fel1 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair_fel1"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikfair_fel1"
 )
 gfpmx_pikfair_base = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikfair"
 )
 
 
@@ -51,7 +51,7 @@ def get_df_eu(model, product, variable):
     selector = df["country"].isin(eu_countries)
     df = df.melt(id_vars=["country", "year"], value_vars="cons", var_name="variable")
     df["product"] = product
-    df["scenario"] = model.scenario_name
+    df["scenario"] = model.scenario
     return df.loc[selector].reset_index(drop=True)
 
 

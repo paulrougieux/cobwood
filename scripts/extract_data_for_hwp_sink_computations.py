@@ -36,10 +36,10 @@ eu_countries += ["Netherlands"]
 
 # Load output data, after a run has already been completed
 gfpmx_pikssp2 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1"
 )
 gfpmx_pikfair = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair_fel1"
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikfair_fel1"
 )
 
 SELECTED_VARIABLES = [
@@ -67,7 +67,7 @@ def get_gfpmx_df(gfpmx_scenario, product):
         .reset_index()
         .sort_values(["country", "year"])
     )
-    df["pathway"] = gfpmx_scenario.scenario_name
+    df["pathway"] = gfpmx_scenario.scenario
     df["product"] = ds.product
     if product in ["paper", "pulp"]:
         df["unit"] = "1000 t"
@@ -139,7 +139,7 @@ np.testing.assert_allclose(
 def extract_to_csv(gfpmx_scenario, product):
     """Extract GFPMx projection to a csv file"""
     df = get_gfpmx_df(gfpmx_scenario=gfpmx_scenario, product=product)
-    df.to_csv(hwp_dir / f"{gfpmx_scenario.scenario_name}_{product}_eu.csv", index=False)
+    df.to_csv(hwp_dir / f"{gfpmx_scenario.scenario}_{product}_eu.csv", index=False)
 
 
 # for product in PRODUCTS:

@@ -53,22 +53,22 @@ if input(msg + "\nPlease confirm [y/n]:") != "y":
     raise ValueError("Cancelled.")
 
 gfpmxb2021 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=True
+    input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=True
 )
 # BAU SSP2 GDP projections from Bodirstky et al 2022
 gfpmxpikssp2 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2", rerun=True
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2", rerun=True
 )
 # FAIR GDP projections from Bodirstky et al 2022
 gfpmxpikfair = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair", rerun=True
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikfair", rerun=True
 )
 # Scenario for a fuel wood demand elasticity of 1 fel1
 gfpmxpikfair_fel1 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikfair_fel1", rerun=True
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikfair_fel1", rerun=True
 )
 gfpmxpikssp2_fel1 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="pikssp2_fel1", rerun=True
+    input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1", rerun=True
 )
 
 
@@ -244,7 +244,7 @@ for scenario in selected_scenarios:
 
 # for scenario in selected_scenarios:
 #     product = "indround"
-#     file_name = f"/tmp/{scenario.scenario_name}_{product}.csv"
+#     file_name = f"/tmp/{scenario.scenario}_{product}.csv"
 #     scenario[product].to_dataframe().loc[["WORLD", "Czechia"]].to_csv(file_name)
 
 
@@ -316,7 +316,7 @@ def da_to_csv(da, file_path, faostat_name):
 def save_harvest_demand_to_eu_cbm_hat(model):
     """Save harvest demand to eu_cbm_hat"""
     eu_cbm_harvest_dir = pathlib.Path(eu_cbm_data_dir) / "domestic_harvest"
-    eu_cbm_harvest_dir = eu_cbm_harvest_dir / model.scenario_name
+    eu_cbm_harvest_dir = eu_cbm_harvest_dir / model.scenario
     eu_cbm_harvest_dir.mkdir(exist_ok=True)
     da_to_csv(
         model.indround["prod"],

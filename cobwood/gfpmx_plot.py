@@ -16,7 +16,7 @@ def plot_da_by_region(
         >>> from cobwood.gfpmx import GFPMX
         >>> from cobwood.gfpmx_plot import plot_da_by_region
         >>> gfpmxb2021 = GFPMX(
-        ...     input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=False
+        ...     input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=False
         ... )
         >>> plot_da_by_region(gfpmxb2021["indround"], "prod")
 
@@ -39,7 +39,7 @@ def facet_plot_by_var(
         >>> from cobwood.gfpmx import GFPMX
         >>> from cobwood.gfpmx_plot import facet_plot_by_var
         >>> gfpmxb2021 = GFPMX(
-        >>>     input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021", rerun=False
+        >>>     input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=False
         >>> )
         >>> # By default plot one line by continent
         >>> facet_plot_by_var(gfpmxb2021.indround)

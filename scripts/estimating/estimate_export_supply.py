@@ -24,9 +24,7 @@ from biotrade.faostat import faostat
 from cobwood.gfpmx import GFPMX
 
 # Load historical data
-gfpmxb2021 = GFPMX(
-    input_dir="gfpmx_base2021", base_year=2021, scenario_name="base_2021"
-)
+gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021")
 
 
 ############################################################
