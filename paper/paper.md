@@ -212,33 +212,32 @@ above.
     from cobwood.gfpmx import GFPMX
     gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
 
-The first plot draws coloured lines by continents. The second plot draws coloured
-lines by countries.
+The first plot draws coloured lines by continents. It is the default plot.
 
     # By default plot one line by continent
     gfpmxb2021.facet_plot_by_var("indround")
-    # The country argument can specify one line by country
-    gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
-
-Plots are visible in the model's output directory `gfpmxb2021.output_dir`. Since the
-method returns a plot object, the plots can also be displayed directly in a Jupyter
-notebook.
-
-The function `facet_plot_by_var` returns a Seaborn facet grid object which has a
-savefig() method to save the plot as an image.
 
 ![Figure 1](fig/indround_by_continent.png "Plot of industrial roundwood variables by
 continent")
 
+The country argument can specify one coloured line by country:
+
+    gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
+
 ![Figure 2](fig/indround_by_country.png "Plot of industrial roundwood variables by
 country")
+
+Plots are visible in the model's output directory `gfpmxb2021.output_dir`. Since the
+method returns a plot object, the output of the `facet_plot_by_var()` method can also be
+displayed in a Jupyter notebook directly.
 
 The following code draws a plot of Forest area and forest stock.
 
     facet_plot_by_var(gfpmxb2021.other, ["area", "stock"],
                      ylabel="Area in 1000ha and stock in million m3")
 
-Xarray objects have a plot method which provides built-in visualisation capabilities.
+Xarray objects also have a plot method which provides built-in visualisation
+capabilities.
 
 <!-- Save plots as images to be inserted in the paper
 
@@ -277,7 +276,9 @@ Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.htm
 We have created a new representation of forest products markets datasets using N
 dimensional labelled data arrays based on Xarray. The data structure enhances source
 code readability so that it can serve as the basis for further modelling improvement.
-Cobwood can be used as a starting point to implement different forest sector models.
+Cobwood can be used as a starting point to implement different forest sector models. The
+scenario configuration files should make it possible to compare many model
+implementations with many configuration parameters.
 
 
 # References
