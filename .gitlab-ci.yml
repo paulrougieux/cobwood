@@ -1,4 +1,4 @@
-image: "python:3.9"
+image: "python:3.11"
 
 variables:
   COBWOOD_DATA: "$CI_PROJECT_DIR/cobwood_data"
@@ -13,8 +13,8 @@ default:
     - pwd
 
 stages:
-  - document
   - paper
+  - document
   - test
 
 md-to-pdf:
