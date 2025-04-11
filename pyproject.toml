@@ -109,7 +109,6 @@ classifiers = [
 dependencies = [
   "pandas",
   "numpy",
-  "urllib",
   "xarray",
   "seaborn",
   "tqdm",
