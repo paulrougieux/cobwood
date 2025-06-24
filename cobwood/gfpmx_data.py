@@ -256,9 +256,12 @@ class GFPMXData:
         self.parent = parent
         self.input_dir = self.parent.input_dir
         if not self.input_dir.exists():
-            msg = "The input data directory specified in the scenario"
-            msg = f"configuration file: {self.parent.config}doesn't exist:\n"
-            msg += f"{self.input_dir}"
+            msg = "The input data directory specified in the scenario yaml file "
+            msg += "doesn't exist.\n"
+            msg += f"Input data directory: {self.input_dir}\n"
+            msg += "Configuration file:"
+            msg += f"{self.parent.scenario_yaml_path}\n"
+            msg += f"{self.parent.config}\n"
             raise FileNotFoundError(msg)
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
