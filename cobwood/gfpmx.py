@@ -195,19 +195,23 @@ class GFPMX:
         # Save simulation output
         self.write_datasets_to_netcdf()
 
-    def write_datasets_to_netcdf(self):
-        """Write all datasets to a single netcdf file with an extra 'product'
-        dimension.
+    @cached_property
+    def all_products_ds(self):
+        """Combined dataset for all products
 
-        This should be performed after the simulation run, to preserve the
-        output of a given scenario. The GFPMX class contains one dataset for
-        each product. This method combines them into one combined dataset with
-        a new product dimension. It then saves that combined dataset to a
-        NetCDF file.
+        The dataset has a third product dimension on top of the country and
+        year dimensions
+        Examples
+        --------
+        Extract industrial roundwood production data:
+
+        >>> from cobwood.gfpmx import GFPMX
+        >>> gfpmx_pikssp2 = GFPMX(scenario="pikssp2")
+        >>> ds = gfpmx_pikssp2.all_products_ds
+        >>> print(ds)
+        >>> print(ds.individual_dataset_attributes)
+
         """
-        if not self.output_dir.exists():
-            self.output_dir.mkdir(parents=True)
-
         datasets_to_combine = []
         attributes_dict = {}
 
@@ -225,9 +229,23 @@ class GFPMX:
         # Store attributes as a global attribute in the combined dataset
         attributes_json_str = json.dumps(attributes_dict)
         combined_ds.attrs["individual_dataset_attributes"] = attributes_json_str
+        return combined_ds
 
-        # Save combined Dataset to NetCDF
-        combined_ds.to_netcdf(self.combined_netcdf_file_path)
+    def write_datasets_to_netcdf(self):
+        """Write all datasets to a single netcdf file with an extra 'product'
+        dimension.
+
+        This should be performed after the simulation run, to preserve the
+        output of a given scenario. The GFPMX class contains one dataset for
+        each product. This method combines them into one combined dataset with
+        a new product dimension. It then saves that combined dataset to a
+        NetCDF file.
+        """
+        if not self.output_dir.exists():
+            self.output_dir.mkdir(parents=True)
+
+        # Save the products_combined Dataset to NetCDF
+        self.all_products_ds.to_netcdf(self.combined_netcdf_file_path)
 
         # Save other dataset to NETCDF
         self.other.to_netcdf(self.output_dir / "other.nc")
