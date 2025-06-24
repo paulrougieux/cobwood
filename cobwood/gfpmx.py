@@ -3,9 +3,11 @@
 """
 
 from functools import cached_property
+from typing import Union, List
 import json
 import xarray
 import cobwood
+import pandas
 
 from cobwood.gfpmx_data import GFPMXData
 from cobwood.gfpmx_data import compare_to_ref
@@ -282,3 +284,61 @@ class GFPMX:
         if product not in accepted_products:
             raise ValueError(f"Product {product} not in {accepted_products}")
         g = facet_plot_by_var(self[product], *args, **kwargs)
+
+    def get_time_series_df(
+        self, product: str, var: Union[str, List[str]]
+    ) -> pandas.DataFrame:
+        """
+        Extract time series data for a given product and variable(s) from a GFPMX model.
+
+        Parameters
+        ----------
+        product : str
+            The product identifier (e.g., "indround" for industrial roundwood).
+        var : Union[str, List[str]]
+            The variable identifier(s) (e.g., "prod" for production, or ["prod", "imp"]
+            for multiple variables).
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame containing the time series data with reset index and renamed
+            variable column(s) using the format "{product}_{var}". The scenario column
+            is added as the first column.
+
+        Examples
+        --------
+        Extract industrial roundwood production data:
+
+        >>> from cobwood.gfpmx import GFPMX
+        >>> gfpmx_pikssp2 = GFPMX(scenario="pikssp2")
+        >>> irw_prod = gfpmx_pikssp2.get_time_series_df(product="indround", var="prod")
+
+        Extract multiple variables for industrial roundwood:
+
+        >>> irw = gfpmx_pikssp2.get_time_series_df(product="indround", var=["prod", "imp"])
+
+        Extract fuelwood production data:
+
+        >>> fuel_prod = gfpmx_pikssp2.get_time_series_df(product="fuel", var="prod")
+        """
+        df = self[product][var].to_dataframe().reset_index()
+
+        # Handle renaming for both single variable and list of variables
+        if isinstance(var, str):
+            # Single variable case
+            df.rename(columns={var: product + "_" + var}, inplace=True)
+        else:
+            # List of variables case
+            rename_dict = {v: product + "_" + v for v in var}
+            df.rename(columns=rename_dict, inplace=True)
+
+        # Add scenario column
+        df["scenario"] = self.scenario
+
+        # Move scenario column to the front
+        cols = df.columns.to_list()
+        cols = cols[-1:] + cols[:-1]
+        df = df[cols]
+
+        return df
