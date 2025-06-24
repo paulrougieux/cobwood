@@ -1,9 +1,12 @@
 """Run the GFPMX model and store output data
 
 """
+
+from functools import cached_property
 import json
 import xarray
 import cobwood
+
 from cobwood.gfpmx_data import GFPMXData
 from cobwood.gfpmx_data import compare_to_ref
 from cobwood.gfpmx_data import convert_to_2d_array
@@ -85,17 +88,17 @@ class GFPMX:
         rerun : bool, optional
             Whether to rerun the model (default: False)
         """
-        # Parse YAML scenario configuration file
-        config = parse_scenario_yaml(scenario)
-        input_dir = config["input_dir"]
-        base_year = config["base_year"]
-        self.input_data = GFPMXData(data_dir=input_dir)
+        self.scenario = scenario
+        # Parse the YAML scenario configuration file
+        self.scenario_yaml_path = cobwood.data_dir / "scenario" / f"{scenario}.yaml"
+        self.config = parse_scenario_yaml(self.scenario_yaml_path)
+        self.input_dir = cobwood.data_dir / "gfpmx_input" / self.config["input_dir"]
+        self.base_year = self.config["base_year"]
         self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario
         self.plot_dir = self.output_dir / "plot"
         if not self.plot_dir.exists():
             self.plot_dir.mkdir(parents=True)
         self.combined_netcdf_file_path = self.output_dir / "combined_datasets.nc"
-        self.base_year = base_year
         self.last_time_step = 2070
         self.scenario = scenario
         self.products = ["indround", "fuel", "sawn", "panel", "pulp", "paper"]
@@ -116,13 +119,18 @@ class GFPMX:
             if not rerun:
                 msg = "There is no output from a previous run for this scenario "
                 msg += f"'{self.scenario}'.\n"
-            msg += f"Load input data from {input_dir} and reset time series to a "
+            msg += f"Load input data from {self.input_dir} and reset time series to a "
             msg += f"base year {self.base_year} before simulation start."
             print(msg)
             for product in self.products + ["other"]:
                 self[product] = remove_after_base_year_and_copy(
                     self[product + "_ref"], self.base_year
                 )
+
+    @cached_property
+    def input_data(self):
+        """Input data"""
+        return GFPMXData(self)
 
     def __getitem__(self, key):
         """Get a dataset from the data dictionary"""
