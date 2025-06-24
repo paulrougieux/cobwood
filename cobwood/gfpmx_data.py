@@ -255,6 +255,10 @@ class GFPMXData:
 
     def __init__(self, data_dir):
         self.data_dir = cobwood.data_dir / "gfpmx_input" / data_dir
+        if not self.data_dir.exists():
+            msg = "The input data directory doesn't exist: "
+            msg += f"{self.data_dir}"
+            raise FileNotFoundError(msg)
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
         self.index = ["year", "country"]
