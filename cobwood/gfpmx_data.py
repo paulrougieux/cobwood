@@ -13,14 +13,16 @@ Before using this object, the Excel file needs to be exported to csv files with:
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
     >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
-The data will then be available in a sub directory of `cobweb.data_dir` with
+The data will then be available in a sub directory of `cobweb.input_dir` with
 the same name as the spreadsheet file (except that it will be in snake case
 `gfpmx_8_6_2021`).
 
+# TODO: update examples to use GFPMX.input_data instead of using this directly
+
     >>> from cobwood.gfpmx_data import GFPMXData
-    >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021")
-    >>> gfpmx_data_b2020 = GFPMXData(data_dir="gfpmx_base2020")
-    >>> gfpmx_data_b2021 = GFPMXData(data_dir="gfpmx_base2021")
+    >>> gfpmx_data_b2018 = GFPMXData(input_dir="gfpmx_8_6_2021")
+    >>> gfpmx_data_b2020 = GFPMXData(input_dir="gfpmx_base2020")
+    >>> gfpmx_data_b2021 = GFPMXData(input_dir="gfpmx_base2021")
 
 You can view spreadsheets contents (loaded from intermediate csv files) by
 selecting their names:
@@ -46,9 +48,6 @@ import pandas
 import xarray
 from numpy.testing import assert_allclose
 
-# Internal modules
-import cobwood
-
 
 def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
     """Convert the year columns of a data frame to a two dimensional data array
@@ -58,7 +57,7 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
 
         >>> from cobwood.gfpmx_data import GFPMXData
         >>> from cobwood.gfpmx_data import convert_to_2d_array
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
         >>> gdp_df = gfpmx_data.get_sheet_wide("gdp")
@@ -83,7 +82,7 @@ def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
 
         >>> from cobwood.gfpmx_data import GFPMXData
         >>> from cobwood.gfpmx_data import convert_to_1d_array
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
         >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
         >>> sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
 
@@ -229,12 +228,12 @@ class GFPMXData:
 
     Load sawnwood consumption data in long format:
 
-    :param data_dir Location of the csv files
+    :param input_dir Location of the csv files
     :param base_year Simulation base year i.e. last year of historical data
            available in the spreadsheet
 
         >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
         >>> swd_cons = gfpmx_data['sawncons']
         >>> swd_cons
 
@@ -253,11 +252,13 @@ class GFPMXData:
         """Return a data frame based on the GFPMX sheet name."""
         return self.get_sheet_long(sheet_name)
 
-    def __init__(self, data_dir):
-        self.data_dir = cobwood.data_dir / "gfpmx_input" / data_dir
-        if not self.data_dir.exists():
-            msg = "The input data directory doesn't exist: "
-            msg += f"{self.data_dir}"
+    def __init__(self, parent):
+        self.parent = parent
+        self.input_dir = self.parent.input_dir
+        if not self.input_dir.exists():
+            msg = "The input data directory specified in the scenario"
+            msg = f"configuration file: {self.parent.config}doesn't exist:\n"
+            msg += f"{self.input_dir}"
             raise FileNotFoundError(msg)
         self.sheets = self.list_sheets()
         self.index_merge = ["year", "country", "faostat_name"]
@@ -285,7 +286,8 @@ class GFPMXData:
 
             >>> from cobwood.gfpmx_data import GFPMXData
             >>> from pandas.errors import EmptyDataError
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+            # TODO: update examples to use GFPMX.input_data
+            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
             >>> sheets = gfpmx_data.list_sheets()
             >>> sheets
 
@@ -334,7 +336,7 @@ class GFPMXData:
             >>>     print(name, "\n",  gfpmx_data[name]["faostat_name"].unique())
 
         """
-        sheet_paths = self.data_dir.glob("**/*.csv")
+        sheet_paths = self.input_dir.glob("**/*.csv")
         df = pandas.DataFrame({"file_name": [x.name for x in sheet_paths]})
         df["name"] = df.file_name.str.extract("(.*).csv")
         # Place product patterns in a capture group for extraction
@@ -353,11 +355,11 @@ class GFPMXData:
         Example use
 
             >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
             >>> print(gfpmx_data.get_sheet_wide("sawnprice"))
 
         """
-        csv_file_name = self.data_dir / (sheet_name + ".csv")
+        csv_file_name = self.input_dir / (sheet_name + ".csv")
         df = pandas.read_csv(csv_file_name)
         return df
 
@@ -367,7 +369,7 @@ class GFPMXData:
         Example use
 
             >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
             >>> print(gfpmx_data.get_sheet_long("sawncons"))
 
         """
@@ -408,7 +410,7 @@ class GFPMXData:
         """Return a data frame of cleaned GDP values
 
         >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
         >>> gfpmx_data.get_price_lag('sawnprice')
 
         """
@@ -423,7 +425,7 @@ class GFPMXData:
         """Return a price table with prices shifted by a one year lag
 
         >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
         >>> gfpmx_data.get_price_lag('sawnprice')
 
         """
@@ -451,7 +453,7 @@ class GFPMXData:
         stock column.
 
             >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
+            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
             >>> rwd = gfpmx_data.join_sheets("round", ["stock"])
             >>> rwd.columns
 
@@ -530,7 +532,7 @@ class GFPMXData:
 
     def get_names(self):
         """Get the product and country names from the names sheet"""
-        csv_file_name = self.data_dir / "names.csv"
+        csv_file_name = self.input_dir / "names.csv"
         # Headers are on two columns, load them, merge them and convert to lower case
         df = pandas.read_csv(csv_file_name, header=[0, 1])
         df.columns = [str("_".join(col)).lower() for col in df.columns]
