@@ -303,16 +303,17 @@ class GFPMX:
             raise ValueError(f"Product {product} not in {accepted_products}")
         g = facet_plot_by_var(self[product], *args, **kwargs)
 
-    def get_time_series_df(
-        self, product: str, var: Union[str, List[str]]
+    def get_df(
+        self, product: Union[str, List[str]], var: Union[str, List[str]]
     ) -> pandas.DataFrame:
         """
-        Extract time series data for a given product and variable(s) from a GFPMX model.
+        Extract time series data for given product(s) and variable(s) from a GFPMX model.
 
         Parameters
         ----------
-        product : str
-            The product identifier (e.g., "indround" for industrial roundwood).
+        product : Union[str, List[str]]
+            The product identifier(s) (e.g., "indround" for industrial roundwood,
+            or ["indround", "fuel"] for multiple products).
         var : Union[str, List[str]]
             The variable identifier(s) (e.g., "prod" for production, or ["prod", "imp"]
             for multiple variables).
@@ -330,31 +331,51 @@ class GFPMX:
 
         >>> from cobwood.gfpmx import GFPMX
         >>> gfpmx_pikssp2 = GFPMX(scenario="pikssp2")
-        >>> irw_prod = gfpmx_pikssp2.get_time_series_df(product="indround", var="prod")
+        >>> irw_prod = gfpmx_pikssp2.get_df(product="indround", var="prod")
 
         Extract multiple variables for industrial roundwood:
 
-        >>> irw = gfpmx_pikssp2.get_time_series_df(product="indround", var=["prod", "imp"])
+        >>> irw = gfpmx_pikssp2.get_df(product="indround", var=["prod", "imp"])
 
-        Extract fuelwood production data:
+        Extract single variable for multiple products:
 
-        >>> fuel_prod = gfpmx_pikssp2.get_time_series_df(product="fuel", var="prod")
+        >>> irw_fw_prod = gfpmx_pikssp2.get_df(product=["indround", "fuel"], var="prod")
+
+        Extract multiple variables for multiple products:
+
+        >>> irw_fw_prod_imp = gfpmx_pikssp2.get_df(
+        ...     product=["indround", "fuel"],
+        ...     var=["prod", "imp"]
+        ... )
+
         """
-        df = self[product][var].to_dataframe().reset_index()
-
-        # Handle renaming for both single variable and list of variables
+        # Convert single values to lists for uniform handling
+        if isinstance(product, str):
+            product = [product]
         if isinstance(var, str):
-            # Single variable case
-            df.rename(columns={var: product + "_" + var}, inplace=True)
-        else:
-            # List of variables case
-            rename_dict = {v: product + "_" + v for v in var}
-            df.rename(columns=rename_dict, inplace=True)
+            var = [var]
 
-        # Add scenario column
+        # Select the specified products from the combined dataset
+        df = self.all_products_ds.sel(product=product)[var].to_dataframe().reset_index()
+
+        # Multiple variables: create columns like indround_prod, indround_imp, fuel_prod, fuel_imp
+        value_vars = var
+        df_melted = df.melt(
+            id_vars=["country", "year", "product"],
+            value_vars=value_vars,
+            var_name="variable",
+        )
+        df_melted["product_var"] = df_melted["product"] + "_" + df_melted["variable"]
+        df = df_melted.pivot_table(
+            index=["country", "year"],
+            columns="product_var",
+            values="value",
+            aggfunc="first",
+        ).reset_index()
+        df.columns.name = None
+
+        # Add scenario column and move it to the front
         df["scenario"] = self.scenario
-
-        # Move scenario column to the front
         cols = df.columns.to_list()
         cols = cols[-1:] + cols[:-1]
         df = df[cols]
