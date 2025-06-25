@@ -86,13 +86,13 @@ countries in the dataset) as follows:
 
 
 
-# Data
+# Input data
 
 The data is based on the FAOSTAT forestry production and trade data set available at:
 http://www.fao.org/faostat/en/#data/FO/visualize
 
 
-# Xarray
+# Data structure
 
 Cobwood implements simulations of the Global Forest Products Market (GFPM), covering
 data for 180 countries over 80 years. Each equation within the model is structured over
@@ -101,6 +101,8 @@ two-dimensional Xarray data arrays, where:
 - Countries form the first dimension (or coordinate), allowing for cross-sectional
   analysis.
 - Years constitute the second dimension, facilitating time-series insights.
+
+![Data structure](paper/fig/data_structure_2.png)
 
 **Data Manipulation and Export**. Xarray data arrays can be converted to a format
 similar to the original GFPMx spreadsheet with countries in rows and years in columns.
