@@ -1,5 +1,5 @@
 ---
-title: "Cobwood: A Python Framework for Forest Sector Analysis Using Labeled N-dimensional Data"
+title: "Cobwood: Enhancing Forest Economics Model Reusability Through Labeled Panel Data Structures"
 tags:
   - forest
   - macroeconomics
@@ -85,15 +85,17 @@ names or vector names within data frames, or simple column names in spreadsheets
 this approach can make programs more concise, it creates challenges for newcomers trying
 to understand the models. Variable names are often unclear, and the limited data
 labeling makes the code difficult to interpret for those unfamiliar with the specific
-implementation.  Examples of this issue can be found in the source code of models like
-GFTM, GFPM, and Timba, though readability varies considerably between different models.
-We note that source code for some models, such as EFI-GTM and G4M-GLOBIOM-Forest, is not
-yet publicly available. Access to these implementations would enable a more
-comprehensive comparative analysis of approaches to forest product demand modeling. The
-lack of data labelling can also be an issue when re-using model output files.
+implementation. Examples of readability issue can be found in the source code of models
+like GFTM, GFPM, and Timba. That source code for other forest sector models, such as
+EFI-GTM and G4M-GLOBIOM-Forest, is not yet publicly available for review.
 
-The cobwood package emphasises model readability through data labelling. The next
-sections describe input output data and the implementation of the data structure.
+The cobwood model has been used to produce scenario analysis for technical reports
+@mubareka2025 and @rougieux2024. The first model programmed inside cobwood is only a
+reimplementation of an existing model, the main value of this python package doesn't lie
+in the model itself, but in the panel data structure that can be used to implement many
+models.
+
+The next sections describe input output data and the data structure.
 
 
 # Input, output
