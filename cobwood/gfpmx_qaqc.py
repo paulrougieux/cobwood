@@ -7,9 +7,6 @@ For example the sum of country values should be equal to the world value.
 
 import pandas
 from numpy.testing import assert_allclose
-from cobwood.gfpmx_data import GFPMXData
-
-gfpmx_data = GFPMXData(data_dir="gfpmx_8_6_2021")
 
 
 def check_world_aggregates(df, df_agg, rtol=None):
@@ -68,8 +65,6 @@ def compare_to_original_cobwood(df, variables=None, base_year=None):
     """Compare computed variables to the original GFTMx values
     After times t = base_year + 1
     """
-    if base_year is None:
-        base_year = gfpmx_data.base_year
     if variables is None:
         variables = ["cons", "imp", "exp", "prod", "price"]
     df_comp = df.query("year > @base_year + 1")
