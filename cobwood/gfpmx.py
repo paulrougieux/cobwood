@@ -142,6 +142,37 @@ class GFPMX:
         """Set a dataset from the data dictionary"""
         setattr(self, key, value)
 
+    def _invalidate_cache(self):
+        """Invalidate cached properties
+
+        In case the property has not been used yet, attempting to delete it
+        would raise an AttributeError: 'GFPMX' object has no attribute
+        'all_products_ds'. That is why the deletion is wrapped in a try except
+        statement.
+
+        Show the impact on the all_products ds by changing roundwood production values in 2000
+
+        >>> from cobwood.gfpmx import GFPMX
+        >>> model = GFPMX(scenario="base_2021")
+        >>> selector_1_prod = dict(country="France", year=2000)
+        >>> selector_all_prod = dict(country="France", product="indround", year=2000)
+        >>> print(model["indround"]["prod"].loc[selector_1_prod].item())
+        >>> print(model.all_products_ds["prod"].loc[selector_all_prod].item())
+        >>> print("When we change the product data set. Setting a value to zero.")
+        >>> model["indround"]["prod"].loc[selector_1_prod] = 0
+        >>> print(model["indround"]["prod"].loc[selector_1_prod].item())
+        >>> print("the all_products_ds remains unchanged")
+        >>> print(model.all_products_ds["prod"].loc[selector_all_prod].item())
+        >>> print("Unless we clear the cache")
+        >>> model._invalidate_cache()
+        >>> print(model.all_products_ds["prod"].loc[selector_all_prod].item())
+
+        """
+        try:
+            del self.all_products_ds
+        except AttributeError:
+            pass
+
     def run_and_compare_to_ref(self, *args, **kwargs):
         """Takes a gpfmx_data object, remove data after the base year
         run the model and compare it to the reference dataset
@@ -192,6 +223,10 @@ class GFPMX:
                     rtol=rtol,
                     strict=strict,
                 )
+
+        # Clear the cache so that results get updated in the combined data set
+        self._invalidate_cache()
+
         # Save simulation output
         self.write_datasets_to_netcdf()
 
@@ -206,8 +241,8 @@ class GFPMX:
         Extract industrial roundwood production data:
 
         >>> from cobwood.gfpmx import GFPMX
-        >>> gfpmx_pikssp2 = GFPMX(scenario="pikssp2")
-        >>> ds = gfpmx_pikssp2.all_products_ds
+        >>> gfpmx_base_2021 = GFPMX(scenario="base_2021")
+        >>> ds = gfpmx_base_2021.all_products_ds
         >>> print(ds)
         >>> print(ds.individual_dataset_attributes)
 
@@ -284,7 +319,7 @@ class GFPMX:
         Example use:
 
             >>> from cobwood.gfpmx import GFPMX
-            >>> gfpmxb2021 = GFPMX(
+            >>> gfpmx_base2021 = GFPMX(
             ...     input_dir="gfpmx_base2021",
             ...     base_year=2021,
             ...     scenario="base_2021",
