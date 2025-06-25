@@ -358,7 +358,8 @@ class GFPMX:
         # Select the specified products from the combined dataset
         df = self.all_products_ds.sel(product=product)[var].to_dataframe().reset_index()
 
-        # Multiple variables: create columns like indround_prod, indround_imp, fuel_prod, fuel_imp
+        # Multiple variables: create columns like indround_prod, indround_imp,
+        # fuel_prod, fuel_imp
         value_vars = var
         df_melted = df.melt(
             id_vars=["country", "year", "product"],
