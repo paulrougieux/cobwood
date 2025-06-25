@@ -113,8 +113,8 @@ called "product" before saving datasets to NetCDF files. These files include met
 labels for units, establishing a foundation for reproducible analysis across research
 teams.
 
-![Figure 3](fig/data_structure_2.pdf "Structure of the data")
-
+![Data structure](fig/data_structure_2.pdf "Structure of the
+data"){#fig:structure}
 
 # Data structure and implementation
 
@@ -137,15 +137,20 @@ Data organization follows a logical hierarchy:
 - Some variables, like demand elasticities, use only the country dimension
 
 To explore available variables and their units for any product, users can access the
-`variables` property (e.g., `gfpmxb2021["sawn"].variables`). A key advantage of this
-approach is Xarray's automatic dimension alignment when performing operations between
-arrays, which simplifies mathematical operations across different data elements. As
-Figure 3 illustrates, this labeled panel data structure creates a clean, organized data
-representation that enhances code readability and makes the modeling system more
-accessible to new users and collaborators.
+`variables` property (e.g., `gfpmxb2021["sawn"].variables`). For example this prints the
+unit used by the roundwood product for the production variable:
 
-Metadata is present, for example
+```
+gfpmxb2021["indround"]["prod"].unit
+# '1000m3'
+```
 
+A key advantage of Xarray's approach is the automatic dimension alignment when
+performing operations between arrays, which simplifies mathematical operations across
+different data elements. As Figure \ref{fig:structure} illustrates, the labeled
+panel data structure
+creates a clean, organized data representation that makes the modeling system more
+accessible to new users.
 
 
 # Model run
@@ -173,21 +178,27 @@ consumption, import, export, production and price. We don't need to re-run the m
 this time since we can simply reload the model's output data from the previous run
 above.
 
-    from cobwood.gfpmx import GFPMX
-    gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
+```
+from cobwood.gfpmx import GFPMX
+gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
+```
 
 The first plot draws coloured lines by continents. It is the default plot.
 
-    gfpmxb2021.facet_plot_by_var("indround")
+```
+gfpmxb2021.facet_plot_by_var("indround")
+```
 
-![Figure 1](fig/indround_by_continent.png "Plot of industrial roundwood variables by
+![Industrial roundwood variables by continent](fig/indround_by_continent.png "Plot of
+industrial roundwood variables by
 continent")
 
 The country argument can specify one coloured line by country:
 
     gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
 
-![Figure 2](fig/indround_by_country.png "Plot of industrial roundwood variables by
+![Industrial roundwood variables by country](fig/indround_by_country.png "Plot of
+industrial roundwood variables by
 country")
 
 Plots are visible in the model's output directory `gfpmxb2021.output_dir`. Since the
@@ -231,16 +242,13 @@ Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.htm
 
 # Conclusion
 
-The cobwood package creates a new representation of macroeconomic forest products market
-data using N dimensional labelled data arrays. The new data structure based on x array
-enhances source code readability so that equations with time and country coordinates can
-be identified in source code. We store metadata such as units as attributes within the
-data structure. NetCDF files preserve Xarray's data model, including dimensions and
-attributes. We hope that this new data structure makes Cobwood a good starting point to
-implement different forest sector models. The scenario configuration file will make it
-possible to compare many model implementations with many configuration parameters.
-
-
-# References
-
+The cobwood package introduces a new way to represent macroeconomic forest products
+market data using N-dimensional labeled data arrays. This data structure, built on
+Xarray, improves source code readability by allowing equations with time and country
+coordinates to be easily identified in the code. Units are stored as metadata attributes
+within the data structure. Model outputs are saved to NetCDF files, which preserve
+Xarray’s data model, including dimensions and attributes. We believe this new structure
+makes Cobwood an excellent foundation for implementing various forest sector models.
+Additionally, the scenario configuration file enables easy comparison of multiple model
+implementations across a wide range of configuration parameters. # References
 
