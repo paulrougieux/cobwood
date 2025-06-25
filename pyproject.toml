@@ -112,6 +112,7 @@ dependencies = [
   "xarray",
   "seaborn",
   "tqdm",
+  "yaml",
   "pyxlsb", # To read input Excel files in binary format
 ]
 
