@@ -40,19 +40,18 @@ End comments.
 # Summary
 
 Managing forest ecosystems effectively requires long-term foresight into global wood
-markets. This planning relies on macroeconomic panel data—comprehensive datasets
-spanning multiple countries over extended time periods. The cobwood package introduces a
-specialized data structure that streamlines panel data manipulation for forecasting and
-scenario analysis. By implementing country and time indexes, the package significantly
-improves model readability, as the source code closely mirrors the mathematical
-equations found in research publications. To demonstrate cobwood's practical
+markets. This planning relies on macroeconomic panel data spanning multiple countries
+over extended time periods. The cobwood package introduces a data structure to
+manipulate panel data for forecasting and scenario analysis. By implementing country and
+time indexes, the package improves model readability, as the source code closely mirrors
+mathematical equations used in research publications. To demonstrate cobwood's practical
 application, we present a reimplementation of the Global Forest Products Model (GFPMx).
-Our package leverages the N-dimensional array package Xarray, which provides robust
-capabilities including NetCDF file storage for model outputs. This approach offers two
-key advantages: enhanced source code clarity that facilitates model inspection, and
-comprehensive metadata for country, product, and time dimensions along with units in
-output files. These features position cobwood as an ideal component for integration into
-broader modeling toolchains.
+Our data structure leverages the Xarray package, which provides labeled N-dimensional
+arrays and robust capabilities including NetCDF file storage for model outputs. This
+approach offers two key advantages: enhanced source code clarity that facilitates model
+inspection, and comprehensive metadata for country, product, and time coordinates along
+with units metadata in the dataset attributes. These features position cobwood as an
+ideal component for integration into broader modeling toolchains.
 
 
 # Statement of need
@@ -145,6 +144,9 @@ Figure 3 illustrates, this labeled panel data structure creates a clean, organiz
 representation that enhances code readability and makes the modeling system more
 accessible to new users and collaborators.
 
+Metadata is present, for example
+
+
 
 # Model run
 
@@ -160,15 +162,16 @@ of GFPMx:
 
 After a model run, the scenario output data is automatically saved inside the model's
 `output_dir` directory. When re-loading the model later, specify the argument
-`rerun="False"` to load both input and output data without the need to run the model.
+`rerun="False"` (default) to load both input and output data without the need to run the
+model.
 
 
 # Visualisation
 
-Once the model once the model has been run. The output data is Reusing the model object
-from above, the following code snippet draws a faceted plot of industrial roundwood
-consumption, import, export, production and price. Don't re-run the model this time.
-Reload the model's output data from the previous run above.
+The following python code draws a faceted plot of industrial roundwood
+consumption, import, export, production and price. We don't need to re-run the model
+this time since we can simply reload the model's output data from the previous run
+above.
 
     from cobwood.gfpmx import GFPMX
     gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
@@ -228,13 +231,14 @@ Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.htm
 
 # Conclusion
 
-We have created a new representation of forest products markets datasets using N
-dimensional labelled data arrays based on Xarray. The new data structure enhances
-source code readability so that equations with time and country indexes can be
-identified in source code with their xarray locator. We hope that this new data
-structure makes Cobwood a good starting point to implement different forest sector
-models. The scenario configuration file will make it possible to compare many model
-implementations with many configuration parameters.
+The cobwood package creates a new representation of macroeconomic forest products market
+data using N dimensional labelled data arrays. The new data structure based on x array
+enhances source code readability so that equations with time and country coordinates can
+be identified in source code. We store metadata such as units as attributes within the
+data structure. NetCDF files preserve Xarray's data model, including dimensions and
+attributes. We hope that this new data structure makes Cobwood a good starting point to
+implement different forest sector models. The scenario configuration file will make it
+possible to compare many model implementations with many configuration parameters.
 
 
 # References
