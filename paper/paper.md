@@ -252,5 +252,8 @@ within the data structure. Model outputs are saved to NetCDF files, which preser
 Xarray’s data model, including dimensions and attributes. We believe this new structure
 makes Cobwood an excellent foundation for implementing various forest sector models.
 Additionally, the scenario configuration file enables easy comparison of multiple model
-implementations across a wide range of configuration parameters. # References
+implementations across a wide range of configuration parameters.
+
+
+# References
 
