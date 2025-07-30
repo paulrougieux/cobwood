@@ -10,6 +10,8 @@ import os
 
 # Where is the data, default case #
 data_dir = Path("~/repos/cobwood_data/")
+data_dir = data_dir.expanduser()
+
 # TODO: remove when it is replaced everywhere by cobwood.data_dir. Maybe it's
 # better to keep it that way explicitly in case we import data_dir from another
 # package?
