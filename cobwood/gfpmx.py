@@ -97,9 +97,6 @@ class GFPMX:
         self.input_dir = cobwood.data_dir / "gfpmx_input" / self.config["input_dir"]
         self.base_year = self.config["base_year"]
         self.output_dir = cobwood.data_dir / "gfpmx_output" / scenario
-        self.plot_dir = self.output_dir / "plot"
-        if not self.plot_dir.exists():
-            self.plot_dir.mkdir(parents=True)
         self.combined_netcdf_file_path = self.output_dir / "combined_datasets.nc"
         self.last_time_step = 2070
         self.scenario = scenario
@@ -128,6 +125,10 @@ class GFPMX:
                 self[product] = remove_after_base_year_and_copy(
                     self[product + "_ref"], self.base_year
                 )
+        # Create a plot dir
+        self.plot_dir = self.output_dir / "plot"
+        if not self.plot_dir.exists():
+            self.plot_dir.mkdir(parents=True)
 
     @cached_property
     def input_data(self):
