@@ -4,7 +4,21 @@
 
 The following text was removed to keep the paper concise.
 
-# Data structure and implementation
+## Summary
+
+By implementing country and time coordinates, the python source code closely mirrors
+mathematical equations used in research publications.
+
+## Statement of need
+
+They particularly value the ability to explore future wood harvest developments under
+various demand and supply scenarios.
+
+Detailed knowledge on the source code implementation of a model becomes essential when
+extending a model to address novel research questions.
+
+
+## Data structure and implementation
 
 Figure illustrating the following points:
 
@@ -26,7 +40,7 @@ experimented as further development of this model. As explained above, the metho
 before saving the datasets to netcdf files.
 
 
-## Model run
+### Model run
 
 It's possible to change any input parameters in the GFPMX object after it has been
 created. For example, to change the GDP projections to a hypothetical 2% growth scenario
@@ -41,7 +55,7 @@ from a given start year:
     gfpmx_2_percent.gdp
 
 
-## Other models
+### Other models
 
 - https://www.perplexity.ai/search/i-am-writing-a-paper-describin-BujunqDzSWCoO1yyDoBkIQ
 
