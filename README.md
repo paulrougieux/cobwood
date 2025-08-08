@@ -15,6 +15,19 @@ Key Features:
   tool chain.
 
 
+# Documentation
+
+- The package documentation (generated from function and method docstrings) is available
+  at https://bioeconomy.gitlab.io/cobwood/cobwood/cobwood.html
+
+- Instructions below explain how to install and run the model.  They provide an
+  overview of
+  model
+  formulation and data structure.
+
+- The paper at paper describes the context and purpose of cobwood.
+
+
 # Installation
 
 Install from the python package index:
@@ -24,31 +37,42 @@ Install from the python package index:
 
 # Run the model
 
-Currently, only the GFFPMx model is available. The input data can be downloaded from the
-website of the university of Wisconsin and converted to CSV files. Convert data to CSV
-files:
+Currently, only the GFFPMx model is available. We will now illustrate how to prepare the
+input data for that model, and how to define a scenario. Not that many scenarios can be
+defined from the same input data, by changing some of the variables, such as the GDP
+projections. We will then explain how to run the model.
 
-    from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
-    gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
+0. The input data can be downloaded from the website of the university of
+  Wisconsin and converted to CSV files. You need to do this step only once and
+  can ignore it later on. Convert data to CSV files inside the cobwood_data
+  directory:
 
-Load the input data into a GFPMX model object and run the model. At each step compare
-with the other run inside the Excel Sheet:
+    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
-    from cobwood.gfpmx import GFPMX
-    gfpmxb2021 = GFPMX(
-        input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=True
-    )
-    gfpmxb2021.run(compare=True, strict=False)
+1. In the cobwood_data directory, write the following configuration files and call it `scenario/base_2021.yaml`
 
-It's possible to change any input parameters in the GFPMX object after it has been
-created. For example, to change the GDP projections to an artificial 2% growth scenario.
+```
+input_dir: "gfpmx_base2021"
+base_year: 2021
+description: "Reproduce the GFPMX base 2021 scenario"
+```
 
-    gfpmx_2_percent = GFPMX(
-        input_dir="gfpmx_base2021", base_year=2021, scenario="2_percent",
-        rerun=True
-    )
-    gfpmx_2_percent.gdp
+2. Load the input data into a [GFPMX](cobwood/gfpmx.html) model object.
 
+    >>> from cobwood.gfpmx import GFPMX
+    >>> gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
+
+3. Run the model.At each step compare with the reference model run inside the
+Excel Sheet:
+
+    >>> gfpmxb2021.run(compare=True, strict=False)
+
+4. Explore the model output tables and make plots.
+
+    >>> print(gfpmxb2021["sawn"])
+    >>> print(gfpmxb2021["sawn"]["cons"])
+    >>> gfpmxb2021.facet_plot_by_var("indround")
 
 
 # Model Formulation
