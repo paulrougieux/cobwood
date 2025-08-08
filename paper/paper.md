@@ -48,8 +48,8 @@ This approach offers two key advantages: enhanced source code clarity that facil
 model inspection, and comprehensive metadata for country, product, and time coordinates
 along with units in the dataset attributes. To demonstrate cobwood's practical
 application, we present a reimplementation of the Global Forest Products Model (GFPMx).
-These features position cobwood as an ideal component for integration into broader
-modelling toolchains.
+This standard data structure positions cobwood as an ideal component for
+integration into modelling tool chains.
 
 
 # Statement of need
@@ -63,23 +63,27 @@ Global Forest Products Model (GFPM)[@buongiorno2003global], the European Forest
 Institute Global Trade Model (EFI-GTM)[@kallio2004global], the Global Forest and
 Agriculture Model (G4M)[@gusti2020g4m], the Global Forest Trade Model (GFTM)
 [@jonsson2015global] and an adaptation called Timba [@tifsm2025]. There are also
-numerous regional and national forest sector models. Transparency of the algorithm is
-helpful for determining whether a particular model is suitable for analysing specific
-policy questions or can be appropriately modified for new purposes. While research
-papers describe the conceptual specifications for these models, reading the source code
-of the model implementation offers a more comprehensive understanding of the system.
+numerous regional and national forest sector models.
 
-Macroeconomic forest sector models typically organize market datasets along two key
-dimensions: country and time. 
 
-In econometrics, the structure is known as panel data.
-These market datasets contain information on production, consumption, and trade for
-specific forest products such as roundwood, sawnwood, wood panels, pulp, and paper
-products. Current modelling software often lacks a consistent, well-labelled panel data
-structure. Instead, these programs use partial labelling approaches—such as matrices
-names or vector names within data frames, or simple column names in spreadsheets. While
-this approach can make programs more concise, it creates challenges for newcomers trying
-to understand the models. Variable names are often unclear, making the code difficult to
+
+Adjacent fields of research such as forestry, vegetation dynamic modelling or Life Cycle
+Analysis need estimes of future processed wood consumption and future roundwood harvest.
+The transparency of the models and algorithms are helpful when determining whether a
+particular model is suitable for analysing specific policy questions or can be
+appropriately modified for new purposes. While research papers describe the conceptual
+specifications for these models, reading the source code of the model implementation
+offers a more comprehensive understanding of the system.
+
+Macroeconomic models typically organize market datasets along two dimensions: country
+and time. In econometrics, the structure is known as panel data. Forest products market
+datasets contain information on production, consumption, and trade for specific products
+such as roundwood, sawnwood, wood panels, pulp, and paper products. Current
+modelling software often lacks a panel data structure.
+Instead, these programs use partial labelling approaches—such as matrices names or
+vector names within data frames, or simple column names in spreadsheets. While this
+approach can make programs more concise, it creates challenges for newcomers trying to
+understand the models. Variable names are often unclear, making the code difficult to
 interpret for those unfamiliar with the model's implementation. In addition, the limited
 data labelling makes it harder to reuse the output data of those models. Examples of
 readability issue can be found in the source code of models like GFTM, GFPM, and Timba.
