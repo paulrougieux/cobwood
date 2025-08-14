@@ -4,6 +4,9 @@
 """
 Written by Paul Rougieux.
 
+This is a legacy script written before re-using the biotrade package.
+
+
 JRC biomass Project.
 Unit D1 Bioeconomy.
 
