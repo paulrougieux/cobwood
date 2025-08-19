@@ -40,155 +40,124 @@ End comments.
 # Summary
 
 Managing forest ecosystems effectively requires long-term foresight into global wood
-markets. This planning relies on macroeconomic panel data spanning multiple countries
-over extended time periods. The cobwood package introduces a data structure for forest
-sector forecasting and scenario analysis. Our data structure leverages labelled
-N-dimensional arrays from the Xarray package, including output storage to NetCDF files.
-This approach offers two key advantages: enhanced source code clarity that facilitates
-model inspection, and comprehensive metadata for country, product, and time coordinates
-along with units in the dataset attributes. To demonstrate cobwood's practical
-application, we present a reimplementation of the Global Forest Products Model (GFPMx).
-This standard data structure positions cobwood as an ideal component for
-integration into modelling tool chains.
+markets. This planning relies on macroeconomic forest sector models spanning multiple
+countries over extended time periods. The cobwood package introduces a panel data
+structure based on labelled N-dimensional arrays from the Xarray package, including
+output storage to NetCDF files. The comprehensive metadata for country, product, time
+coordinates along with units enhances source code clarity and facilitates model
+inspection. To demonstrate cobwood's practical application, we present a
+reimplementation of the Global Forest Products Model (GFPMx). The reusable data
+structure positions cobwood as an ideal component for integration into a greater
+modelling tool chain.
 
 
 # Statement of need
 
-Forest management requires a long-term perspective, as trees grow over decades or
-centuries, while wood markets operate on a global scale. Decision makers in the forestry
-sector need long-term forecasts of global wood consumption, production and trade
-patterns. This need has prompted forest economists to develop macroeconomic models of
-the forest sector. Several global forest sector models currently exist, including the
-Global Forest Products Model (GFPM)[@buongiorno2003global], the European Forest
-Institute Global Trade Model (EFI-GTM)[@kallio2004global], the Global Forest and
-Agriculture Model (G4M)[@gusti2020g4m], the Global Forest Trade Model (GFTM)
-[@jonsson2015global] and an adaptation called Timba [@tifsm2025]. There are also
-numerous regional and national forest sector models.
+Trees grow over decades or centuries and wood markets may be very localized. Yet markets
+for processed wood and paper products are interconnected at the global scale requiring,
+decision makers to understand long-term forecasts of global wood consumption, production
+and trade. This need has led forest economists to develop macroeconomic models of the
+forest sector. Several global forest sector models currently exist, including the Global
+Forest Products Model (GFPM)[@buongiorno2003global], the European Forest Institute
+Global Trade Model (EFI-GTM)[@kallio2004global], the Global Forest and Agriculture Model
+(G4M)[@gusti2020g4m], the Global Forest Trade Model (GFTM) [@jonsson2015global] and an
+adaptation called Timba [@tifsm2025]. There are also multiple regional and national
+forest sector models.
 
+These macroeconomic models organize market datasets as panel data with country and time
+dimensions, containing information on production, consumption, and trade for products
+such as roundwood, sawnwood, wood panels, pulp, and paper. However, current modeling
+software often lacks proper panel data structures, instead using partial labeling
+approaches with unclear variable names that make source code difficult to interpret.
+Many models are not open source, and limited data labeling makes model outputs difficult
+to reuse.
 
-
-Adjacent fields of research such as forestry, vegetation dynamic modelling or Life Cycle
-Analysis need estimes of future processed wood consumption and future roundwood harvest.
-The transparency of the models and algorithms are helpful when determining whether a
-particular model is suitable for analysing specific policy questions or can be
-appropriately modified for new purposes. While research papers describe the conceptual
-specifications for these models, reading the source code of the model implementation
-offers a more comprehensive understanding of the system.
-
-Macroeconomic models typically organize market datasets along two dimensions: country
-and time. In econometrics, the structure is known as panel data. Forest products market
-datasets contain information on production, consumption, and trade for specific products
-such as roundwood, sawnwood, wood panels, pulp, and paper products. Current
-modelling software often lacks a panel data structure.
-Instead, these programs use partial labelling approaches—such as matrices names or
-vector names within data frames, or simple column names in spreadsheets. While this
-approach can make programs more concise, it creates challenges for newcomers trying to
-understand the models. Variable names are often unclear, making the code difficult to
-interpret for those unfamiliar with the model's implementation. In addition, the limited
-data labelling makes it harder to reuse the output data of those models. Examples of
-readability issue can be found in the source code of models like GFTM, GFPM, and Timba.
-That source code for other forest sector models, such as EFI-GTM and G4M-GLOBIOM-Forest,
-is not yet publicly available for review.
-
-The cobwood model has been used to produce scenario analysis for technical reports
-@mubareka2025 and @rougieux2024. The first model programmed inside cobwood is a
-reimplementation of a simple forest sector model, the main value of this python package
-doesn't lie in the model itself, but in the panel data structure that can be used to
-implement many models.
-
-The next sections describe input output data and the data structure.
+Adjacent research fields including forest management, vegetation dynamics, and
+life cycle analysis need estimates of future roundwood harvest and wood products
+consumption. Model transparency helps these communities determine whether existing
+models are suitable for specific policy questions or can be modified to simulate new
+drivers influencing forest products markets.
 
 
 # Input, output
 
-Cobwood can process **input** data from any tabular source that Python supports. For
-instance, the GFPMx model uses a single Excel spreadsheet containing separate sheets for
-consumption, production, import, export, and prices of major forest products from
-FAOSTAT. The implementation first converts these sheets to CSV files, which the
-gfpmx_data.py module then transforms into an Xarray data structure. Remember that Xarray
-datasets can be converted to pandas data frame very easily.
+A yaml file in the `cobwood_data/scenario` directory defines the particular input data
+used for a given scenario. Cobwood can load input data from any tabular source that
+pandas support. For instance, the GFPMx data is stored inside a single Excel
+spreadsheet containing many sheets for consumption, production, import, export, and
+prices of major forest products. A script first converts sheets to CSV files, which the
+`GFPMXData.convert_sheets_to_dataset` then transforms into an Xarray data structure.
+Other methods make it possible to load forest products market data from the FAOSTAT API
+and to transform them into xarray datasets.
 
-**Output** data is saved in NetCDF format, which serves as Xarray's disk representation.
-While not commonly used in economics, this format is standard in earth systems modelling,
-making it ideal for integrated modelling systems where economic and biophysical models
-exchange data. The `write_datasets_to_netcdf` method adds a third dimension coordinate
-called "product" before saving datasets to NetCDF files. These files include metadata
-labels for units, establishing a foundation for reproducible analysis across research
-teams.
+The `write_datasets_to_netcdf` combines many products 2D datasets into one larger 3D
+dataset, by adding a third coordinate called "`product`" before saving the model output
+datasets to NetCDF files. These files include metadata labels for units. While not
+commonly used in economics, the NetCDF format is standard in earth systems modelling,
+making it ideal for integrated modelling systems.
 
 ![Data structure](fig/data_structure_2.pdf "Structure of the
 data"){#fig:structure}
 
+
 # Data structure and implementation
 
-Cobwood leverages Xarray's labelled data arrays to represent panel data, enabling a more
-intuitive approach to economic modelling. This design allows developers to write Python
-functions that closely mirror the mathematical equations found in academic literature,
-with explicit time and country dimensions. The package is designed for extensibility
-across different models, though the initial release focuses on implementing the Global
-Forest Products Model (GFPMx) [@buongiorno2021gfpmx]. The core of cobwood is the GFPMX
-object, which organizes global forest product data including consumption, production,
-trade flows, and prices.
+Figure \ref{fig:structure} illustrates the data structure:
 
-Data organization follows a logical hierarchy:
-
-- Each forest product is stored as a separate Xarray dataset (e.g., gfpmx["sawn"] for
+- Global consumption, production, trade flows, and prices for all countries, all years
+ and for each forest product are stored as an Xarray dataset (e.g., `model["sawn"]` for
   sawnwood)
-- Within each product dataset, specific variables are accessible as two-dimensional
-  arrays (e.g., gfpmx["sawn"]["cons"] for consumption)
-- These arrays maintain panel data structure with clear country and year dimensions
-- Some variables, like demand elasticities, use only the country dimension
 
-To explore available variables and their units for any product, users can access the
-`variables` property (e.g., `gfpmxb2021["sawn"].variables`). For example this prints the
-unit used by the roundwood product for the production variable:
+- Within each dataset for one product, specific variables are accessible as
+  two-dimensional arrays with country and year coordinates (e.g.,
+  `model["sawn"]["cons"]` for consumption)
+
+To explore available variables, users can access the `variables` property (e.g.,
+`model["sawn"].variables`). Array properties are used to store metadata, the example
+below displays the roundwood production unit :
 
 ```
-gfpmxb2021["indround"]["prod"].unit
+model["indround"]["prod"].unit
 # '1000m3'
 ```
 
-A key advantage of Xarray's approach is the automatic dimension alignment when
-performing operations between arrays, which simplifies mathematical operations across
-different data elements. As Figure \ref{fig:structure} illustrates, the labelled
-panel data structure
-creates a clean, organized data representation that makes the modelling system more
-accessible to new users.
+The cobwood model has been used to produce scenario analysis @mubareka2025 and
+@rougieux2024. The first model programmed inside cobwood is a reimplementation of a
+simple forest sector model called GFPMx [@buongiorno2021gfpmx]. Labelled data arrays
+allow developers to write Python functions that closely mirror the mathematical
+equations found in the academic papers describing the models, with explicit time and
+country dimensions. For example the demand function in `cobwood/gfpmx_equations.py` is
+implemented on an `xarray` dataset `ds` where a dependent variable such as GDP is
+selected for all countries at time t with `ds["gdp"].loc[ds.c, t]`.
 
 
 # Model run
 
-Load the input data into a GFPMX model object. The `rerun=True` argument gives the
-instruction to erase previous model runs of this scenario. When running the model,
-`compare=True` argument makes it compare the model output with a reference model run
-from the external model that we use as a reference in this case the Excel implementation
-of GFPMx:
+The following code instantiates a GFPMX model object based on a scenario yaml file
+defining the model configuration. The `rerun=True` argument gives the instruction to
+erase previous model runs of this scenario. When running the model, the `compare=True`
+argument makes it compare the model output with a reference model run from the external
+model that we use as a reference in this case the Excel implementation of GFPMx:
 
-    from cobwood.gfpmx import GFPMX
-    gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
-    gfpmxb2021.run(compare=True, strict=False)
+```
+from cobwood.gfpmx import GFPMX
+gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
+gfpmxb2021.run(compare=True, strict=False)
+```
 
-After a model run, the scenario output data is automatically saved inside the model's
-`output_dir` directory. When re-loading the model later, specify the argument
-`rerun="False"` (default) to load both input and output data without the need to run the
-model.
+The model output data is saved inside the model's `output_dir` directory. When
+re-using the model later, specify the argument `rerun="False"` (default) to load
+the output data without the need to run the model.
 
 
 # Visualisation
 
-The following python code draws a faceted plot of industrial roundwood
-consumption, import, export, production and price. We don't need to re-run the model
-this time since we can simply reload the model's output data from the previous run
-above.
+The following python code draws a faceted plot of industrial roundwood consumption,
+import, export, production and price with one line by continent.
 
 ```
 from cobwood.gfpmx import GFPMX
 gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
-```
-
-The first plot draws coloured lines by continents. It is the default plot.
-
-```
 gfpmxb2021.facet_plot_by_var("indround")
 ```
 
@@ -198,7 +167,9 @@ continent")
 
 The country argument can specify one coloured line by country:
 
-    gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
+```
+gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
+```
 
 ![Industrial roundwood variables by country](fig/indround_by_country.png "Plot of
 industrial roundwood variables by
@@ -207,19 +178,18 @@ country")
 
 # Conclusion
 
-The cobwood package introduces a new way to represent macroeconomic forest products
-market data using N-dimensional labelled data arrays. This data structure, built on
-Xarray, improves source code readability by allowing equations with time and country
-coordinates to be easily identified in the code. Units are stored as metadata attributes
-within the data structure. Model outputs are saved to NetCDF files, which preserve
-Xarray’s data model, including dimensions and attributes. We believe this new structure
-makes Cobwood an excellent foundation for implementing various forest sector models.
-Additionally, the scenario configuration file enables easy comparison of multiple model
-implementations across a wide range of configuration parameters.
+The cobwood package represents macroeconomic forest products market data as
+N-dimensional labelled data arrays. The data structure incorporates comprehensive
+metadata and coordinates improving source code readability and model transparency.
+Additionally, the scenario configuration file enables comparison of different model
+implementations across variations of input parameters. Furthermore, model outputs are
+saved to NetCDF files, which preserve dimensions and metadata. This data structure will
+be reused to implement many other forest sector models. Ultimately, the goal is to
+facilitate the integration of forest sector models as components of interdisciplinary
+modelling tool chains.
 
 
 # References
-
 
 <!-- Save plots as images to be inserted in the paper
 
