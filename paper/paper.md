@@ -113,9 +113,9 @@ selected for all countries at time t with `ds["gdp"].loc[ds.c, t]`.
 
 # Model run
 
-The following code instantiates a GFPMX model object
-from a scenario yaml file. The `rerun=True` argument erases previous model runs, while
-`compare=True` compares output with the reference Excel implementation of GFPMx
+The following code instantiates a GFPMX model object from a scenario yaml file. The
+`rerun=True` argument erases previous model runs, while `compare=True` compares output
+with the reference Excel implementation of GFPMx
 
 ```
 from cobwood.gfpmx import GFPMX

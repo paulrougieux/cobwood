@@ -248,9 +248,15 @@ def compute_country_aggregates(
             msg += f"{ds[var].loc[ds.c, t]}"
             raise ValueError(msg)
         ds[var].loc["WORLD", t] = ds[var].loc[ds.c, t].sum()
-        ds[var].loc[regions, t] = (
-            ds[var].loc[ds.c, t].groupby(ds["region"].loc[ds.c]).sum()
-        )
+        v_agg = ds[var].loc[ds.c, t].groupby(ds["region"].loc[ds.c]).sum()
+        # Rename the dimension from region to country to avoid a ValueError:
+        #   new dimensions ('country',) must be a superset of existing
+        #   dimensions ('region',)
+        v_agg = v_agg.rename({"region": "country"})
+        # Ensure v_agg has 'country' dimension coordinates in the same order as
+        # the dataset slice on the left-hand side.
+        v_agg_aligned = v_agg.reindex(country=ds[var].loc[regions, t].country)
+        ds[var].loc[regions, t] = v_agg_aligned
 
 
 def compute_secondary_product_ciep(
