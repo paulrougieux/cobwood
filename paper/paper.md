@@ -76,9 +76,6 @@ datasets to NetCDF files. These files include metadata labels for units. While n
 commonly used in economics, the NetCDF format is standard in earth systems modelling,
 making it ideal for integrated modelling systems.
 
-![Data structure](fig/data_structure_2.pdf "Structure of the
-data"){#fig:structure}
-
 
 # Data structure and implementation
 
@@ -109,6 +106,9 @@ equations found in the academic papers describing the models, with explicit time
 country dimensions. For example the demand function in `cobwood/gfpmx_equations.py` is
 implemented on an `xarray` dataset `ds` where a dependent variable such as GDP is
 selected for all countries at time t with `ds["gdp"].loc[ds.c, t]`.
+
+![Data structure](fig/data_structure_2.pdf "Structure of the
+data"){#fig:structure}
 
 
 # Model run
