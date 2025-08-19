@@ -16,26 +16,6 @@ date: 2025
 bibliography: paper.bib
 ---
 
-<!--
-The following comments will not appear in the paper.
-
-- Journal of Open Source Software (JOSS)- Paper submission guidelines
-  https://joss.readthedocs.io/en/latest/submitting.html
-
-- Compile this paper to a pdf document with the script specified in .gitlab-ci.yml. JOSS
-  uses the openjournals/inara docker image and compiles the document with the following
-script:
-
-        inara -p -o pdf paper/paper.md
-
-- Extract documentation from the package docstrings with pdoc
-
-        pdoc -o public ./cobwood/
-
-- TODO: install the package in a new environment, based on the TOML file
-
-End comments.
--->
 
 # Summary
 
@@ -134,10 +114,9 @@ selected for all countries at time t with `ds["gdp"].loc[ds.c, t]`.
 # Model run
 
 The following code instantiates a GFPMX model object based on a scenario yaml file
-defining the model configuration. The `rerun=True` argument gives the instruction to
-erase previous model runs of this scenario. When running the model, the `compare=True`
-argument makes it compare the model output with a reference model run from the external
-model that we use as a reference in this case the Excel implementation of GFPMx:
+defining the model configuration. The following code instantiates a GFPMX model object
+from a scenario yaml file. The `rerun=True` argument erases previous model runs, while
+`compare=True` compares output with the reference Excel implementation of GFPMx
 
 ```
 from cobwood.gfpmx import GFPMX
@@ -156,8 +135,6 @@ The following python code draws a faceted plot of industrial roundwood consumpti
 import, export, production and price with one line by continent.
 
 ```
-from cobwood.gfpmx import GFPMX
-gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
 gfpmxb2021.facet_plot_by_var("indround")
 ```
 
@@ -165,7 +142,7 @@ gfpmxb2021.facet_plot_by_var("indround")
 industrial roundwood variables by
 continent")
 
-The country argument can specify one coloured line by country:
+Specify the country argument to get one line by country
 
 ```
 gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
@@ -190,31 +167,4 @@ modelling tool chains.
 
 
 # References
-
-<!-- Save plots as images to be inserted in the paper
-
-    from cobwood import data_dir
-    from cobwood.gfpmx_equations import compute_country_aggregates
-    plot_dir = data_dir.parent / "cobwood/paper/fig"
-    gfpmxb2021 = GFPMX(
-        input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021",
-        rerun=False
-    )
-    print("Re-compute aggregates for the historical period.")
-    for this_product in gfpmxb2021.products:
-        for year in range(1995, 2022):
-            compute_country_aggregates(gfpmxb2021[this_product], year)
-            compute_country_aggregates(gfpmxb2021.other, year, ["area", "stock"])
-
-    # Draw the default plot with one line by continent
-    g = gfpmxb2021.facet_plot("indround")
-    g.savefig(plot_dir / "indround_by_continent.png")
-
-    # Use the countries argument to specify one line by country
-    g = gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
-    g.savefig(plot_dir / "indround_by_country.png")
-
-Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.html
-
--->
 

@@ -1,3 +1,54 @@
+# Instruction
+
+
+The following comments will not appear in the paper.
+
+- Journal of Open Source Software (JOSS)- Paper submission guidelines
+  https://joss.readthedocs.io/en/latest/submitting.html
+
+- Compile this paper to a pdf document with the script specified in .gitlab-ci.yml. JOSS
+  uses the openjournals/inara docker image and compiles the document with the following
+script:
+
+        inara -p -o pdf paper/paper.md
+
+- Extract documentation from the package docstrings with pdoc
+
+        pdoc -o public ./cobwood/
+
+- TODO: install the package in a new environment, based on the TOML file
+
+End comments.
+
+
+## Plots as images
+
+
+Save plots as images to be inserted in the paper
+
+    from cobwood import data_dir
+    from cobwood.gfpmx_equations import compute_country_aggregates
+    plot_dir = data_dir.parent / "cobwood/paper/fig"
+    gfpmxb2021 = GFPMX(
+        input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021",
+        rerun=False
+    )
+    print("Re-compute aggregates for the historical period.")
+    for this_product in gfpmxb2021.products:
+        for year in range(1995, 2022):
+            compute_country_aggregates(gfpmxb2021[this_product], year)
+            compute_country_aggregates(gfpmxb2021.other, year, ["area", "stock"])
+
+    # Draw the default plot with one line by continent
+    g = gfpmxb2021.facet_plot("indround")
+    g.savefig(plot_dir / "indround_by_continent.png")
+
+    # Use the countries argument to specify one line by country
+    g = gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
+    g.savefig(plot_dir / "indround_by_country.png")
+
+Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.html
+
 
 
 # Discarded text
