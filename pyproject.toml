@@ -105,13 +105,14 @@ classifiers = [
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
 dependencies = [
-  "pandas",
+  "PyYAML", # Read scenario configuration yaml files
+  "netCDF4", # Write model Xarray datasets to netcdf files
   "numpy",
-  "xarray",
-  "seaborn",
-  "tqdm",
-  "PyYAML",
-  "pyxlsb", # To read input Excel files in binary format
+  "pandas", # Manipulate data frames
+  "pyxlsb", # Read input Excel files in binary format
+  "seaborn", # Plot faceted graphs
+  "tqdm", # Show progress bars
+  "xarray", # Structure modelling data as N dimensional arrays 
 ]
 
 # List additional groups of dependencies here (e.g. development
