@@ -34,6 +34,31 @@ Install from the python package index:
 
     pip install cobwood
 
+Clone the cobwood_data to create the cobwood_data structure at the default location,
+alternatively clone it at any location and set the environment variable `COBWOOD_DATA` to
+define the location of the data:
+
+    mkdir -p ~/repos
+    cd ~/repos
+    git clone git@gitlab.com:bioeconomy/cobwood/cobwood_data.git
+
+
+## Optional virtual environment
+
+Optionally create a virtual environment and install the `cobwood` package and
+its dependencies inside this virtual environment:
+
+    mkdir -p /tmp/cobwoodenv
+    cd /tmp/cobwoodenv/
+    python3 -m venv /tmp/cobwoodenv/
+    source /tmp/cobwoodenv/bin/activate
+    pip install cobwood
+
+You can later on use the model inside this virtual environment by activating it each
+time with:
+
+    source /tmp/cobwoodenv/bin/activate
+
 
 # Run the model
 
@@ -42,33 +67,17 @@ input data for that model, and how to define a scenario. Not that many scenarios
 defined from the same input data, by changing some of the variables, such as the GDP
 projections. We will then explain how to run the model.
 
-0. The input data can be downloaded from the website of the university of
-  Wisconsin and converted to CSV files. You need to do this step only once and
-  can ignore it later on. Convert data to CSV files inside the cobwood_data
-  directory:
-
-    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
-    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
-
-1. In the cobwood_data directory, write the following configuration files and call it `scenario/base_2021.yaml`
-
-```
-input_dir: "gfpmx_base2021"
-base_year: 2021
-description: "Reproduce the GFPMX base 2021 scenario"
-```
-
-2. Load the input data into a [GFPMX](cobwood/gfpmx.html) model object.
+1. Load the input data into a [GFPMX](cobwood/gfpmx.html) model object.
 
     >>> from cobwood.gfpmx import GFPMX
     >>> gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
 
-3. Run the model.At each step compare with the reference model run inside the
-Excel Sheet:
+2. Run the model.At each step compare with the reference model run inside the Excel
+   Sheet:
 
     >>> gfpmxb2021.run(compare=True, strict=False)
 
-4. Explore the model output tables and make plots.
+3. Explore the model output tables and make plots.
 
     >>> print(gfpmxb2021["sawn"])
     >>> print(gfpmxb2021["sawn"]["cons"])

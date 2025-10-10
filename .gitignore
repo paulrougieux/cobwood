@@ -16,7 +16,7 @@ public
 # Build artefacts
 cobwood.egg-info
 dist
-
+build
 
 
 # Vim Tags
