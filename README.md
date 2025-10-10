@@ -69,19 +69,25 @@ projections. We will then explain how to run the model.
 
 1. Load the input data into a [GFPMX](cobwood/gfpmx.html) model object.
 
-    >>> from cobwood.gfpmx import GFPMX
-    >>> gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
+```python
+from cobwood.gfpmx import GFPMX
+gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
+```
 
 2. Run the model.At each step compare with the reference model run inside the Excel
    Sheet:
 
-    >>> gfpmxb2021.run(compare=True, strict=False)
+```python
+gfpmxb2021.run(compare=True, strict=False)
+```
 
 3. Explore the model output tables and make plots.
 
-    >>> print(gfpmxb2021["sawn"])
-    >>> print(gfpmxb2021["sawn"]["cons"])
-    >>> gfpmxb2021.facet_plot_by_var("indround")
+```python
+print(gfpmxb2021["sawn"])
+print(gfpmxb2021["sawn"]["cons"])
+gfpmxb2021.facet_plot_by_var("indround")
+```
 
 
 # Model Formulation
@@ -135,7 +141,7 @@ two-dimensional Xarray data arrays, where:
   analysis.
 - Years constitute the second dimension, facilitating time-series insights.
 
-![Data structure](paper/fig/data_structure_2.png)
+![Data structure](https://gitlab.com/bioeconomy/cobwood/cobwood/-/raw/main/paper/fig/data_structure_2.png)
 
 **Data Manipulation and Export**. Xarray data arrays can be converted to a format
 similar to the original GFPMx spreadsheet with countries in rows and years in columns.
