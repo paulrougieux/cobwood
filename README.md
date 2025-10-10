@@ -91,8 +91,16 @@ gfpmxb2021.run(compare=True, strict=False)
 ```python
 print(gfpmxb2021["sawn"])
 print(gfpmxb2021["sawn"]["cons"])
-gfpmxb2021.facet_plot_by_var("indround")
 ```
+
+4. Create plots
+
+```python
+import matplotlib.pyplot as plt
+gfpmxb2021.facet_plot_by_var("indround")
+plt.show()
+```
+
 
 
 # Model Formulation
