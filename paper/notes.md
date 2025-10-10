@@ -1,10 +1,16 @@
+
+# TODO
+
+- TODO: install the package in a new environment, based on the TOML file
+
+
 # Instruction
-
-
-The following comments will not appear in the paper.
 
 - Journal of Open Source Software (JOSS)- Paper submission guidelines
   https://joss.readthedocs.io/en/latest/submitting.html
+
+
+## Compile the paper to pdf
 
 - Compile this paper to a pdf document with the script specified in .gitlab-ci.yml. JOSS
   uses the openjournals/inara docker image and compiles the document with the following
@@ -16,13 +22,11 @@ script:
 
         pdoc -o public ./cobwood/
 
-- TODO: install the package in a new environment, based on the TOML file
 
 End comments.
 
 
-## Plots as images
-
+## Generate plots as images
 
 Save plots as images to be inserted in the paper
 
@@ -214,4 +218,27 @@ from a given start year:
 > factors. It is developed by the European Forest Institute. Detailed documentation can
 > be found in the internal report"
 
+
+# Review
+
+Link to the pre-review https://github.com/openjournals/joss-reviews/issues/8587
+
+
+## Reviewers
+
+List of potential reviewers without the "`@`" mention, with a short explanation for the
+choice.
+
+Authors of papers marked as similar:
+
+- MatthewHeun https://github.com/MatthewHeun
+- ghislainv https://github.com/ghislainv
+- klau506 https://github.com/klau506
+- realxinzhao https://github.com/realxinzhao
+
+Authors of packages that use Xarray as well:
+
+- ArcticSnow https://github.com/ArcticSnow
+- tennlee https://github.com/tennlee
+- tomvothecoder https://github.com/tomvothecoder
 
