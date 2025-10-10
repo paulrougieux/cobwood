@@ -67,7 +67,9 @@ input data for that model, and how to define a scenario. Not that many scenarios
 defined from the same input data, by changing some of the variables, such as the GDP
 projections. We will then explain how to run the model.
 
-1. Load the input data into a [GFPMX](cobwood/gfpmx.html) model object.
+1. Load the input data into a
+   [GFPMX](https://bioeconomy.gitlab.io/cobwood/cobwood/cobwood/gfpmx.html#GFPMX) model
+   object.
 
 ```python
 from cobwood.gfpmx import GFPMX
