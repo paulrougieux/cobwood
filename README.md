@@ -62,10 +62,13 @@ time with:
 
 # Run the model
 
-Currently, only the GFFPMx model is available. We will now illustrate how to prepare the
-input data for that model, and how to define a scenario. Not that many scenarios can be
-defined from the same input data, by changing some of the variables, such as the GDP
-projections. We will then explain how to run the model.
+Currently, only the GFFPMx model is available. We will now illustrate how to initiate a
+model instance for a given scenario. Scenarios are defined in the scenario input
+directory
+[cobwood_data/scenarios](https://gitlab.com/bioeconomy/cobwood/cobwood_data/-/tree/main/scenario?ref_type=heads)
+as yaml files. They define variations of the model input, by changing some of the
+variables, such as the GDP projections for example. Here is how to run the model to
+reproduce a baseline scenario:
 
 1. Load the input data into a
    [GFPMX](https://bioeconomy.gitlab.io/cobwood/cobwood/cobwood/gfpmx.html#GFPMX) model
