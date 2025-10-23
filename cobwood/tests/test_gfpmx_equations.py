@@ -16,18 +16,22 @@ from cobwood.gfpmx_equations import (
     import_demand,
     import_demand_pulp,
     # import_demand_indround,
-    # export_supply   ,
-    # production      ,
-    # world_price     ,
-    # world_price_indround   ,
-    # local_price     ,
-    # forest_stock    ,
+    # export_supply,
+    # production,
+    # world_price,
+    # world_price_indround,
+    # local_price,
+    # forest_stock,
 )
 
 
 @pytest.fixture
 def primary_product_dataset():
-    """Create a sample dataset for testing"""
+    """Create a sample primary products dataset If your goal is debugging or
+    inspection (in a notebook or console), remove the @pytest.fixture decorator
+    temporarily. To be able to allocate this to an actual dataset:
+    >>> ds = primary_product_dataset()
+    """
     ds = xarray.Dataset(
         {
             "cons_constant": xarray.DataArray([2, 3, 4], dims=["country"]),
@@ -43,6 +47,10 @@ def primary_product_dataset():
             ),
             "cons_products_elasticity": xarray.DataArray(
                 [0.5, 0.6, 0.7], dims=["country"]
+            ),
+            "imp_price_elasticity": xarray.DataArray([0.5, 0.6, 0.7], dims=["country"]),
+            "imp_paper_production_elasticity": xarray.DataArray(
+                [0.9, 1.0, 0.8], dims=["country"]
             ),
             "tariff": xarray.DataArray(
                 [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]], dims=["country", "year"]
@@ -74,6 +82,7 @@ def secondary_product_dataset():
             ),
             "imp_price_elasticity": xarray.DataArray([0.5, 0.6, 0.7], dims=["country"]),
             "cons_gdp_elasticity": xarray.DataArray([0.8, 0.9, 1.0], dims=["country"]),
+            "imp_gdp_elasticity": xarray.DataArray([0.8, 0.9, 1.0], dims=["country"]),
             "tariff": xarray.DataArray(
                 [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]], dims=["country", "year"]
             ),
@@ -147,7 +156,7 @@ def test_import_demand(secondary_product_dataset):
     ds = secondary_product_dataset
     t = 1
     expected_result = xarray.DataArray(
-        [1.043081, 2.592547, 4.999707],
+        [145.395289, 1491.468245, 9834.541699],
         dims=["country"],
     )
     result = import_demand(ds, t)
@@ -159,9 +168,8 @@ def test_import_demand_pulp(primary_product_dataset, secondary_product_dataset):
     ds = primary_product_dataset
     ds_paper = secondary_product_dataset
     t = 1
-
     expected_result = xarray.DataArray(
-        [1.043081, 2.592547, 2.869484],
+        [246.975193, 2715.313696, 2736.049032],
         dims=["country"],
     )
     result = import_demand_pulp(ds, ds_paper, t)
