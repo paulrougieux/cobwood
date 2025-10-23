@@ -20,10 +20,8 @@ Key Features:
 - The package documentation (generated from function and method docstrings) is available
   at https://bioeconomy.gitlab.io/cobwood/cobwood/cobwood.html
 
-- Instructions below explain how to install and run the model.  They provide an
-  overview of
-  model
-  formulation and data structure.
+- Instructions below explain how to install and run the model.  They provide an overview
+  of model formulation and data structure.
 
 - The paper at paper describes the context and purpose of cobwood.
 
@@ -34,13 +32,32 @@ Install from the python package index:
 
     pip install cobwood
 
-Clone the cobwood_data to create the cobwood_data structure at the default location,
-alternatively clone it at any location and set the environment variable `COBWOOD_DATA` to
-define the location of the data:
+Install optional development dependencies for tests and other dependencies for notebooks
+data exploration:
+
+    pip install cobwood[dev,notebooks]
+
+
+## Input data
+
+Clone the `cobwood_data` repository to create a `cobwood_data` structure at the default
+location, alternatively clone it at any location and set the environment variable
+`COBWOOD_DATA` to define the location of the data:
 
     mkdir -p ~/repos
     cd ~/repos
-    git clone git@gitlab.com:bioeconomy/cobwood/cobwood_data.git
+    git clone https://gitlab.com/bioeconomy/cobwood/cobwood_data.git
+
+The input data is based on:
+
+- A version of the GFPMx model that is no longer available online. More information in
+  the data repository https://gitlab.com/bioeconomy/cobwood/cobwood_data
+
+- The FAOSTAT forestry production and trade data set available at:
+  http://www.fao.org/faostat/en/#data/FO/visualize
+
+More details in the data repository
+https://gitlab.com/bioeconomy/cobwood/cobwood_data
 
 
 ## Optional virtual environment
@@ -54,6 +71,7 @@ its dependencies inside this virtual environment:
     source /tmp/cobwoodenv/bin/activate
     pip install cobwood
 
+Replace `/tmp/cobwoodenv` with whatever directory path you want to use on your computer.
 You can later on use the model inside this virtual environment by activating it each
 time with:
 
@@ -138,10 +156,6 @@ countries in the dataset) as follows:
 
 
 
-# Input data
-
-The data is based on the FAOSTAT forestry production and trade data set available at:
-http://www.fao.org/faostat/en/#data/FO/visualize
 
 
 # Data structure
