@@ -2,8 +2,11 @@
 
 
 Note:
-- The problem is that this requires the biotrade package and the biotrade_data
-  directory to be defined so that the intermediate download can be saved.
+
+- The problem is that `faostat.forestry_production_df` requires the
+  [biotrade](https://pypi.org/project/biotrade/) package and the
+  `biotrade_data` directory to be defined so that the intermediate download can
+  be saved.
 
 """
 
