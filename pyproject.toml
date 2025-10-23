@@ -126,7 +126,7 @@ dependencies = [
 # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#extras
 [project.optional-dependencies]
 notebooks = ["matplotlib", "biotrade"]
-tests = ["pytest"]
+dev = ["pytest"]
 
 # List URLs that are relevant to your project
 #
