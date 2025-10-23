@@ -104,8 +104,10 @@ classifiers = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
+
 dependencies = [
   "PyYAML", # Read scenario configuration yaml files
+  "biotrade", # Load data from FAOSTAT
   "netCDF4", # Write model Xarray datasets to netcdf files
   "numpy",
   "pandas", # Manipulate data frames
@@ -125,8 +127,8 @@ dependencies = [
 # referred to as "extras". For a more extensive definition see:
 # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#extras
 [project.optional-dependencies]
-notebooks = ["matplotlib", "biotrade"]
-dev = ["pytest"]
+analysis = ["matplotlib"]
+dev = ["pytest", "pdoc"]
 
 # List URLs that are relevant to your project
 #

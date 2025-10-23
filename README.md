@@ -32,10 +32,9 @@ Install from the python package index:
 
     pip install cobwood
 
-Install optional development dependencies for tests and other dependencies for notebooks
-data exploration:
+Install optional development dependencies to run tests or build the documentation:
 
-    pip install cobwood[dev,notebooks]
+    pip install cobwood[dev]
 
 
 ## Input data

@@ -6,9 +6,7 @@ variables:
 default:
   before_script:
     - python --version
-    - pip install .
-    - pip install pytest
-    - pip install pdoc
+    - pip install .[dev]
     - echo $CI_PROJECT_DIR 
     - pwd
 
