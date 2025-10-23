@@ -41,7 +41,13 @@ data exploration:
 ## Input data
 
 Clone the `cobwood_data` repository to create a `cobwood_data` structure at the default
-location, alternatively clone it at any location and set the environment variable
+location in your user home directory. To find out where the default location is, start
+python and call:
+
+    from cobwood import cobwood_data_dir
+    print(cobwood_data_dir)
+
+Alternatively clone it at any location and set the environment variable
 `COBWOOD_DATA` to define the location of the data:
 
     mkdir -p ~/repos

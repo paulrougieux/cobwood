@@ -76,7 +76,7 @@ data_dir = data_dir.expanduser()
 
 # TODO: remove when it is replaced everywhere by cobwood.data_dir. Maybe it's
 # better to keep it that way explicitly in case we import data_dir from another
-# package?
+# package as well?
 cobwood_data_dir = data_dir
 
 # But you can override that with an environment variable #
