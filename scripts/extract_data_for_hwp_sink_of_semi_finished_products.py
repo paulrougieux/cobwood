@@ -45,11 +45,12 @@ def get_semifinished_projection(model):
 
     Example:
 
+        from cobwood.gfpmx import GFPMX
         ssp2fel1 = GFPMX(scenario="pikssp2_fel1")
         df = get_semifinished_projection(ssp2fel1)
 
     """
-    df = model.all_products_ds["prod"].to_dataframe()
+    df = model.all_products_ds[["prod", "imp", "exp"]].to_dataframe()
     df["scenario"] = model.scenario
     df.reset_index(inplace=True)
     return df
