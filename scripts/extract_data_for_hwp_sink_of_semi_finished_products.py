@@ -61,6 +61,9 @@ def write_semifinished_projection_to_eu_cbm_data(model):
 
     Example:
 
+        cd $HOME/rp/cobwood/scripts
+        ipython
+        from  extract_data_for_hwp_sink_of_semi_finished_products import  write_semifinished_projection_to_eu_cbm_data
         from cobwood.gfpmx import GFPMX
         ssp2fel1 = GFPMX(scenario="pikssp2_fel1")
         write_semifinished_projection_to_eu_cbm_data(ssp2fel1)
@@ -76,7 +79,7 @@ def write_semifinished_projection_to_eu_cbm_data(model):
     cols.insert(0, "scenario")
     df = df[cols]
     directory = eu_cbm_data_pathlib / "domestic_harvest" / model.scenario
-    df.to_csv(directory / "hwp_expected_gfpmx.csv", index=False)
+    df.to_csv(directory / "hwp_expected_fsm.csv", index=False)
 
 
 # available scenarios
