@@ -61,6 +61,7 @@ def write_semifinished_projection_to_eu_cbm_data(model):
 
     Example:
 
+        from cobwood.gfpmx import GFPMX
         ssp2fel1 = GFPMX(scenario="pikssp2_fel1")
         write_semifinished_projection_to_eu_cbm_data(ssp2fel1)
 
