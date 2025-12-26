@@ -46,13 +46,19 @@ Model (EFI-GTM)[@kallio2004global], the Global Forest and Agriculture Model
 adaptation called Timba [@tifsm2025]. There are also multiple regional and national
 forest sector models.
 
-Current modelling software often uses partial labelling approaches with unclear variable
+Current modelling softwares often use partial labelling approaches with unclear variable
 names that make source code difficult to interpret. Many models are not open source, and
 limited data labelling makes model outputs difficult to reuse. The cobwood library
 addresses transparency limitations by organizing forest sector datasets as labelled
 multi-dimensional arrays with explicit country, product, and year dimensions. Metadata
 and dimension names are stored directly within datasets (both in memory and on disk),
 making model inputs and outputs easier to interpret and share.
+
+Existing modelling softwares typically relies on ad-hoc input file management to
+distinguish scenarios, with scenario assumptions scattered across multiple data files,
+in the input file name itself , or in separate Excel sheets. Cobwood uses explicit
+scenario configuration files, improving reproducibility and enabling transparent version
+control of modeling assumptions."
 
 By standardizing data representation and exposing model internals, cobwood facilitates
 collaboration beyond forest economics. Adjacent fields such as forest management,
