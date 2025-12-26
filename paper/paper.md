@@ -33,13 +33,19 @@ modelling tool chain.
 
 # Statement of need
 
-Trees grow over decades or centuries and wood markets may be very localized. Yet markets
-for processed wood and paper products are interconnected at the global scale requiring,
-decision makers to understand long-term forecasts of global wood consumption, production
-and trade. This need has led forest economists to develop macroeconomic models of the
-forest sector. Several global forest sector models currently exist, including the Global
-Forest Products Model (GFPM)[@buongiorno2003global], the European Forest Institute
-Global Trade Model (EFI-GTM)[@kallio2004global], the Global Forest and Agriculture Model
+Trees grow over decades or centuries and wood markets can be very localized. Yet markets
+for processed wood and paper products are interconnected through global trade networks.
+To understand how trade barriers, resource scarcity, or climate change affect the forest
+sector, economists rely on macroeconomic models of the forest sector. These models operate
+in static and dynamic phases. The static phase balances supply and demand within a
+single year. The dynamic phase projects future demand and supply driven by exogenous
+factors like GDP growth and changes in the forest stock.
+
+Forest Sector Models exist to provide quantitative insights into how policy or
+environmental changes propagate through international forest product markets. Several
+global forest sector models currently exist, including the Global Forest Products Model
+(GFPM)[@buongiorno2003global], the European Forest Institute Global Trade Model
+(EFI-GTM)[@kallio2004global], the Global Forest and Agriculture Model
 (G4M)[@gusti2020g4m], the Global Forest Trade Model (GFTM) [@jonsson2015global] and an
 adaptation called Timba [@tifsm2025]. There are also multiple regional and national
 forest sector models.
