@@ -58,11 +58,19 @@ approaches with unclear variable names that make source code difficult to interp
 Many models are not open source, and limited data labeling makes model outputs difficult
 to reuse.
 
-Adjacent research fields including forest management, vegetation dynamics, and
-life cycle analysis need estimates of future roundwood harvest and wood products
-consumption. Model transparency helps these communities determine whether existing
-models are suitable for specific policy questions or can be modified to simulate new
-drivers influencing forest products markets.
+The cob wood library addresses these structural and transparency limitations. It
+provides an open-source Python interface for organizing forest sector datasets as
+labelled, multi-dimensional arrays using the Xarray library. These arrays represent
+trade flows, production, and consumption with explicit country, product, and year
+dimensions. Metadata and dimension names are stored directly within datasets (both in
+memory and on disk) making model inputs and outputs easier to interpret and share.
+
+By standardizing data representation and exposing model internals, cobwood facilitates
+collaboration beyond forest economics. Adjacent research fields such as forest
+management, vegetation dynamics, and life cycle analysis rely on projections of
+roundwood harvest and wood product consumption. A transparent and interoperable
+modelling framework enables these communities to reuse, and extend existing models to
+simulate new drivers and analyse new policy questions.
 
 
 # Input, output
