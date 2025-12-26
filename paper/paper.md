@@ -19,58 +19,47 @@ bibliography: paper.bib
 
 # Summary
 
-Managing forest ecosystems effectively requires long-term foresight into global wood
-markets. This planning relies on macroeconomic forest sector models spanning multiple
-countries over extended time periods. The cobwood package introduces a panel data
-structure based on labelled N-dimensional arrays from the Xarray package, including
-output storage to NetCDF files. The comprehensive metadata for country, product, time
-coordinates along with units enhances source code clarity and facilitates model
-inspection. To demonstrate cobwood's practical application, we present a
-reimplementation of the Global Forest Products Model (GFPMx). The reusable data
-structure positions cobwood as an ideal component for integration into a greater
-modelling tool chain.
+Forest Sector Models provide quantitative insights into how policy changes, resource
+scarcity or climate impacts propagate through international forest products markets.
+These models balance demand, trade and wood supply in each country and project future
+market dynamics over decades. The cobwood package provides a labelled data structure
+that enhances code clarity and facilitates model inspection compared to traditional
+approaches. To demonstrate cobwood's application, we present a reimplementation of the
+Global Forest Products Model (GFPMx). The reusable data structure positions cobwood as
+an ideal component for integration into a greater modelling tool chain.
 
 
 # Statement of need
 
 Trees grow over decades or centuries and wood markets can be very localized. Yet markets
 for processed wood and paper products are interconnected through global trade networks.
-To understand how trade barriers, resource scarcity, or climate change affect the forest
-sector, economists rely on macroeconomic models of the forest sector. These models operate
-in static and dynamic phases. The static phase balances supply and demand within a
-single year. The dynamic phase projects future demand and supply driven by exogenous
-factors like GDP growth and changes in the forest stock.
+To simulate the effect of policy changes, forest economists rely on macroeconomic forest
+sector models. These models operate in static and dynamic phases. The static phase
+balances supply and demand within a single year. The dynamic phase projects future
+demand and supply driven by exogenous factors like GDP growth and changes in the forest
+stock.
 
-Forest Sector Models exist to provide quantitative insights into how policy or
-environmental changes propagate through international forest product markets. Several
-global forest sector models currently exist, including the Global Forest Products Model
-(GFPM)[@buongiorno2003global], the European Forest Institute Global Trade Model
-(EFI-GTM)[@kallio2004global], the Global Forest and Agriculture Model
+Several global forest sector models currently exist, including the Global Forest
+Products Model (GFPM)[@buongiorno2003global], the European Forest Institute Global Trade
+Model (EFI-GTM)[@kallio2004global], the Global Forest and Agriculture Model
 (G4M)[@gusti2020g4m], the Global Forest Trade Model (GFTM) [@jonsson2015global] and an
 adaptation called Timba [@tifsm2025]. There are also multiple regional and national
 forest sector models.
 
-These macroeconomic models organize market datasets as panel data with country and time
-dimensions, containing information on production, consumption, and trade for products
-such as roundwood, sawnwood, wood panels, pulp, and paper. However, current modeling
-software often lacks proper panel data structures, instead using partial labeling
-approaches with unclear variable names that make source code difficult to interpret.
-Many models are not open source, and limited data labeling makes model outputs difficult
-to reuse.
-
-The cob wood library addresses these structural and transparency limitations. It
-provides an open-source Python interface for organizing forest sector datasets as
-labelled, multi-dimensional arrays using the Xarray library. These arrays represent
-trade flows, production, and consumption with explicit country, product, and year
-dimensions. Metadata and dimension names are stored directly within datasets (both in
-memory and on disk) making model inputs and outputs easier to interpret and share.
+Current modelling software often uses partial labelling approaches with unclear variable
+names that make source code difficult to interpret. Many models are not open source, and
+limited data labelling makes model outputs difficult to reuse. The cobwood library
+addresses transparency limitations by organizing forest sector datasets as labelled
+multi-dimensional arrays with explicit country, product, and year dimensions. Metadata
+and dimension names are stored directly within datasets (both in memory and on disk),
+making model inputs and outputs easier to interpret and share.
 
 By standardizing data representation and exposing model internals, cobwood facilitates
-collaboration beyond forest economics. Adjacent research fields such as forest
-management, vegetation dynamics, and life cycle analysis rely on projections of
-roundwood harvest and wood product consumption. A transparent and interoperable
-modelling framework enables these communities to reuse, and extend existing models to
-simulate new drivers and analyse new policy questions.
+collaboration beyond forest economics. Adjacent fields such as forest management,
+vegetation dynamics, and life cycle analysis rely on projections of roundwood harvest
+and wood products consumption. An interoperable python package enables these communities
+to reuse and extend existing models to simulate new drivers and analyze new policy
+questions.
 
 
 # Input, output
