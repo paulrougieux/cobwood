@@ -82,8 +82,8 @@ and to transform them into xarray datasets.
 The `write_datasets_to_netcdf` combines many products 2D datasets into one larger 3D
 dataset, by adding a third coordinate called "`product`" before saving the model output
 datasets to NetCDF files. These files include metadata labels for units. While not
-commonly used in economics, the NetCDF format is a widely accepted format in earth
-systems modelling, making it ideal for integrated modelling systems.
+commonly used in economics, NetCDF is a widely accepted format in earth systems
+modelling, making it ideal for integrated modelling systems.
 
 
 # Data structure and implementation

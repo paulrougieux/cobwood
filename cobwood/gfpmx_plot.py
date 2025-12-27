@@ -30,6 +30,7 @@ def facet_plot_by_var(
     countries: list = None,
     ylabel: str = None,
     title: str = None,
+    ncol: int = 2,
 ) -> seaborn.axisgrid.FacetGrid:
     """Plot the given dataset variables with a facet for each variable and a
     color line for each continent
@@ -71,7 +72,7 @@ def facet_plot_by_var(
         col="variable",
         hue="country",
         kind="line",
-        col_wrap=5,
+        col_wrap=ncol,
         height=3,
         facet_kws={"sharey": False, "sharex": False},
     )
