@@ -1,6 +1,4 @@
-"""Run the GFPMX model and store output data
-
-"""
+"""Run the GFPMX model and store output data"""
 
 from functools import cached_property
 from typing import Union, List
@@ -338,6 +336,7 @@ class GFPMX:
         if product not in accepted_products:
             raise ValueError(f"Product {product} not in {accepted_products}")
         g = facet_plot_by_var(self[product], *args, **kwargs)
+        return g
 
     def get_df(
         self, product: Union[str, List[str]], var: Union[str, List[str]]
