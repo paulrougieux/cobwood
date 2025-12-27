@@ -81,5 +81,5 @@ def facet_plot_by_var(
     g.fig.subplots_adjust(left=0.15, top=0.85)
     # Use scientific notation on y-axis
     for ax in g.axes.flat:
-        ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 4))
     return g
