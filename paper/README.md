@@ -1,7 +1,13 @@
+This directory contains the draft of a JOSS paper:
+
+- Pre-review https://github.com/openjournals/joss-reviews/issues/8587
+- Review
+
 
 # TODO
 
 - TODO: install the package in a new environment, based on the TOML file
+
 
 
 # Instruction
@@ -23,36 +29,31 @@ script:
         pdoc -o public ./cobwood/
 
 
-End comments.
-
-
 ## Generate plots as images
 
 Save plots as images to be inserted in the paper
 
     from cobwood import data_dir
-    from cobwood.gfpmx_equations import compute_country_aggregates
+    from cobwood.gfpmx import GFPMX
     plot_dir = data_dir.parent / "cobwood/paper/fig"
-    gfpmxb2021 = GFPMX(
-        input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021",
-        rerun=False
-    )
+    gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
+
+    # Draw the default plot with one line by continent
+    g = gfpmxb2021.facet_plot_by_var("indround")
+    g.savefig(plot_dir / "indround_by_continent.png")
+
+    # Use the countries argument to specify one line by country
+    g = gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
+    g.savefig(plot_dir / "indround_by_country.png")
+
     print("Re-compute aggregates for the historical period.")
+    print("It seems it's not necessary anymore")
     for this_product in gfpmxb2021.products:
         for year in range(1995, 2022):
             compute_country_aggregates(gfpmxb2021[this_product], year)
             compute_country_aggregates(gfpmxb2021.other, year, ["area", "stock"])
 
-    # Draw the default plot with one line by continent
-    g = gfpmxb2021.facet_plot("indround")
-    g.savefig(plot_dir / "indround_by_continent.png")
-
-    # Use the countries argument to specify one line by country
-    g = gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
-    g.savefig(plot_dir / "indround_by_country.png")
-
 Maybe use https://docs.xarray.dev/en/latest/generated/xarray.plot.pcolormesh.html
-
 
 
 # Discarded text
@@ -219,7 +220,7 @@ from a given start year:
 > be found in the internal report"
 
 
-# Review
+# JOSS Review
 
 Link to the pre-review https://github.com/openjournals/joss-reviews/issues/8587
 
