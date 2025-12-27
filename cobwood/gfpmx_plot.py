@@ -1,6 +1,4 @@
-"""Plot GFPMx dataset objects by region (continent) or by country
-
-"""
+"""Plot GFPMx dataset objects by region (continent) or by country"""
 
 import seaborn
 import xarray
@@ -81,4 +79,7 @@ def facet_plot_by_var(
     g.fig.supylabel(ylabel)
     g.fig.suptitle(title)
     g.fig.subplots_adjust(left=0.15, top=0.85)
+    # Use scientific notation on y-axis
+    for ax in g.axes.flat:
+        ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     return g
