@@ -46,6 +46,8 @@ Save plots as images to be inserted in the paper
     g = gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
     g.savefig(plot_dir / "indround_by_country.png")
 
+Recompute aggregates not necessary
+
     print("Re-compute aggregates for the historical period.")
     print("It seems it's not necessary anymore")
     for this_product in gfpmxb2021.products:
