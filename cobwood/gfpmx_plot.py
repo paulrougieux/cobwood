@@ -77,7 +77,8 @@ def facet_plot_by_var(
         facet_kws={"sharey": False, "sharex": False},
     )
     g.set(ylim=(0, None))
+    g.set_ylabels("")
     g.fig.supylabel(ylabel)
     g.fig.suptitle(title)
-    g.fig.subplots_adjust(left=0.09, top=0.85)
+    g.fig.subplots_adjust(left=0.15, top=0.85)
     return g
