@@ -1,7 +1,7 @@
 """Run tests with
 
 cd ~/repos/cobwood/
-pytest
+pytest -v
 
 """
 
@@ -9,6 +9,7 @@ pytest
 # pylint: disable=redefined-outer-name
 import pytest
 import xarray
+import numpy as np
 from cobwood.gfpmx_equations import (
     consumption,
     consumption_pulp,
@@ -18,7 +19,7 @@ from cobwood.gfpmx_equations import (
     import_demand_indround,
     export_supply,
     production,
-    # world_price,
+    world_price,
     # world_price_indround,
     # local_price,
     # forest_stock,
@@ -104,6 +105,31 @@ def secondary_product_dataset():
             "exp_constant": xarray.DataArray([1, 2, 3], dims=["country"]),
             "c": xarray.DataArray([True, True, True], dims=["country"]),
         }
+    )
+    return ds
+
+
+@pytest.fixture
+def world_price_primary_dataset():
+    """Create a minimal dataset for testing world_price with primary products"""
+    ds = xarray.Dataset(
+        {
+            "price": xarray.DataArray([[7, 8]], dims=["country", "year"]),
+        },
+        coords={"country": ["WORLD"], "year": [1, 2]},
+    )
+    return ds
+
+
+@pytest.fixture
+def world_price_secondary_dataset():
+    """Create a minimal dataset for testing world_price with secondary products"""
+    ds = xarray.Dataset(
+        {
+            "price_constant": xarray.DataArray([40], dims=["country"]),
+            "price_input_elast": xarray.DataArray([0.4], dims=["country"]),
+        },
+        coords={"country": ["WORLD"]},
     )
     return ds
 
@@ -225,3 +251,13 @@ def test_production(secondary_product_dataset):
     expected_result = xarray.DataArray([200, 400, 600], dims=["country"])
     result = production(ds, t)
     xarray.testing.assert_allclose(result, expected_result)
+
+
+def test_world_price(world_price_secondary_dataset, world_price_primary_dataset):
+    """Test the world_price function"""
+    ds = world_price_secondary_dataset
+    ds_primary = world_price_primary_dataset
+    t = 1
+    expected_result = 87.1162569793112
+    result = world_price(ds, ds_primary, t)
+    np.testing.assert_allclose(result.item(), expected_result)
