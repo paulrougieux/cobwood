@@ -15,7 +15,7 @@ from cobwood.gfpmx_equations import (
     consumption_indround,
     import_demand,
     import_demand_pulp,
-    # import_demand_indround,
+    import_demand_indround,
     # export_supply,
     # production,
     # world_price,
@@ -49,6 +49,9 @@ def primary_product_dataset():
                 [0.5, 0.6, 0.7], dims=["country"]
             ),
             "imp_price_elasticity": xarray.DataArray([0.5, 0.6, 0.7], dims=["country"]),
+            "imp_products_elasticity": xarray.DataArray(
+                [0.5, 0.6, 0.7], dims=["country"]
+            ),
             "imp_paper_production_elasticity": xarray.DataArray(
                 [0.9, 1.0, 0.8], dims=["country"]
             ),
@@ -173,4 +176,21 @@ def test_import_demand_pulp(primary_product_dataset, secondary_product_dataset):
         dims=["country"],
     )
     result = import_demand_pulp(ds, ds_paper, t)
+    xarray.testing.assert_allclose(result, expected_result)
+
+
+def test_import_demand_indround(primary_product_dataset, secondary_product_dataset):
+    """Test the import_demand_indround function"""
+    ds = primary_product_dataset
+    ds["imp_constant"].loc[2] = -10
+    ds_sawn = secondary_product_dataset
+    ds_panel = secondary_product_dataset
+    ds_pulp = secondary_product_dataset
+    t = 1
+    compatible_mode = False
+    expected_result = xarray.DataArray(
+        [53.665631, 499.550705, 0],
+        dims=["country"],
+    )
+    result = import_demand_indround(ds, ds_sawn, ds_panel, ds_pulp, t, compatible_mode)
     xarray.testing.assert_allclose(result, expected_result)
