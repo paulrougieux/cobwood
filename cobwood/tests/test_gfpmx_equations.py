@@ -17,7 +17,7 @@ from cobwood.gfpmx_equations import (
     import_demand_pulp,
     import_demand_indround,
     export_supply,
-    # production,
+    production,
     # world_price,
     # world_price_indround,
     # local_price,
@@ -90,6 +90,12 @@ def secondary_product_dataset():
                 [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]], dims=["country", "year"]
             ),
             "imp": xarray.DataArray(
+                [[10, 20], [30, 40], [50, 60]], dims=["country", "year"]
+            ),
+            "cons": xarray.DataArray(
+                [[100, 200], [300, 400], [500, 600]], dims=["country", "year"]
+            ),
+            "exp": xarray.DataArray(
                 [[10, 20], [30, 40], [50, 60]], dims=["country", "year"]
             ),
             "exp_marginal_propensity_to_export": xarray.DataArray(
@@ -209,4 +215,13 @@ def test_export_supply(secondary_product_dataset):
     t = 1
     expected_result = xarray.DataArray([13, 26, 39], dims=["country"])
     result = export_supply(ds, t)
+    xarray.testing.assert_allclose(result, expected_result)
+
+
+def test_production(secondary_product_dataset):
+    """Test the production function"""
+    ds = secondary_product_dataset
+    t = 1
+    expected_result = xarray.DataArray([200, 400, 600], dims=["country"])
+    result = production(ds, t)
     xarray.testing.assert_allclose(result, expected_result)
