@@ -31,13 +31,13 @@ an ideal component for integration into a greater modelling tool chain.
 
 # Statement of need
 
-Trees grow over decades or centuries and wood markets can be very localized. Yet markets
-for processed wood and paper products are interconnected through global trade networks.
-To simulate the effect of policy changes, forest economists rely on macroeconomic forest
-sector models. These models operate in static and dynamic phases. The static phase
-balances supply and demand within a single year. The dynamic phase projects future
-demand and supply driven by exogenous factors like GDP growth and changes in the forest
-stock.
+Trees grow over decades or centuries and wood markets can be very localized.
+Yet markets for processed wood and paper products are interconnected through
+global trade networks. To simulate the future condition of wood markets, forest
+economists rely on macroeconomic forest sector models. These models operate in
+static and dynamic phases. The static phase balances supply and demand within a
+single year. The dynamic phase projects future demand and supply driven by
+exogenous factors like GDP growth and changes in the forest stock.
 
 Several global forest sector models currently exist, including the Global Forest
 Products Model (GFPM)[@buongiorno2003global], the European Forest Institute Global Trade

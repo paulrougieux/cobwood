@@ -125,7 +125,6 @@ plt.show()
 ```
 
 
-
 # Model Formulation
 
 The core implementation serves as a foundation for developing various versions of global
@@ -158,8 +157,6 @@ countries in the dataset) as follows:
             * pow(ds["price"].loc[ds.c, t - 1], ds["cons_price_elasticity"])
             * pow(ds["gdp"].loc[ds.c, t], ds["cons_gdp_elasticity"])
         )
-
-
 
 
 

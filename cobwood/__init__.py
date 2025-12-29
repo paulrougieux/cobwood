@@ -1,36 +1,149 @@
-#!/usr/bin/env python3
+# a!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# Introduction
+# User Guide
 
 This documentation describes the cobwood package to analyse global forest
 products markets. The package is distributed on the python pacage index at
 https://pypi.org/project/cobwood/. The source code is available at
 https://bioeconomy.gitlab.io/cobwood/cobwood/
 
-Key Features:
 
-- **Panel Data Structure**: The package represents international forest products market
-  data through 2 dimensional arrays with multiple years
-  and countries, enabling time-series and cross-sectional analysis.
+# Panel Data Structure
 
-- **Data Handling with Xarray**: Utilizes Xarray datasets to efficiently manipulate
-  multi-dimensional data structures. X array is tightly integrated with pandas.
-  Conversion to and from pandas data frames is very straightforward. Xarray datasets are
-  saved on disk using the NetCDF format. This format has the advantage of providing good
-  metadata descriptors. NetCDF is a standard data format used in earth systems
-  modelling, that will just help this model become a component of a greater modelling
-  tool chain.
+The cobwood package represents international forest products market data
+through 2 dimensional arrays with multiple years and countries, enabling
+time-series and cross-sectional analysis.
+
+Load a model to reproduce the examples below:
+
+    from cobwood.gfpmx import GFPMX
+    model = GFPMX(scenario="base_2021", rerun=False)
+
+Starting with a simple example, the sawnwood consumption in Italy in 2020 is
+accessible through the "sawn" product and the "cons" variable as follows:
+
+    model["sawn"]["cons"].loc["Italy", 2070].values
+    # array(5307.84727538)
+
+The time series for all years in Italy is accessible as a data frame as
+follows:
+
+    model["sawn"]["cons"].loc["Italy"].to_dataframe()
+
+Cobwood utilizes Xarray datasets to efficiently manipulate multi-dimensional
+data structures. X array is tightly integrated with pandas. Conversion to and
+from pandas data frames is very straightforward.
+
+All consumption time series for all years and all countries are accessible as a
+data frame as follows:
+
+    model["sawn"]["cons"].to_dataframe()
+
+Other important variables are consumption (cons), production (prod), import
+(imp) and export (exp):
+
+    selected_variables = ["cons", "prod", "imp", "exp"]
+    model["sawn"][selected_variables].to_dataframe()
+
+The products available in that data frame are:
+
+['indround', 'fuel', 'sawn', 'panel', 'pulp', 'paper']
+
+The main Variables are production (prod), consumption (cons), import (imp),
+export (exp) and price.
+
+All variables are described in the following table:
+
+| Variable                             | Description                                                 |
+| ------------------------------------ | ----------------------------------------------------------- |
+| cons                                 | Consumption                                                 |
+| cons_price_elasticity                | Consumption elasticity with respect to price                |
+| cons_products_elasticity             | Consumption elasticity with respect to other products       |
+| cons_constant                        | Constant term in consumption equation                       |
+| cons_usd                             | Consumption in USD                                          |
+| exp                                  | Export                                                      |
+| exp_marginal_propensity_to_export    | Marginal propensity to export                               |
+| exp_constant                         | Constant term in export equation                            |
+| exp_usd                              | Export in USD                                               |
+| imp                                  | Import                                                      |
+| imp_price_elasticity                 | Import elasticity with respect to price                     |
+| imp_products_elasticity              | Import elasticity with respect to other products            |
+| imp_constant                         | Constant term in import equation                            |
+| imp_usd                              | Import in USD                                               |
+| nettrade                             | Net trade                                                   |
+| nettrade_usd                         | Net trade in USD                                            |
+| price                                | Price                                                       |
+| price_trend                          | Price trend                                                 |
+| price_stock_elast                    | Price elasticity with respect to stock                      |
+| price_world_price_elasticity         | Price elasticity with respect to world price                |
+| price_constant                       | Constant term in price equation                             |
+| prod                                 | Production                                                  |
+| prod_usd                             | Production in USD                                           |
+| tariff                               | Tariff                                                      |
+| c                                    | Constant                                                    |
+| cons_gdp_elasticity                  | Consumption elasticity with respect to GDP                  |
+| conspercap                           | Consumption per capita                                      |
+| imp_gdp_elasticity                   | Import elasticity with respect to GDP                       |
+| price_input_elast                    | Price elasticity with respect to input                      |
+| gdp                                  | Gross Domestic Product                                      |
+| cons_paper_production_elasticity     | Consumption elasticity with respect to paper production     |
+| imp_paper_production_elasticity      | Import elasticity with respect to paper production          |
+
+To explore available variables, users can access the `variables` property (e.g.,
+`model["sawn"].variables`).
+
+
+Units are stored as Array properties are used to store metadata, the example
+below displays the roundwood production unit :
+
+```
+model["indround"]["prod"].unit
+# '1000m3'
+```
+
+After the model run, the output Xarray datasets are saved on disk using the
+NetCDF format. This format has the advantage of providing good metadata
+descriptors. NetCDF is a common data format used in earth systems modelling.
+Display the path of the NetCDF file for the current model object:
+
+    model.combined_netcdf_file_path
+
+In summary:
+
+- Forest products consumption, production, trade flows, and prices for all countries
+ are stored as a Xarray datasets.
+
+- Within each dataset for one product, specific variables are accessible as
+  two-dimensional arrays with country and year coordinates (e.g.,
+  `model["sawn"]["cons"]` for consumption)
 
 
 # Models
 
-The goal of cobwood is to provide a readable and reusable data structure to implement many forest sector models.
+Trees grow over decades or centuries and wood markets can be very localized.
+Yet markets for processed wood and paper products are interconnected through
+global trade networks. To simulate the future condition of wood markets, forest
+economists rely on macroeconomic forest sector models. The goal of cobwood is
+to provide a reusable data structure to implement many forest sector models.
+
+
+## Model run
+
+Forest sector models operate in static and dynamic phases. The static phase
+balances supply and demand within a single year. The dynamic phase projects
+future demand and supply driven by exogenous factors like GDP growth and
+changes in the forest stock. Running a model means simulating the dynamic
+phase through time.
 
 
 ## GFPMx
 
-Currently, only the GFFPMx model is available. We will now illustrate how to prepare the input data for that model, and how to define a scenario. Not that many scenarios can be defined from the same input data, by changing some of the variables, such as the GDP projections. We will then explain how to run the model.
+Currently, only the GFFPMx model is available. We will now illustrate how to
+prepare the input data for that model, and how to define a scenario. Not that
+many scenarios can be defined from the same input data, by changing some of the
+variables, such as the GDP projections. We will then explain how to run the
+model.
 
 0. The input data can be downloaded from the website of the university of
   Wisconsin and converted to CSV files. You need to do this step only once and
