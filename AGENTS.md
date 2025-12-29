@@ -52,6 +52,10 @@ into this section.
 
 6. **Modified `cobwood/gfpmx_plot.py`**: Added code to force scientific notation (1e6 for millions, 1e3 for thousands) on the y-axis of facet plots.
 
+7. **Modified `cobwood/gfpmx.py`**: Added type hints to the `__init__` method parameters (`scenario: str`, `rerun: bool = False`).
+
+8. **Modified `cobwood/gfpmx.py`**: Added type hints to all methods in the GFPMX class, including imports for typing and seaborn.
+
 ## Commits
 
 

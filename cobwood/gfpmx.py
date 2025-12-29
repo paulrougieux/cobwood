@@ -1,11 +1,12 @@
 """Run the GFPMX model and store output data"""
 
 from functools import cached_property
-from typing import Union, List
+from typing import Union, List, Optional, Any
 import json
 import xarray
 import cobwood
 import pandas
+import seaborn
 
 from cobwood.gfpmx_data import GFPMXData
 from cobwood.gfpmx_data import compare_to_ref
@@ -77,7 +78,7 @@ class GFPMX:
         >>> print(gfpmxb2018.gdp)
     """
 
-    def __init__(self, scenario, rerun=False):
+    def __init__(self, scenario: str, rerun: bool = False):
         """
         Initialize the GFPMX model with the specified scenario.
 
@@ -129,19 +130,19 @@ class GFPMX:
             self.plot_dir.mkdir(parents=True)
 
     @cached_property
-    def input_data(self):
+    def input_data(self) -> GFPMXData:
         """Input data"""
         return GFPMXData(self)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Optional[Any]:
         """Get a dataset from the data dictionary"""
         return getattr(self, key, None)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         """Set a dataset from the data dictionary"""
         setattr(self, key, value)
 
-    def _invalidate_cache(self):
+    def _invalidate_cache(self) -> None:
         """Invalidate cached properties
 
         In case the property has not been used yet, attempting to delete it
@@ -172,13 +173,15 @@ class GFPMX:
         except AttributeError:
             pass
 
-    def run_and_compare_to_ref(self, *args, **kwargs):
+    def run_and_compare_to_ref(self, *args, **kwargs) -> None:
         """Takes a gpfmx_data object, remove data after the base year
         run the model and compare it to the reference dataset
         """
         self.run(compare=True, *args, **kwargs)
 
-    def run(self, compare: bool = False, rtol: float = None, strict: bool = True):
+    def run(
+        self, compare: bool = False, rtol: Optional[float] = None, strict: bool = True
+    ) -> None:
         """Run the model for many time steps from base_year + 1 to last_time_step."""
         if rtol is None:
             rtol = 1e-2
@@ -230,7 +233,7 @@ class GFPMX:
         self.write_datasets_to_netcdf()
 
     @cached_property
-    def all_products_ds(self):
+    def all_products_ds(self) -> xarray.Dataset:
         """Combined dataset for all products
 
         The dataset has a third product dimension on top of the country and
@@ -265,7 +268,7 @@ class GFPMX:
         combined_ds.attrs["individual_dataset_attributes"] = attributes_json_str
         return combined_ds
 
-    def write_datasets_to_netcdf(self):
+    def write_datasets_to_netcdf(self) -> None:
         """Write all datasets to a single netcdf file with an extra 'product'
         dimension.
 
@@ -284,7 +287,7 @@ class GFPMX:
         # Save other dataset to NETCDF
         self.other.to_netcdf(self.output_dir / "other.nc")
 
-    def read_datasets_from_netcdf(self):
+    def read_datasets_from_netcdf(self) -> None:
         """Read datasets from a single netcdf file and populate GFPMX object attributes.
 
         This should be performed to restore the GFPMX object from saved scenarios.
@@ -312,7 +315,9 @@ class GFPMX:
         # Read the other dataset that doesn't have a product dimension
         self["other"] = xarray.open_dataset(self.output_dir / "other.nc")
 
-    def facet_plot_by_var(self, product, *args, **kwargs):
+    def facet_plot_by_var(
+        self, product: str, *args, **kwargs
+    ) -> seaborn.axisgrid.FacetGrid:
         """Plot one variable for each facet for the given product
 
         Example use:
