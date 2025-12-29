@@ -23,13 +23,30 @@ Load a model to reproduce the examples below:
 Starting with a simple example, the sawnwood consumption in Italy in 2020 is
 accessible through the "sawn" product and the "cons" variable as follows:
 
-    model["sawn"]["cons"].loc["Italy", 2070].values
-    # array(5307.84727538)
+    model["sawn"]["cons"].loc["Italy", 2070].item()
+
+    # 5307.847275379434
 
 The time series for all years in Italy is accessible as a data frame as
 follows:
 
     model["sawn"]["cons"].loc["Italy"].to_dataframe()
+
+    #      country         cons
+    # year
+    # 1995   Italy  8126.000000
+    # 1996   Italy  7078.000000
+    # 1997   Italy  8516.000000
+    # 1998   Italy  8721.000000
+    # 1999   Italy  9023.000000
+    # ...      ...          ...
+    # 2067   Italy  5306.695434
+    # 2068   Italy  5307.084872
+    # 2069   Italy  5307.472006
+    # 2070   Italy  5307.847275
+    # 2071   Italy          NaN
+
+    # [77 rows x 2 columns]
 
 Cobwood utilizes Xarray datasets to efficiently manipulate multi-dimensional
 data structures. X array is tightly integrated with pandas. Conversion to and
@@ -40,18 +57,46 @@ data frame as follows:
 
     model["sawn"]["cons"].to_dataframe()
 
-Other important variables are consumption (cons), production (prod), import
-(imp) and export (exp):
+    #                        cons
+    # country year
+    # Algeria 1995     680.700000
+    #         1996     502.800000
+    #         1997     665.400000
+    #         1998     679.800000
+    #         1999     790.000000
+    # ...                     ...
+    # EUROPE  2067  142264.389155
+    #         2068  142785.668853
+    #         2069  143311.938636
+    #         2070  143842.325350
+    #         2071            NaN
 
-    selected_variables = ["cons", "prod", "imp", "exp"]
-    model["sawn"][selected_variables].to_dataframe()
-
-The products available in that data frame are:
-
-['indround', 'fuel', 'sawn', 'panel', 'pulp', 'paper']
+    # [14399 rows x 1 columns]
 
 The main Variables are production (prod), consumption (cons), import (imp),
 export (exp) and price.
+
+    selected_variables = ["cons", "prod", "imp", "exp", "price"]
+    model["sawn"][selected_variables].to_dataframe()
+
+
+    #                        cons           prod           imp            exp       price
+    # country year
+    # Algeria 1995     680.700000      12.800000    667.900000       0.000000  443.903867
+    #         1996     502.800000      12.800000    490.000000       0.000000  393.071157
+    #         1997     665.400000      12.800000    652.600000       0.000000  351.963573
+    #         1998     679.800000      12.800000    667.000000       0.000000  318.725131
+    #         1999     790.000000      12.800000    777.200000       0.000000  278.379100
+    # ...                     ...            ...           ...            ...         ...
+    # EUROPE  2067  142264.389155  258834.056697  75813.799887  192348.078142         NaN
+    #         2068  142785.668853  260826.261676  76316.972174  194320.290505         NaN
+    #         2069  143311.938636  262853.904524  76826.128428  196328.918956         NaN
+    #         2070  143842.325350  264914.071865  77340.716970  198371.372494         NaN
+    #         2071            NaN            NaN           NaN            NaN         NaN
+
+    # [14399 rows x 5 columns]
+
+
 
 All variables are described in the following table:
 
@@ -93,7 +138,6 @@ All variables are described in the following table:
 To explore available variables, users can access the `variables` property (e.g.,
 `model["sawn"].variables`).
 
-
 Units are stored as Array properties are used to store metadata, the example
 below displays the roundwood production unit :
 
@@ -108,6 +152,9 @@ descriptors. NetCDF is a common data format used in earth systems modelling.
 Display the path of the NetCDF file for the current model object:
 
     model.combined_netcdf_file_path
+
+The products available are: industrial roundwood ('indround'), fuel wood
+('fuel'), sawnwood ('sawn'), wood panels ('panel'), 'pulp' and  'paper'.
 
 In summary:
 
