@@ -27,6 +27,7 @@ Source of the GFPMX spread sheet data by Joseph Buongiorno:
 # Built-in modules #
 from pathlib import Path
 import re
+from typing import Union
 
 # Third party modules #
 import pandas
@@ -38,7 +39,9 @@ from tqdm import tqdm
 import cobwood
 
 
-def extract_world_price_parameter(df, col_name, contains, var_name):
+def extract_world_price_parameter(
+    df: pandas.DataFrame, col_name: str, contains: str, var_name: str
+) -> pandas.DataFrame:
     """Extract world price parameters such as input elasticity,
     stock elasticity and trend.
     """
@@ -50,7 +53,7 @@ def extract_world_price_parameter(df, col_name, contains, var_name):
     return df
 
 
-def gfpmx_spreadsheet_to_csv(spreadsheet_path):
+def gfpmx_spreadsheet_to_csv(spreadsheet_path: Union[str, Path]) -> None:
     """Convert GFTMX data to csv files and store them inside the cobwood_data directory
 
     The function gfpmx_spreadsheet_to_csv loads a Excel file and writes all

@@ -12,6 +12,8 @@ Note:
 
 from functools import cached_property
 from biotrade.faostat import faostat as biotrade_faostat
+import pandas as pd
+import xarray as xr
 
 
 class FAOSTAT:
@@ -39,11 +41,11 @@ class FAOSTAT:
         pass
 
     @cached_property
-    def forestry_production_df(self):
+    def forestry_production_df(self) -> pd.DataFrame:
         """Forestry production pandas dataframe"""
         return biotrade_faostat.pump.read_df("forestry_production")
 
-    def foresty_production_ds(self):
+    def foresty_production_ds(self) -> xr.Dataset:
         """Forestry production Xarray Dataset"""
 
 

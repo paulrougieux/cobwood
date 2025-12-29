@@ -7,9 +7,12 @@ For example the sum of country values should be equal to the world value.
 
 import pandas
 from numpy.testing import assert_allclose
+from typing import Optional, List
 
 
-def check_world_aggregates(df, df_agg, rtol=None):
+def check_world_aggregates(
+    df: pandas.DataFrame, df_agg: pandas.DataFrame, rtol: Optional[float] = None
+) -> None:
     """Check that the world aggregate correspond to the sum of constituents
     Compare only columns where the sum makes sense
 
@@ -40,7 +43,7 @@ def check_world_aggregates(df, df_agg, rtol=None):
     assert_allclose(world_sum_1, world_sum_2, rtol=rtol)
 
 
-def check_nrows_years_countries(df, dataset_name):
+def check_nrows_years_countries(df: pandas.DataFrame, dataset_name: str) -> str:
     """Check that the number of rows is equal to the number of years times the
     number of countries. Return a diagnostic message that can be printed
     """
@@ -61,7 +64,11 @@ def check_nrows_years_countries(df, dataset_name):
 # Compare only values after the base year
 
 
-def compare_to_original_cobwood(df, variables=None, base_year=None):
+def compare_to_original_cobwood(
+    df: pandas.DataFrame,
+    variables: Optional[List[str]] = None,
+    base_year: Optional[int] = None,
+) -> None:
     """Compare computed variables to the original GFTMx values
     After times t = base_year + 1
     """
