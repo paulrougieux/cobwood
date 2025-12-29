@@ -1,10 +1,23 @@
 # a!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+
 # User Guide
 
 This documentation describes the cobwood package to analyse global forest
-products markets. The package is distributed on the python pacage index at
+products markets. Cobwood helps analyse wood products markets from raw logs to
+semi finished products such as sawnwood, paper and panels. If you're interested
+in questions like: How much sawnwood does Italy consume? Or what are the
+scenarios for global roundwood production by 2050?. This package provides the
+tools and data to quickly retrieve historical data and scenarios to simulate
+potential future developments. The package organizes decades of international
+consumption, production and trade data. The examples below will guide you
+through accessing and working with data and scenarios.
+
+
+# Links
+
+The package is distributed on the python pacage index at
 https://pypi.org/project/cobwood/. The source code is available at
 https://bioeconomy.gitlab.io/cobwood/cobwood/
 
