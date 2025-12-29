@@ -1,7 +1,7 @@
-""" Run tests with
+"""Run tests with
 
-    cd ~/repos/cobwood/
-    pytest
+cd ~/repos/cobwood/
+pytest
 
 """
 
@@ -16,7 +16,7 @@ from cobwood.gfpmx_equations import (
     import_demand,
     import_demand_pulp,
     import_demand_indround,
-    # export_supply,
+    export_supply,
     # production,
     # world_price,
     # world_price_indround,
@@ -89,6 +89,13 @@ def secondary_product_dataset():
             "tariff": xarray.DataArray(
                 [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]], dims=["country", "year"]
             ),
+            "imp": xarray.DataArray(
+                [[10, 20], [30, 40], [50, 60]], dims=["country", "year"]
+            ),
+            "exp_marginal_propensity_to_export": xarray.DataArray(
+                [0.1, 0.2, 0.3], dims=["country"]
+            ),
+            "exp_constant": xarray.DataArray([1, 2, 3], dims=["country"]),
             "c": xarray.DataArray([True, True, True], dims=["country"]),
         }
     )
@@ -193,4 +200,13 @@ def test_import_demand_indround(primary_product_dataset, secondary_product_datas
         dims=["country"],
     )
     result = import_demand_indround(ds, ds_sawn, ds_panel, ds_pulp, t, compatible_mode)
+    xarray.testing.assert_allclose(result, expected_result)
+
+
+def test_export_supply(secondary_product_dataset):
+    """Test the export_supply function"""
+    ds = secondary_product_dataset
+    t = 1
+    expected_result = xarray.DataArray([13, 26, 39], dims=["country"])
+    result = export_supply(ds, t)
     xarray.testing.assert_allclose(result, expected_result)
