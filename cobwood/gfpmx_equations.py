@@ -9,6 +9,7 @@ Usage:
 import numpy as np
 import xarray
 import pandas
+from typing import Optional, List, Union
 
 # Reproduce behaviour/bugs in GFPMX-8-6-2021.xlsx
 GFPMX_8_6_2021_COMPATIBLE_MODE = True
@@ -47,7 +48,7 @@ def consumption_indround(
     ds_panel: xarray.Dataset,
     ds_pulp: xarray.Dataset,
     t: int,
-    compatible_mode: bool = None,
+    compatible_mode: Optional[bool] = None,
 ) -> xarray.DataArray:
     """Domestic demand for industrial roundwood equation 3
 
@@ -117,7 +118,7 @@ def import_demand_indround(
     ds_panel: xarray.Dataset,
     ds_pulp: xarray.Dataset,
     t: int,
-    compatible_mode: bool = None,
+    compatible_mode: Optional[bool] = None,
 ) -> xarray.DataArray:
     """Compute the import demand of industrial roundwood equation 6"""
     if compatible_mode is None:
@@ -225,7 +226,7 @@ def forest_stock(
 
 
 def compute_country_aggregates(
-    ds: xarray.Dataset, t: int, variable: str = None
+    ds: xarray.Dataset, t: int, variable: Optional[Union[str, List[str]]] = None
 ) -> None:
     """Compute aggregates for 'WORLD' and for
     'AFRICA', 'NORTH AMERICA', 'SOUTH AMERICA', 'ASIA', 'OCEANIA', 'EUROPE'
@@ -284,8 +285,15 @@ def compute_secondary_product_price(
 
 
 def compute_one_time_step(
-    ds_indround, ds_fuel, ds_pulp, ds_sawn, ds_panel, ds_paper, ds_other, year
-):
+    ds_indround: xarray.Dataset,
+    ds_fuel: xarray.Dataset,
+    ds_pulp: xarray.Dataset,
+    ds_sawn: xarray.Dataset,
+    ds_panel: xarray.Dataset,
+    ds_paper: xarray.Dataset,
+    ds_other: xarray.Dataset,
+    year: int,
+) -> None:
     """Modifies the input data sets in place
     TODO: change this to use the gfpmx_data as the unique argument
     This requires adding the boolean country indicator ds.c as a prerequisite"""
