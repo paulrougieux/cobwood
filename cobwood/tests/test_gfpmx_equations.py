@@ -19,8 +19,8 @@ from cobwood.gfpmx_equations import (
     import_demand_indround,
     export_supply,
     production,
-    world_price,
-    # world_price_indround,
+    # world_price,
+    world_price_indround,
     # local_price,
     # forest_stock,
 )
@@ -115,6 +115,34 @@ def world_price_primary_dataset():
     ds = xarray.Dataset(
         {
             "price": xarray.DataArray([[7, 8]], dims=["country", "year"]),
+        },
+        coords={"country": ["WORLD"], "year": [1, 2]},
+    )
+    return ds
+
+
+@pytest.fixture
+def indround_world_price_dataset():
+    """Create a minimal dataset for testing world_price_indround with indround products"""
+    ds = xarray.Dataset(
+        {
+            "price_constant": xarray.DataArray([40], dims=["country"]),
+            "price_world_price_elasticity": xarray.DataArray([0.5], dims=["country"]),
+            "price_stock_elast": xarray.DataArray([0.3], dims=["country"]),
+            "price_trend": xarray.DataArray([0.01], dims=["country"]),
+            "prod": xarray.DataArray([[100, 1000]], dims=["country", "year"]),
+        },
+        coords={"country": ["WORLD"], "year": [1, 2]},
+    )
+    return ds
+
+
+@pytest.fixture
+def stock_dataset():
+    """Create a minimal dataset for testing world_price_indround with stock"""
+    ds = xarray.Dataset(
+        {
+            "stock": xarray.DataArray([[1000, 5000]], dims=["country", "year"]),
         },
         coords={"country": ["WORLD"], "year": [1, 2]},
     )
@@ -253,11 +281,11 @@ def test_production(secondary_product_dataset):
     xarray.testing.assert_allclose(result, expected_result)
 
 
-def test_world_price(world_price_secondary_dataset, world_price_primary_dataset):
-    """Test the world_price function"""
-    ds = world_price_secondary_dataset
-    ds_primary = world_price_primary_dataset
-    t = 1
-    expected_result = 87.1162569793112
-    result = world_price(ds, ds_primary, t)
+def test_world_price_indround(indround_world_price_dataset, stock_dataset):
+    """Test the world_price_indround function"""
+    ds = indround_world_price_dataset
+    ds_other = stock_dataset
+    t = 2
+    expected_result = 40 * (1000**0.5) * (5000**0.3) * np.exp(0.01 * 2)
+    result = world_price_indround(ds, ds_other, t)
     np.testing.assert_allclose(result.item(), expected_result)

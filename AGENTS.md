@@ -79,3 +79,4 @@ this list.
     `forestry_production_df` method (returning `pd.DataFrame`) and `foresty_production_ds`
     method (returning `xr.Dataset`), including necessary imports for pandas and xarray.
 
+15. **Modified `cobwood/tests/test_gfpmx_equations.py`**: test the `export_supply` equation with expected results.
