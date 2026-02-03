@@ -21,7 +21,7 @@ from cobwood.gfpmx_equations import (
     production,
     world_price,
     world_price_indround,
-    # local_price,
+    local_price,
     # forest_stock,
 )
 
@@ -158,6 +158,26 @@ def world_price_secondary_dataset():
             "price_input_elast": xarray.DataArray([0.4], dims=["country"]),
         },
         coords={"country": ["WORLD"]},
+    )
+    return ds
+
+
+@pytest.fixture
+def local_price_dataset():
+    """Create a dataset for testing local_price with countries and world price"""
+    ds = xarray.Dataset(
+        {
+            "price_constant": xarray.DataArray([10, 20, 30], dims=["country"]),
+            "price_world_price_elasticity": xarray.DataArray(
+                [0.5, 0.6, 0.7], dims=["country"]
+            ),
+            "price": xarray.DataArray(
+                [[100, 200], [100, 200], [100, 200]],
+                dims=["country", "year"],
+            ),
+            "c": xarray.DataArray([True, True, False], dims=["country"]),
+        },
+        coords={"country": ["GER", "FRA", "WORLD"], "year": [1, 2]},
     )
     return ds
 
@@ -301,3 +321,16 @@ def test_world_price_indround(indround_world_price_dataset, stock_dataset):
     expected_result = 40 * (1000**0.5) * (5000**0.3) * np.exp(0.01 * 2)
     result = world_price_indround(ds, ds_other, t)
     np.testing.assert_allclose(result.item(), expected_result)
+
+
+def test_local_price(local_price_dataset):
+    """Test the local_price function"""
+    ds = local_price_dataset
+    t = 2
+    # Expected: price_constant * (world_price ^ price_world_price_elasticity)
+    # For GER: 10 * (200 ^ 0.5) = 10 * 14.142... = 141.421...
+    # For FRA: 20 * (200 ^ 0.6) = 20 * 21.112... = 422.247...
+    # WORLD is filtered out by ds.c
+    result = local_price(ds, t)
+    expected_values = np.array([10 * (200**0.5), 20 * (200**0.6)])
+    np.testing.assert_allclose(result.values, expected_values)
