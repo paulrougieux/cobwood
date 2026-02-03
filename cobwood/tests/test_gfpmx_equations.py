@@ -23,6 +23,7 @@ from cobwood.gfpmx_equations import (
     world_price_indround,
     local_price,
     forest_stock,
+    compute_country_aggregates,
 )
 
 
@@ -231,6 +232,97 @@ def fuel_dataset():
     return ds
 
 
+@pytest.fixture
+def country_aggregates_dataset():
+    """Create a dataset for testing compute_country_aggregates with regions"""
+    ds = xarray.Dataset(
+        {
+            "cons": xarray.DataArray(
+                [
+                    [100, 0],
+                    [200, 0],
+                    [300, 0],
+                    [400, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                ],
+                dims=["country", "year"],
+            ),
+            "imp": xarray.DataArray(
+                [
+                    [10, 0],
+                    [20, 0],
+                    [30, 0],
+                    [40, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                ],
+                dims=["country", "year"],
+            ),
+            "exp": xarray.DataArray(
+                [
+                    [5, 0],
+                    [15, 0],
+                    [25, 0],
+                    [35, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                ],
+                dims=["country", "year"],
+            ),
+            "prod": xarray.DataArray(
+                [
+                    [50, 0],
+                    [150, 0],
+                    [250, 0],
+                    [350, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                ],
+                dims=["country", "year"],
+            ),
+            "region": xarray.DataArray(
+                [
+                    "EUROPE",
+                    "EUROPE",
+                    "ASIA",
+                    "NORTH AMERICA",
+                    "EUROPE",
+                    "ASIA",
+                    "NORTH AMERICA",
+                    "WORLD",
+                ],
+                dims=["country"],
+            ),
+            "c": xarray.DataArray(
+                [True, True, True, True, False, False, False, False], dims=["country"]
+            ),
+        },
+        coords={
+            "country": [
+                "Germany",
+                "France",
+                "China",
+                "USA",
+                "EUROPE",
+                "ASIA",
+                "NORTH AMERICA",
+                "WORLD",
+            ],
+            "year": [1, 2],
+        },
+    )
+    return ds
+
+
 def test_consumption(secondary_product_dataset):
     """Test the consumption function"""
     ds = secondary_product_dataset
@@ -399,3 +491,38 @@ def test_forest_stock(forest_stock_dataset, indround_dataset, fuel_dataset):
     expected_values = np.array([1019.925, 2059.82])
     result = forest_stock(ds, ds_indround, ds_fuel, t)
     np.testing.assert_allclose(result.values, expected_values)
+
+
+def test_compute_country_aggregates(country_aggregates_dataset):
+    """Test the compute_country_aggregates function"""
+    ds = country_aggregates_dataset
+    t = 1
+    # Call the function which modifies the dataset in-place
+    compute_country_aggregates(ds, t)
+    # Check WORLD totals (sum of Germany, France, China, USA)
+    # cons: 100+200+300+400 = 1000
+    # imp: 10+20+30+40 = 100
+    # exp: 5+15+25+35 = 80
+    # prod: 50+150+250+350 = 800
+    np.testing.assert_allclose(ds["cons"].loc["WORLD", t].values, 1000)
+    np.testing.assert_allclose(ds["imp"].loc["WORLD", t].values, 100)
+    np.testing.assert_allclose(ds["exp"].loc["WORLD", t].values, 80)
+    np.testing.assert_allclose(ds["prod"].loc["WORLD", t].values, 800)
+    # Check EUROPE totals (Germany + France)
+    # cons: 100+200 = 300, imp: 10+20 = 30, exp: 5+15 = 20, prod: 50+150 = 200
+    np.testing.assert_allclose(ds["cons"].loc["EUROPE", t].values, 300)
+    np.testing.assert_allclose(ds["imp"].loc["EUROPE", t].values, 30)
+    np.testing.assert_allclose(ds["exp"].loc["EUROPE", t].values, 20)
+    np.testing.assert_allclose(ds["prod"].loc["EUROPE", t].values, 200)
+    # Check ASIA totals (China only)
+    # cons: 300, imp: 30, exp: 25, prod: 250
+    np.testing.assert_allclose(ds["cons"].loc["ASIA", t].values, 300)
+    np.testing.assert_allclose(ds["imp"].loc["ASIA", t].values, 30)
+    np.testing.assert_allclose(ds["exp"].loc["ASIA", t].values, 25)
+    np.testing.assert_allclose(ds["prod"].loc["ASIA", t].values, 250)
+    # Check NORTH AMERICA totals (USA only)
+    # cons: 400, imp: 40, exp: 35, prod: 350
+    np.testing.assert_allclose(ds["cons"].loc["NORTH AMERICA", t].values, 400)
+    np.testing.assert_allclose(ds["imp"].loc["NORTH AMERICA", t].values, 40)
+    np.testing.assert_allclose(ds["exp"].loc["NORTH AMERICA", t].values, 35)
+    np.testing.assert_allclose(ds["prod"].loc["NORTH AMERICA", t].values, 350)
