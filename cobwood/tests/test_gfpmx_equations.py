@@ -177,7 +177,7 @@ def local_price_dataset():
             ),
             "c": xarray.DataArray([True, True, False], dims=["country"]),
         },
-        coords={"country": ["GER", "FRA", "WORLD"], "year": [1, 2]},
+        coords={"country": ["Germany", "France", "WORLD"], "year": [1, 2]},
     )
     return ds
 
@@ -328,8 +328,8 @@ def test_local_price(local_price_dataset):
     ds = local_price_dataset
     t = 2
     # Expected: price_constant * (world_price ^ price_world_price_elasticity)
-    # For GER: 10 * (200 ^ 0.5) = 10 * 14.142... = 141.421...
-    # For FRA: 20 * (200 ^ 0.6) = 20 * 21.112... = 422.247...
+    # For Germany: 10 * (200 ^ 0.5) = 10 * 14.142... = 141.421...
+    # For France: 20 * (200 ^ 0.6) = 20 * 21.112... = 422.247...
     # WORLD is filtered out by ds.c
     result = local_price(ds, t)
     expected_values = np.array([10 * (200**0.5), 20 * (200**0.6)])
