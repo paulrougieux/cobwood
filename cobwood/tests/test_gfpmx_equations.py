@@ -22,7 +22,7 @@ from cobwood.gfpmx_equations import (
     world_price,
     world_price_indround,
     local_price,
-    # forest_stock,
+    forest_stock,
 )
 
 
@@ -182,6 +182,55 @@ def local_price_dataset():
     return ds
 
 
+@pytest.fixture
+def forest_stock_dataset():
+    """Create a dataset for testing forest_stock"""
+    ds = xarray.Dataset(
+        {
+            "stock": xarray.DataArray(
+                [[1000, 1500], [2000, 2500]], dims=["country", "year"]
+            ),
+            "stock_growth_rate_without_harvest": xarray.DataArray(
+                [0.02, 0.03], dims=["country"]
+            ),
+            "stock_harvest_effect_on_stock": xarray.DataArray(
+                [0.5, 0.6], dims=["country"]
+            ),
+            "c": xarray.DataArray([True, True], dims=["country"]),
+        },
+        coords={"country": ["Germany", "France"], "year": [1, 2]},
+    )
+    return ds
+
+
+@pytest.fixture
+def indround_dataset():
+    """Create a dataset for testing forest_stock with indround production"""
+    ds = xarray.Dataset(
+        {
+            "prod": xarray.DataArray(
+                [[100, 150], [200, 250]], dims=["country", "year"]
+            ),
+            "c": xarray.DataArray([True, True], dims=["country"]),
+        },
+        coords={"country": ["Germany", "France"], "year": [1, 2]},
+    )
+    return ds
+
+
+@pytest.fixture
+def fuel_dataset():
+    """Create a dataset for testing forest_stock with fuel production"""
+    ds = xarray.Dataset(
+        {
+            "prod": xarray.DataArray([[50, 75], [100, 125]], dims=["country", "year"]),
+            "c": xarray.DataArray([True, True], dims=["country"]),
+        },
+        coords={"country": ["Germany", "France"], "year": [1, 2]},
+    )
+    return ds
+
+
 def test_consumption(secondary_product_dataset):
     """Test the consumption function"""
     ds = secondary_product_dataset
@@ -333,4 +382,20 @@ def test_local_price(local_price_dataset):
     # WORLD is filtered out by ds.c
     result = local_price(ds, t)
     expected_values = np.array([10 * (200**0.5), 20 * (200**0.6)])
+    np.testing.assert_allclose(result.values, expected_values)
+
+
+def test_forest_stock(forest_stock_dataset, indround_dataset, fuel_dataset):
+    """Test the forest_stock function"""
+    ds = forest_stock_dataset
+    ds_indround = indround_dataset
+    ds_fuel = fuel_dataset
+    t = 2
+    # Formula: stock[t-1] * (1 + growth_rate) - harvest_effect * (indround + fuel) / 1000
+    # Germany: indround + fuel = 100 + 50 = 150
+    #          stock = 1000 * 1.02 - 0.5 * 150 / 1000 = 1020 - 0.075 = 1019.925
+    # France:  indround + fuel = 200 + 100 = 300
+    #          stock = 2000 * 1.03 - 0.6 * 300 / 1000 = 2060 - 0.18 = 2059.82
+    expected_values = np.array([1019.925, 2059.82])
+    result = forest_stock(ds, ds_indround, ds_fuel, t)
     np.testing.assert_allclose(result.values, expected_values)
