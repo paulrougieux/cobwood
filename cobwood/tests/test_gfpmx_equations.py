@@ -24,6 +24,8 @@ from cobwood.gfpmx_equations import (
     local_price,
     forest_stock,
     compute_country_aggregates,
+    compute_secondary_product_price,
+    compute_one_time_step,
 )
 
 
@@ -323,6 +325,245 @@ def country_aggregates_dataset():
     return ds
 
 
+@pytest.fixture
+def secondary_product_price_dataset():
+    """Create a dataset for testing compute_secondary_product_price"""
+    ds = xarray.Dataset(
+        {
+            "price_constant": xarray.DataArray([10, 20, 30], dims=["country"]),
+            "price_input_elast": xarray.DataArray([0.4, 0.5, 0.3], dims=["country"]),
+            "price_world_price_elasticity": xarray.DataArray(
+                [0.4, 0.5, 0.3], dims=["country"]
+            ),
+            "price": xarray.DataArray(
+                [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], dims=["country", "year"]
+            ),
+            "c": xarray.DataArray([True, True, False], dims=["country"]),
+        },
+        coords={"country": ["Germany", "France", "WORLD"], "year": [1, 2]},
+    )
+    return ds
+
+
+@pytest.fixture
+def primary_product_price_dataset():
+    """Create a primary product dataset for testing compute_secondary_product_price"""
+    ds = xarray.Dataset(
+        {
+            "price": xarray.DataArray([[100, 200]], dims=["country", "year"]),
+        },
+        coords={"country": ["WORLD"], "year": [1, 2]},
+    )
+    return ds
+
+
+@pytest.fixture
+def one_timestep_dataset():
+    """Create datasets for testing compute_one_time_step"""
+    countries = ["Germany", "France", "EUROPE", "WORLD"]
+    years = [0, 1, 2]
+
+    # Helper function to create a product dataset
+    def create_product_ds(product_name):
+        ds = xarray.Dataset(
+            {
+                "cons": xarray.DataArray(
+                    [
+                        [100.0, 0.0, 0.0],
+                        [200.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dims=["country", "year"],
+                ),
+                "imp": xarray.DataArray(
+                    [
+                        [10.0, 0.0, 0.0],
+                        [20.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dims=["country", "year"],
+                ),
+                "exp": xarray.DataArray(
+                    [
+                        [5.0, 0.0, 0.0],
+                        [15.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dims=["country", "year"],
+                ),
+                "prod": xarray.DataArray(
+                    [
+                        [50.0, 0.0, 0.0],
+                        [150.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dims=["country", "year"],
+                ),
+                "price": xarray.DataArray(
+                    [
+                        [100.0, 0.0, 0.0],
+                        [100.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                        [100.0, 0.0, 0.0],
+                    ],
+                    dims=["country", "year"],
+                ),
+                "gdp": xarray.DataArray(
+                    [
+                        [1000.0, 1100.0, 1200.0],
+                        [2000.0, 2200.0, 2400.0],
+                        [0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dims=["country", "year"],
+                ),
+                "tariff": xarray.DataArray(
+                    [
+                        [0.1, 0.1, 0.1],
+                        [0.2, 0.2, 0.2],
+                        [0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0],
+                    ],
+                    dims=["country", "year"],
+                ),
+                "price_constant": xarray.DataArray(
+                    [10.0, 20.0, 0.0, 30.0], dims=["country"]
+                ),
+                "price_input_elast": xarray.DataArray(
+                    [0.4, 0.5, 0.0, 0.3], dims=["country"]
+                ),
+                "price_world_price_elasticity": xarray.DataArray(
+                    [0.4, 0.5, 0.0, 0.3], dims=["country"]
+                ),
+                "cons_price_elasticity": xarray.DataArray(
+                    [0.5, 0.6, 0.0, 0.0], dims=["country"]
+                ),
+                "cons_gdp_elasticity": xarray.DataArray(
+                    [0.8, 0.9, 0.0, 0.0], dims=["country"]
+                ),
+                "imp_price_elasticity": xarray.DataArray(
+                    [0.5, 0.6, 0.0, 0.0], dims=["country"]
+                ),
+                "imp_gdp_elasticity": xarray.DataArray(
+                    [0.8, 0.9, 0.0, 0.0], dims=["country"]
+                ),
+                "exp_marginal_propensity_to_export": xarray.DataArray(
+                    [0.1, 0.2, 0.0, 0.0], dims=["country"]
+                ),
+                "exp_constant": xarray.DataArray(
+                    [1.0, 2.0, 0.0, 0.0], dims=["country"]
+                ),
+                "region": xarray.DataArray(
+                    ["EUROPE", "EUROPE", "EUROPE", "WORLD"], dims=["country"]
+                ),
+                "c": xarray.DataArray([True, True, False, False], dims=["country"]),
+                "product": product_name,
+            },
+            coords={"country": countries, "year": years},
+        )
+        return ds
+
+    # Create datasets for primary products (pulp, indround)
+    ds_pulp = create_product_ds("pulp")
+    ds_pulp["cons_paper_production_elasticity"] = xarray.DataArray(
+        [0.9, 1.0, 0.0, 0.0], dims=["country"]
+    )
+    ds_pulp["cons_products_elasticity"] = xarray.DataArray(
+        [0.5, 0.6, 0.0, 0.0], dims=["country"]
+    )
+    ds_pulp["imp_paper_production_elasticity"] = xarray.DataArray(
+        [0.9, 1.0, 0.0, 0.0], dims=["country"]
+    )
+    ds_pulp["imp_products_elasticity"] = xarray.DataArray(
+        [0.5, 0.6, 0.0, 0.0], dims=["country"]
+    )
+    ds_pulp["cons_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+    ds_pulp["imp_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+
+    ds_indround = create_product_ds("indround")
+    ds_indround["cons_paper_production_elasticity"] = xarray.DataArray(
+        [0.9, 1.0, 0.0, 0.0], dims=["country"]
+    )
+    ds_indround["cons_products_elasticity"] = xarray.DataArray(
+        [0.5, 0.6, 0.0, 0.0], dims=["country"]
+    )
+    ds_indround["imp_paper_production_elasticity"] = xarray.DataArray(
+        [0.9, 1.0, 0.0, 0.0], dims=["country"]
+    )
+    ds_indround["imp_products_elasticity"] = xarray.DataArray(
+        [0.5, 0.6, 0.0, 0.0], dims=["country"]
+    )
+    ds_indround["cons_constant"] = xarray.DataArray(
+        [2.0, 3.0, 0.0, 0.0], dims=["country"]
+    )
+    ds_indround["imp_constant"] = xarray.DataArray(
+        [2.0, 3.0, 0.0, 0.0], dims=["country"]
+    )
+    ds_indround["price_stock_elast"] = xarray.DataArray(
+        [0.0, 0.0, 0.0, 0.3], dims=["country"]
+    )
+    ds_indround["price_trend"] = xarray.DataArray(
+        [0.0, 0.0, 0.0, 0.01], dims=["country"]
+    )
+
+    # Create datasets for secondary products
+    ds_sawn = create_product_ds("sawn")
+    ds_sawn["cons_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+    ds_sawn["imp_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+
+    ds_panel = create_product_ds("panel")
+    ds_panel["cons_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+    ds_panel["imp_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+
+    ds_fuel = create_product_ds("fuel")
+    ds_fuel["cons_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+    ds_fuel["imp_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+
+    ds_paper = create_product_ds("paper")
+    ds_paper["cons_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+    ds_paper["imp_constant"] = xarray.DataArray([2.0, 3.0, 0.0, 0.0], dims=["country"])
+
+    # Create other dataset for stock
+    ds_other = xarray.Dataset(
+        {
+            "stock": xarray.DataArray(
+                [
+                    [1000.0, 0.0, 0.0],
+                    [2000.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                ],
+                dims=["country", "year"],
+            ),
+            "stock_growth_rate_without_harvest": xarray.DataArray(
+                [0.02, 0.03, 0.0, 0.0], dims=["country"]
+            ),
+            "stock_harvest_effect_on_stock": xarray.DataArray(
+                [0.5, 0.6, 0.0, 0.0], dims=["country"]
+            ),
+            "region": xarray.DataArray(
+                ["EUROPE", "EUROPE", "EUROPE", "WORLD"], dims=["country"]
+            ),
+            "c": xarray.DataArray([True, True, False, False], dims=["country"]),
+        },
+        coords={"country": countries, "year": years},
+    )
+
+    return {
+        "ds_indround": ds_indround,
+        "ds_fuel": ds_fuel,
+        "ds_pulp": ds_pulp,
+        "ds_sawn": ds_sawn,
+        "ds_panel": ds_panel,
+        "ds_paper": ds_paper,
+        "ds_other": ds_other,
+    }
+
+
 def test_consumption(secondary_product_dataset):
     """Test the consumption function"""
     ds = secondary_product_dataset
@@ -526,3 +767,78 @@ def test_compute_country_aggregates(country_aggregates_dataset):
     np.testing.assert_allclose(ds["imp"].loc["NORTH AMERICA", t].values, 40)
     np.testing.assert_allclose(ds["exp"].loc["NORTH AMERICA", t].values, 35)
     np.testing.assert_allclose(ds["prod"].loc["NORTH AMERICA", t].values, 350)
+
+
+def test_compute_secondary_product_price(
+    secondary_product_price_dataset, primary_product_price_dataset
+):
+    """Test the compute_secondary_product_price function"""
+    ds = secondary_product_price_dataset
+    ds_primary = primary_product_price_dataset
+    t = 2
+    # Call the function which modifies the dataset in-place
+    compute_secondary_product_price(ds, ds_primary, t)
+    # Check WORLD price: price_constant[WORLD] * (primary_price ^ price_input_elast[WORLD])
+    # = 30 * (200 ^ 0.3)
+    world_price_value = 30 * (200**0.3)
+    np.testing.assert_allclose(ds["price"].loc["WORLD", t].values, world_price_value)
+    # Check local prices: price_constant * (world_price ^ price_world_price_elasticity)
+    # Germany: 10 * (world_price_value ^ 0.4)
+    # France: 20 * (world_price_value ^ 0.5)
+    expected_germany = 10 * (world_price_value**0.4)
+    expected_france = 20 * (world_price_value**0.5)
+    np.testing.assert_allclose(ds["price"].loc["Germany", t].values, expected_germany)
+    np.testing.assert_allclose(ds["price"].loc["France", t].values, expected_france)
+
+
+def test_compute_one_time_step(one_timestep_dataset):
+    """Test the compute_one_time_step function"""
+    datasets = one_timestep_dataset
+    ds_indround = datasets["ds_indround"]
+    ds_fuel = datasets["ds_fuel"]
+    ds_pulp = datasets["ds_pulp"]
+    ds_sawn = datasets["ds_sawn"]
+    ds_panel = datasets["ds_panel"]
+    ds_paper = datasets["ds_paper"]
+    ds_other = datasets["ds_other"]
+    year = 1
+
+    # Call the function which modifies all datasets in-place
+    compute_one_time_step(
+        ds_indround, ds_fuel, ds_pulp, ds_sawn, ds_panel, ds_paper, ds_other, year
+    )
+
+    # Verify that key values have been computed and are not zero/null
+    # 1. Check that stock was computed
+    assert ds_other["stock"].loc["Germany", year] > 0
+    assert ds_other["stock"].loc["France", year] > 0
+    assert not ds_other["stock"].loc["Germany", year].isnull()
+
+    # 2. Check that cons, imp, exp, prod were computed for secondary products
+    assert ds_sawn["cons"].loc["Germany", year] > 0
+    assert ds_panel["prod"].loc["France", year] >= 0
+    assert not ds_fuel["imp"].loc["Germany", year].isnull()
+
+    # 3. Check that cons, imp, exp, prod were computed for primary products
+    assert ds_pulp["cons"].loc["Germany", year] > 0
+    assert ds_indround["prod"].loc["France", year] >= 0
+
+    # 4. Check that aggregates were computed
+    # WORLD should be the sum of Germany and France
+    world_cons_sawn = (
+        ds_sawn["cons"].loc["Germany", year] + ds_sawn["cons"].loc["France", year]
+    )
+    np.testing.assert_allclose(
+        ds_sawn["cons"].loc["WORLD", year].values, world_cons_sawn.values
+    )
+
+    # 5. Check that prices were computed
+    # WORLD price for indround should not be null or zero
+    assert ds_indround["price"].loc["WORLD", year] > 0
+    assert not ds_indround["price"].loc["WORLD", year].isnull()
+    # Local prices for indround should be computed
+    assert ds_indround["price"].loc["Germany", year] > 0
+    # Secondary product prices should be computed
+    assert ds_sawn["price"].loc["WORLD", year] > 0
+    assert ds_pulp["price"].loc["WORLD", year] > 0
+    assert ds_paper["price"].loc["WORLD", year] > 0
