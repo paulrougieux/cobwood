@@ -28,54 +28,54 @@ class GFPMX:
     Run with xarray and compare to the reference dataset for each available model
     version (with different base years)
 
-        >>> from cobwood.gfpmx import GFPMX
-        >>> # Base 2021
-        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=True)
-        >>> gfpmxb2021.run_and_compare_to_ref()
-        >>> gfpmxb2021.run()
+         from cobwood.gfpmx import GFPMX
+         # Base 2021
+         gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=True)
+         gfpmxb2021.run_and_compare_to_ref()
+         gfpmxb2021.run()
 
     Load output data, after a run has already been completed
 
-        >>> gfpmx_pikssp2 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1")
+         gfpmx_pikssp2 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1")
 
     You can debug data issues by creating the data object only as follows:
 
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+         from cobwood.gfpmx_data import GFPMXData
+         gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
 
     You can debug equations for the different model versions as follows:
 
-        >>> from cobwood.gfpmx_equations import world_price
-        >>> world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
+         from cobwood.gfpmx_equations import world_price
+         world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
 
     Run other base years and compare GFPMx Excel results with the one from the cobwood
 
-        >>> # Base 2018
-        >>> gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018, scenario="base_2018")
-        >>> # Run and stop when the result diverges from the reference spreadsheet
-        >>> gfpmxb2018.run(compare=True)
-        >>> # Run and continue when the result diverges (just print the missmatch message)
-        >>> gfpmxb2018.run(compare=True, strict=False)
-        >>> # Just run, without comparison (default is compare=False)
-        >>> gfpmxb2021.run()
-        >>> print(gfpmxb2018.indround)
-        >>> # Base 2020
-        >>> gfpmxb2020 = GFPMX(input_dir="gfpmx_base2020", base_year=2020, scenario="base_2020")
-        >>> gfpmxb2020.run_and_compare_to_ref() # Fails
-        >>> gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021")
+         # Base 2018
+         gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018, scenario="base_2018")
+         # Run and stop when the result diverges from the reference spreadsheet
+         gfpmxb2018.run(compare=True)
+         # Run and continue when the result diverges (just print the missmatch message)
+         gfpmxb2018.run(compare=True, strict=False)
+         # Just run, without comparison (default is compare=False)
+         gfpmxb2021.run()
+         print(gfpmxb2018.indround)
+         # Base 2020
+         gfpmxb2020 = GFPMX(input_dir="gfpmx_base2020", base_year=2020, scenario="base_2020")
+         gfpmxb2020.run_and_compare_to_ref() # Fails
+         gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021")
 
     You will then be able to load Xarray datasets with the
     `convert_sheets_to_dataset()` method:
 
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018)
-        >>> print(gfpmxb2018.other_ref)
-        >>> print(gfpmxb2018.indround_ref)
-        >>> print(gfpmxb2018.sawn_ref)
-        >>> print(gfpmxb2018.panel_ref)
-        >>> print(gfpmxb2018.pulp_ref)
-        >>> print(gfpmxb2018.paper_ref)
-        >>> print(gfpmxb2018.gdp)
+         from cobwood.gfpmx_data import GFPMXData
+         gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018)
+         print(gfpmxb2018.other_ref)
+         print(gfpmxb2018.indround_ref)
+         print(gfpmxb2018.sawn_ref)
+         print(gfpmxb2018.panel_ref)
+         print(gfpmxb2018.pulp_ref)
+         print(gfpmxb2018.paper_ref)
+         print(gfpmxb2018.gdp)
     """
 
     def __init__(self, scenario: str, rerun: bool = False):
@@ -152,20 +152,20 @@ class GFPMX:
 
         Show the impact on the all_products ds by changing roundwood production values in 2000
 
-        >>> from cobwood.gfpmx import GFPMX
-        >>> model = GFPMX(scenario="base_2021")
-        >>> selector_1_prod = dict(country="France", year=2000)
-        >>> selector_all_prod = dict(country="France", product="indround", year=2000)
-        >>> print(model["indround"]["prod"].loc[selector_1_prod].item())
-        >>> print(model.all_products_ds["prod"].loc[selector_all_prod].item())
-        >>> print("When we change the product data set. Setting a value to zero.")
-        >>> model["indround"]["prod"].loc[selector_1_prod] = 0
-        >>> print(model["indround"]["prod"].loc[selector_1_prod].item())
-        >>> print("the all_products_ds remains unchanged")
-        >>> print(model.all_products_ds["prod"].loc[selector_all_prod].item())
-        >>> print("Unless we clear the cache")
-        >>> model._invalidate_cache()
-        >>> print(model.all_products_ds["prod"].loc[selector_all_prod].item())
+         from cobwood.gfpmx import GFPMX
+         model = GFPMX(scenario="base_2021")
+         selector_1_prod = dict(country="France", year=2000)
+         selector_all_prod = dict(country="France", product="indround", year=2000)
+         print(model["indround"]["prod"].loc[selector_1_prod].item())
+         print(model.all_products_ds["prod"].loc[selector_all_prod].item())
+         print("When we change the product data set. Setting a value to zero.")
+         model["indround"]["prod"].loc[selector_1_prod] = 0
+         print(model["indround"]["prod"].loc[selector_1_prod].item())
+         print("the all_products_ds remains unchanged")
+         print(model.all_products_ds["prod"].loc[selector_all_prod].item())
+         print("Unless we clear the cache")
+         model._invalidate_cache()
+         print(model.all_products_ds["prod"].loc[selector_all_prod].item())
 
         """
         try:
@@ -242,11 +242,11 @@ class GFPMX:
         --------
         Extract industrial roundwood production data:
 
-        >>> from cobwood.gfpmx import GFPMX
-        >>> gfpmx_base_2021 = GFPMX(scenario="base_2021")
-        >>> ds = gfpmx_base_2021.all_products_ds
-        >>> print(ds)
-        >>> print(ds.individual_dataset_attributes)
+         from cobwood.gfpmx import GFPMX
+         gfpmx_base_2021 = GFPMX(scenario="base_2021")
+         ds = gfpmx_base_2021.all_products_ds
+         print(ds)
+         print(ds.individual_dataset_attributes)
 
         """
         datasets_to_combine = []
@@ -322,19 +322,19 @@ class GFPMX:
 
         Example use:
 
-            >>> from cobwood.gfpmx import GFPMX
-            >>> gfpmx_base2021 = GFPMX(
+             from cobwood.gfpmx import GFPMX
+             gfpmx_base2021 = GFPMX(
             ...     input_dir="gfpmx_base2021",
             ...     base_year=2021,
             ...     scenario="base_2021",
             ...     rerun=False
             ... )
-            >>> gfpmxb2021.facet_plot("indround")
-            >>> # The country argument can specify one line by country
-            >>> gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
-            >>> # The variable argument can specify one variable by facet
-            >>> gfpmxb2021.facet_plot("other", variables=["area", "stock"],
-            >>>                  ylabel="Area in 1000ha and stock in million m3")
+             gfpmxb2021.facet_plot("indround")
+             # The country argument can specify one line by country
+             gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
+             # The variable argument can specify one variable by facet
+             gfpmxb2021.facet_plot("other", variables=["area", "stock"],
+                              ylabel="Area in 1000ha and stock in million m3")
 
         """
         accepted_products = self.products + ["other"]
@@ -369,21 +369,21 @@ class GFPMX:
         --------
         Extract industrial roundwood production data:
 
-        >>> from cobwood.gfpmx import GFPMX
-        >>> gfpmx_pikssp2 = GFPMX(scenario="pikssp2")
-        >>> irw_prod = gfpmx_pikssp2.get_df(product="indround", var="prod")
+         from cobwood.gfpmx import GFPMX
+         gfpmx_pikssp2 = GFPMX(scenario="pikssp2")
+         irw_prod = gfpmx_pikssp2.get_df(product="indround", var="prod")
 
         Extract multiple variables for industrial roundwood:
 
-        >>> irw = gfpmx_pikssp2.get_df(product="indround", var=["prod", "imp"])
+         irw = gfpmx_pikssp2.get_df(product="indround", var=["prod", "imp"])
 
         Extract single variable for multiple products:
 
-        >>> irw_fw_prod = gfpmx_pikssp2.get_df(product=["indround", "fuel"], var="prod")
+         irw_fw_prod = gfpmx_pikssp2.get_df(product=["indround", "fuel"], var="prod")
 
         Extract multiple variables for multiple products:
 
-        >>> irw_fw_prod_imp = gfpmx_pikssp2.get_df(
+         irw_fw_prod_imp = gfpmx_pikssp2.get_df(
         ...     product=["indround", "fuel"],
         ...     var=["prod", "imp"]
         ... )

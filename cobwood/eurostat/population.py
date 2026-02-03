@@ -12,38 +12,38 @@ Sources:
 
 Usage:
 
-    >>> from cobwood.eurostat.population import load_hist_population_and_proj
-    >>> popt = load_hist_population_and_proj("eurostat_tps00001_page.tsv", "eurostat_proj_23np.tsv")
+     from cobwood.eurostat.population import load_hist_population_and_proj
+     popt = load_hist_population_and_proj("eurostat_tps00001_page.tsv", "eurostat_proj_23np.tsv")
 
 Separate low level functions for information and debugging:
 
-    >>> from cobwood.eurostat.population import load_eurostat
-    >>> from cobwood.eurostat.population import combine_hist_population_to_proj
-    >>> # Load Eurostat historical population
-    >>> from cobwood.eurostat.population import load_hist_population_and_proj
-    >>> pop_hist = load_eurostat("eurostat_tps00001_page.tsv")
-    >>> # Load Eurostat population projection
-    >>> pop_proj_23 = load_eurostat("eurostat_proj_23np.tsv")
-    >>> # combine them in one data frame
-    >>> popt = combine_hist_population_to_proj(pop_hist, pop_proj_23)
-    >>> # Descriptive statistics of the projections
-    >>> for col in ["freq", "projection", "sex", "age", "unit", "geo", "year"]:
-    >>>     print(col, ":", pop_proj_23[col].unique())
+     from cobwood.eurostat.population import load_eurostat
+     from cobwood.eurostat.population import combine_hist_population_to_proj
+     # Load Eurostat historical population
+     from cobwood.eurostat.population import load_hist_population_and_proj
+     pop_hist = load_eurostat("eurostat_tps00001_page.tsv")
+     # Load Eurostat population projection
+     pop_proj_23 = load_eurostat("eurostat_proj_23np.tsv")
+     # combine them in one data frame
+     popt = combine_hist_population_to_proj(pop_hist, pop_proj_23)
+     # Descriptive statistics of the projections
+     for col in ["freq", "projection", "sex", "age", "unit", "geo", "year"]:
+         print(col, ":", pop_proj_23[col].unique())
 
 Plot the historical population data and baseline projection
 
-    >>> from matplotlib import pyplot as plt
-    >>> popt.set_index("year").plot()
-    >>> plt.show()
+     from matplotlib import pyplot as plt
+     popt.set_index("year").plot()
+     plt.show()
 
 Plot all projections
 
-    >>> selector = pop_proj_23["geo"] == "EU27_2020"
-    >>> selector &= pop_proj_23["sex"] == "T"
-    >>> pop_proj_23["value_m"] =  pop_proj_23["value"] / 1e6
-    >>> proj_wide = pop_proj_23.loc[selector].pivot(columns="projection", index="year", values="value_m")
-    >>> proj_wide.plot(title="EU population projection in million inhabitants")
-    >>> plt.show()
+     selector = pop_proj_23["geo"] == "EU27_2020"
+     selector &= pop_proj_23["sex"] == "T"
+     pop_proj_23["value_m"] =  pop_proj_23["value"] / 1e6
+     proj_wide = pop_proj_23.loc[selector].pivot(columns="projection", index="year", values="value_m")
+     proj_wide.plot(title="EU population projection in million inhabitants")
+     plt.show()
 
 """
 

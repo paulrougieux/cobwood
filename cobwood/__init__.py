@@ -210,8 +210,8 @@ model.
   can ignore it later on. Convert data to CSV files inside the cobwood_data
   directory:
 
-    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
-    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
+     from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+     gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
 1. In the cobwood_data directory, write the following configuration files and call it `scenario/base_2021.yaml`
 
@@ -223,19 +223,19 @@ description: "Reproduce the GFPMX base 2021 scenario"
 
 2. Load the input data into a [GFPMX](cobwood/gfpmx.html) model object.
 
-    >>> from cobwood.gfpmx import GFPMX
-    >>> gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
+     from cobwood.gfpmx import GFPMX
+     gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
 
 3. Run the model.At each step compare with the reference model run inside the
 Excel Sheet:
 
-    >>> gfpmxb2021.run(compare=True, strict=False)
+     gfpmxb2021.run(compare=True, strict=False)
 
 4. Explore the model output tables and make plots.
 
-    >>> print(gfpmxb2021["sawn"])
-    >>> print(gfpmxb2021["sawn"]["cons"])
-    >>> gfpmxb2021.facet_plot_by_var("indround")
+     print(gfpmxb2021["sawn"])
+     print(gfpmxb2021["sawn"]["cons"])
+     gfpmxb2021.facet_plot_by_var("indround")
 
 """
 
@@ -262,9 +262,9 @@ def create_data_dir(path: str):
 
     Example:
 
-        >>> import cobwood
-        >>> test_sub_dir = cobwood.create_data_dir("test")
-        >>> print(test_sub_dir)
+         import cobwood
+         test_sub_dir = cobwood.create_data_dir("test")
+         print(test_sub_dir)
 
     """
     sub_dir = data_dir / path

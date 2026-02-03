@@ -55,22 +55,22 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
 
     Simple docstring test:
 
-        >>> import pandas
-        >>> import numpy as np
-        >>> from cobwood.gfpmx_data import convert_to_2d_array
-        >>> df = pandas.DataFrame({
+         import pandas
+         import numpy as np
+         from cobwood.gfpmx_data import convert_to_2d_array
+         df = pandas.DataFrame({
         ...     'country': ['USA', 'Canada'],
         ...     'value_2020': [100, 200],
         ...     'value_2021': [110, 210]
         ... })
-        >>> da = convert_to_2d_array(df)
-        >>> da.dims
+         da = convert_to_2d_array(df)
+         da.dims
         ('country', 'year')
-        >>> da.coords['year'].values.tolist()
+         da.coords['year'].values.tolist()
         [2020, 2021]
-        >>> da.sel(country='USA', year=2020).item()
+         da.sel(country='USA', year=2020).item()
         100
-        >>> da.sel(country='Canada', year=2021).item()
+         da.sel(country='Canada', year=2021).item()
         210
 
     Example use with GFPMXData:

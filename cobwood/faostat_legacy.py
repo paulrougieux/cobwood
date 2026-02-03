@@ -12,13 +12,13 @@ Unit D1 Bioeconomy.
 
 Download a compressed CSV file from the FAOSTAT API and save it in the data folder.
 
->>> from cobwood.faostat import faostat
->>> faostat.download("Forestry_E_All_Data_(Normalized).zip")
+ from cobwood.faostat import faostat
+ faostat.download("Forestry_E_All_Data_(Normalized).zip")
 
 Read a compressed CSV
 
->>> from cobwood.faostat import faostat
->>> fo = faostat.read_csv("Forestry_E_All_Data_(Normalized).zip")
+ from cobwood.faostat import faostat
+ fo = faostat.read_csv("Forestry_E_All_Data_(Normalized).zip")
 """
 
 
@@ -55,8 +55,8 @@ class Faostat:
 
         Sample use
 
-        >>> from cobwood.faostat import faostat
-        >>> faostat.download("Forestry_E_All_Data_(Normalized).zip")
+         from cobwood.faostat import faostat
+         faostat.download("Forestry_E_All_Data_(Normalized).zip")
         """
         orig_url = self.url_base + "/" + file_name
         dest_file = self.data_folder + "/" + file_name
@@ -83,8 +83,8 @@ class Faostat:
 
         Sample use
 
-        >>> from cobwood.faostat import faostat
-        >>> fo = faostat.read_csv("Forestry_E_All_Data_(Normalized).zip")
+         from cobwood.faostat import faostat
+         fo = faostat.read_csv("Forestry_E_All_Data_(Normalized).zip")
         """
         zip_file_name = self.data_folder + "/" + file_name
         # There are 2 csv files in the archive

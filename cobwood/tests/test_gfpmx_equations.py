@@ -34,7 +34,7 @@ def primary_product_dataset():
     """Create a sample primary products dataset If your goal is debugging or
     inspection (in a notebook or console), remove the @pytest.fixture decorator
     temporarily. To be able to allocate this to an actual dataset:
-    >>> ds = primary_product_dataset()
+     ds = primary_product_dataset()
     """
     ds = xarray.Dataset(
         {
