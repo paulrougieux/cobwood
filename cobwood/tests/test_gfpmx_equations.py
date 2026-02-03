@@ -19,7 +19,7 @@ from cobwood.gfpmx_equations import (
     import_demand_indround,
     export_supply,
     production,
-    # world_price,
+    world_price,
     world_price_indround,
     # local_price,
     # forest_stock,
@@ -279,6 +279,18 @@ def test_production(secondary_product_dataset):
     expected_result = xarray.DataArray([200, 400, 600], dims=["country"])
     result = production(ds, t)
     xarray.testing.assert_allclose(result, expected_result)
+
+
+def test_world_price(world_price_secondary_dataset, world_price_primary_dataset):
+    """Test the world_price function"""
+    ds = world_price_secondary_dataset
+    ds_primary = world_price_primary_dataset
+    t = 2
+    # Expected: price_constant * (primary_price ^ price_input_elast)
+    # = 40 * (8 ^ 0.4)
+    expected_result = 40 * (8**0.4)
+    result = world_price(ds, ds_primary, t)
+    np.testing.assert_allclose(result.item(), expected_result)
 
 
 def test_world_price_indround(indround_world_price_dataset, stock_dataset):
