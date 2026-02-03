@@ -8,10 +8,10 @@ Originally released at
 
 Before using this object, the Excel file needs to be exported to csv files with:
 
-    >>> from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
-    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
-    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
-    >>> gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
+    from cobwood.gfpmx_spreadsheet_to_csv import gfpmx_spreadsheet_to_csv
+    gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-8-6-2021.xlsx")
+    gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2020.xlsx")
+    gfpmx_spreadsheet_to_csv("~/large_models/GFPMX-base2021.xlsb")
 
 The data will then be available in a sub directory of `cobweb.input_dir` with
 the same name as the spreadsheet file (except that it will be in snake case
@@ -19,23 +19,23 @@ the same name as the spreadsheet file (except that it will be in snake case
 
 # TODO: update examples to use GFPMX.input_data instead of using this directly
 
-    >>> from cobwood.gfpmx_data import GFPMXData
-    >>> gfpmx_data_b2018 = GFPMXData(input_dir="gfpmx_8_6_2021")
-    >>> gfpmx_data_b2020 = GFPMXData(input_dir="gfpmx_base2020")
-    >>> gfpmx_data_b2021 = GFPMXData(input_dir="gfpmx_base2021")
+    from cobwood.gfpmx_data import GFPMXData
+    gfpmx_data_b2018 = GFPMXData(input_dir="gfpmx_8_6_2021")
+    gfpmx_data_b2020 = GFPMXData(input_dir="gfpmx_base2020")
+    gfpmx_data_b2021 = GFPMXData(input_dir="gfpmx_base2021")
 
 You can view spreadsheets contents (loaded from intermediate csv files) by
 selecting their names:
 
-    >>> gfpmx_data_b2018.sheets
-    >>> gfpmx_data_b2018["indroundprod"]
-    >>> gfpmx_data_b2018["stock"]
+    gfpmx_data_b2018.sheets
+    gfpmx_data_b2018["indroundprod"]
+    gfpmx_data_b2018["stock"]
 
 You can load Xarray datasets with the `convert_sheets_to_dataset()` method.
 
-    >>> indround = gfpmx_data_b2018.convert_sheets_to_dataset("indround")
-    >>> sawn = gfpmx_data_b2018.convert_sheets_to_dataset("sawn")
-    >>> other = gfpmx_data_b2018.convert_sheets_to_dataset("other")
+    indround = gfpmx_data_b2018.convert_sheets_to_dataset("indround")
+    sawn = gfpmx_data_b2018.convert_sheets_to_dataset("sawn")
+    other = gfpmx_data_b2018.convert_sheets_to_dataset("other")
 
 """
 
@@ -53,15 +53,35 @@ def convert_to_2d_array(df: pandas.DataFrame) -> xarray.DataArray:
     """Convert the year columns of a data frame to a two dimensional data array
     In wide format the values are in one column for each year.
 
-    Example use:
+    Simple docstring test:
 
-        >>> from cobwood.gfpmx_data import GFPMXData
+        >>> import pandas
+        >>> import numpy as np
         >>> from cobwood.gfpmx_data import convert_to_2d_array
-        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-        >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
-        >>> sawnprice_da = convert_to_2d_array(sawnprice_df)
-        >>> gdp_df = gfpmx_data.get_sheet_wide("gdp")
-        >>> gdp_da = convert_to_2d_array(gdp_df)
+        >>> df = pandas.DataFrame({
+        ...     'country': ['USA', 'Canada'],
+        ...     'value_2020': [100, 200],
+        ...     'value_2021': [110, 210]
+        ... })
+        >>> da = convert_to_2d_array(df)
+        >>> da.dims
+        ('country', 'year')
+        >>> da.coords['year'].values.tolist()
+        [2020, 2021]
+        >>> da.sel(country='USA', year=2020).item()
+        100
+        >>> da.sel(country='Canada', year=2021).item()
+        210
+
+    Example use with GFPMXData:
+
+        from cobwood.gfpmx_data import GFPMXData
+        from cobwood.gfpmx_data import convert_to_2d_array
+        gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+        sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
+        sawnprice_da = convert_to_2d_array(sawnprice_df)
+        gdp_df = gfpmx_data.get_sheet_wide("gdp")
+        gdp_da = convert_to_2d_array(gdp_df)
 
     """
     cols = df.columns
@@ -80,11 +100,11 @@ def convert_to_1d_array(df: pandas.DataFrame, var: str) -> xarray.DataArray:
 
     Example use:
 
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> from cobwood.gfpmx_data import convert_to_1d_array
-        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-        >>> sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
-        >>> sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
+        from cobwood.gfpmx_data import GFPMXData
+        from cobwood.gfpmx_data import convert_to_1d_array
+        gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+        sawnprice_df = gfpmx_data.get_sheet_wide("sawnprice")
+        sawnprice_elast_da = convert_to_1d_array(sawnprice_df, "world_price_elasticity")
 
     """
     return xarray.DataArray(df.set_index("country")[var], dims=["country"])
@@ -190,8 +210,8 @@ def compare_to_ref(
 ):
     """Compare the computed dataset to the reference dataset for the given t
     Example use:
-        >>> compare_to_ref(sawn, sawn_ref, "price", 2019)
-        >>> compare_to_ref(indround, indround_ref, ["cons", "imp"], 2019)
+        compare_to_ref(sawn, sawn_ref, "price", 2019)
+        compare_to_ref(indround, indround_ref, ["cons", "imp"], 2019)
     """
     if rtol is None:
         rtol = 1e-6
@@ -232,10 +252,10 @@ class GFPMXData:
     :param base_year Simulation base year i.e. last year of historical data
            available in the spreadsheet
 
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-        >>> swd_cons = gfpmx_data['sawncons']
-        >>> swd_cons
+        from cobwood.gfpmx_data import GFPMXData
+        gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+        swd_cons = gfpmx_data['sawncons']
+        swd_cons
 
     The GFPMX dataset is useful to:
 
@@ -287,56 +307,56 @@ class GFPMXData:
 
         For example show all sheets available
 
-            >>> from cobwood.gfpmx_data import GFPMXData
-            >>> from pandas.errors import EmptyDataError
+            from cobwood.gfpmx_data import GFPMXData
+            from pandas.errors import EmptyDataError
             # TODO: update examples to use GFPMX.input_data
-            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-            >>> sheets = gfpmx_data.list_sheets()
-            >>> sheets
+            gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+            sheets = gfpmx_data.list_sheets()
+            sheets
 
         As a prerequisite to merge sheets together, the following code
         shows additional variables besides the value in each sheet:
 
-            >>> known_columns = ['year', 'element', 'unit', 'country',
-            >>>                  'faostat_name', 'value']
-            >>> for prod in sheets["product"].unique():
-            >>>     sheets_selected = sheets.query("product==@prod")
-            >>>     print(f"Additional variables in '{prod}' related sheets:")
-            >>>     for s in sheets_selected.index:
-            >>>         try:
-            >>>             df = gfpmx_data[s]
-            >>>             columns = df.columns
-            >>>         except EmptyDataError:
-            >>>             print(f"   No data in the '{s}' file.")
-            >>>             columns = ["no data"]
-            >>>         print("  ", s, set(columns) - set(known_columns))
+            known_columns = ['year', 'element', 'unit', 'country',
+                             'faostat_name', 'value']
+            for prod in sheets["product"].unique():
+                sheets_selected = sheets.query("product==@prod")
+                print(f"Additional variables in '{prod}' related sheets:")
+                for s in sheets_selected.index:
+                    try:
+                        df = gfpmx_data[s]
+                        columns = df.columns
+                    except EmptyDataError:
+                        print(f"   No data in the '{s}' file.")
+                        columns = ["no data"]
+                    print("  ", s, set(columns) - set(known_columns))
 
         List all columns in the roundwood related sheets
 
-            >>> for name in sheets.query("product == 'round'").index:
-            >>>     print(name, "\n",  gfpmx_data[name].columns.tolist())
+            for name in sheets.query("product == 'round'").index:
+                print(name, gfpmx_data[name].columns.tolist())
 
         List all columns in the other sheets
 
-            >>> for name in sheets.query("product == 'other'").index:
-            >>>     if name in ["author", "names", "notes", "worldprice"]:
-            >>>          continue
-            >>>     print(name, "\n",  gfpmx_data[name].columns.tolist())
+            for name in sheets.query("product == 'other'").index:
+                if name in ["author", "names", "notes", "worldprice"]:
+                    continue
+                print(name, gfpmx_data[name].columns.tolist())
 
         Display the shape of the other sheets
 
-            >>> for s in sheets.query("product == 'other'").index:
-            >>>     try:
-            >>>         print(s, gfpmx_data[s].shape)
-            >>>     except EmptyDataError:
-            >>>         print(f"No data in the '{s}' file.")
-            >>>     except ValueError as e:
-            >>>         print(f"Error in {s}: {e}")
+            for s in sheets.query("product == 'other'").index:
+                try:
+                    print(s, gfpmx_data[s].shape)
+                except EmptyDataError:
+                    print(f"No data in the '{s}' file.")
+                except ValueError as e:
+                    print(f"Error in {s}: {e}")
 
         Display the faostat_name of the sawnwood sheets
 
-            >>> for name in sheets.query("product == 'sawn'").index:
-            >>>     print(name, "\n",  gfpmx_data[name]["faostat_name"].unique())
+            for name in sheets.query("product == 'sawn'").index:
+                print(name, gfpmx_data[name]["faostat_name"].unique())
 
         """
         sheet_paths = self.input_dir.glob("**/*.csv")
@@ -357,9 +377,9 @@ class GFPMXData:
 
         Example use
 
-            >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-            >>> print(gfpmx_data.get_sheet_wide("sawnprice"))
+            from cobwood.gfpmx_data import GFPMXData
+            gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+            print(gfpmx_data.get_sheet_wide("sawnprice"))
 
         """
         csv_file_name = self.input_dir / (sheet_name + ".csv")
@@ -371,9 +391,9 @@ class GFPMXData:
 
         Example use
 
-            >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-            >>> print(gfpmx_data.get_sheet_long("sawncons"))
+            from cobwood.gfpmx_data import GFPMXData
+            gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+            print(gfpmx_data.get_sheet_long("sawncons"))
 
         """
         df_wide = self.get_sheet_wide(sheet_name=sheet_name)
@@ -412,9 +432,9 @@ class GFPMXData:
     def get_gdp(self, sheet_name="gdp", index=None, var_name="gdp"):
         """Return a data frame of cleaned GDP values
 
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-        >>> gfpmx_data.get_price_lag('sawnprice')
+        from cobwood.gfpmx_data import GFPMXData
+        gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+        gfpmx_data.get_price_lag('sawnprice')
 
         """
         if index is None:
@@ -427,9 +447,9 @@ class GFPMXData:
     def get_price_lag(self, sheet_name, index=None, var_name="price"):
         """Return a price table with prices shifted by a one year lag
 
-        >>> from cobwood.gfpmx_data import GFPMXData
-        >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-        >>> gfpmx_data.get_price_lag('sawnprice')
+        from cobwood.gfpmx_data import GFPMXData
+        gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+        gfpmx_data.get_price_lag('sawnprice')
 
         """
         if index is None:
@@ -455,29 +475,29 @@ class GFPMXData:
         For example join all roundwood sheets in one data frame and add a
         stock column.
 
-            >>> from cobwood.gfpmx_data import GFPMXData
-            >>> gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
-            >>> rwd = gfpmx_data.join_sheets("round", ["stock"])
-            >>> rwd.columns
+            from cobwood.gfpmx_data import GFPMXData
+            gfpmx_data = GFPMXData(input_dir="gfpmx_8_6_2021")
+            rwd = gfpmx_data.join_sheets("round", ["stock"])
+            rwd.columns
 
         Join sheets for all available products
 
-            >>> for product in gfpmx_data.sheets["product"].unique():
-            >>>     if product == "other":
-            >>>         continue
-            >>>     print(product)
-            >>>     print(gfpmx_data.join_sheets(product).head())
+            for product in gfpmx_data.sheets["product"].unique():
+                if product == "other":
+                    continue
+                print(product)
+                print(gfpmx_data.join_sheets(product).head())
 
         Join all other sheets
 
-            >>> sheets = gfpmx_data.list_sheets()
-            >>> other_sheets = sheets.query("product == 'other'")
-            >>> other_element = other_sheets["element"].to_list()
-            >>> for element in ["author", "names", "notes", "worldprice"]:
-            >>>     other_element.remove(element)
-            >>> other = gfpmx_data.join_sheets("round", other_element)
-            >>> print(other.columns)
-            >>> other[other.columns[other.columns.str.contains("unnamed")]]
+            sheets = gfpmx_data.list_sheets()
+            other_sheets = sheets.query("product == 'other'")
+            other_element = other_sheets["element"].to_list()
+            for element in ["author", "names", "notes", "worldprice"]:
+                other_element.remove(element)
+            other = gfpmx_data.join_sheets("round", other_element)
+            print(other.columns)
+            other[other.columns[other.columns.str.contains("unnamed")]]
 
         """
 
@@ -568,10 +588,10 @@ class GFPMXData:
 
         Example load sawnwood data, add GDP to the panel data:
 
-            >>> from cobwood.gfpmx_data import gfpmx_data
-            >>> sawn = gfpmx_data.convert_sheets_to_dataset("sawn")
-            >>> print(sawn.data_vars)
-            >>> panel = gfpmx_data.convert_sheets_to_dataset("panel", ["gdp"])
+            from cobwood.gfpmx_data import gfpmx_data
+            sawn = gfpmx_data.convert_sheets_to_dataset("sawn")
+            print(sawn.data_vars)
+            panel = gfpmx_data.convert_sheets_to_dataset("panel", ["gdp"])
 
         """
         sheets = self.sheets[self.sheets["product"] == product]

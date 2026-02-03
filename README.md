@@ -37,6 +37,21 @@ Install optional development dependencies to run tests or build the documentatio
     pip install cobwood[dev]
 
 
+# Testing
+
+After installing the development dependencies, you can run the test suite to verify the
+installation and ensure everything works correctly.
+
+Run tests with pytest:
+
+    pytest
+
+Doctests are embedded in function docstrings and serve as both documentation and tests.
+Run doctests through pytest:
+
+    pytest --doctest-modules cobwood/
+
+
 ## Input data
 
 Clone the `cobwood_data` repository to create a `cobwood_data` structure at the default
