@@ -51,6 +51,10 @@ Run doctests through pytest:
 
     pytest --doctest-modules cobwood/
 
+Test coverage
+
+    pytest --cov
+
 
 ## Input data
 
