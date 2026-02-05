@@ -307,7 +307,7 @@ class GFPMX:
 
         for product in self.products:
             # Select data corresponding to each product and drop 'product' coordinate
-            ds = combined_ds.sel(product=product).drop("product")
+            ds = combined_ds.sel(product=product).drop_vars("product")
             # Restore attributes
             ds.attrs = attributes_dict.get(product, {})
             self[product] = ds
