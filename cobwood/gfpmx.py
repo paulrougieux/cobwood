@@ -303,7 +303,7 @@ class GFPMX:
             )
 
         # Read the combined dataset from the NetCDF file
-        combined_ds = xarray.open_dataset(self.combined_netcdf_file_path)
+        combined_ds = xarray.open_dataset(self.combined_netcdf_file_path).load()
         # Retrieve stored attributes and deserialize from JSON string
         attributes_json_str = combined_ds.attrs.get(
             "individual_dataset_attributes", "{}"
@@ -318,7 +318,7 @@ class GFPMX:
             self[product] = ds
 
         # Read the other dataset that doesn't have a product dimension
-        self["other"] = xarray.open_dataset(self.output_dir / "other.nc")
+        self["other"] = xarray.open_dataset(self.output_dir / "other.nc").load()
 
     def facet_plot_by_var(
         self, product: str, *args, **kwargs
