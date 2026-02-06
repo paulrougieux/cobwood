@@ -25,57 +25,62 @@ class GFPMX:
     - Runs the model
     - Saves the model output in NETCDF files
 
+    The constructor takes a scenario name which references a YAML configuration file
+    in the scenario directory. The YAML file specifies input_dir and base_year.
+
     Run with xarray and compare to the reference dataset for each available model
     version (with different base years)
 
          from cobwood.gfpmx import GFPMX
          # Base 2021
-         gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=True)
+         gfpmxb2021 = GFPMX(scenario="base_2021", rerun=True)
          gfpmxb2021.run_and_compare_to_ref()
          gfpmxb2021.run()
 
     Load output data, after a run has already been completed
 
-         gfpmx_pikssp2 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="pikssp2_fel1")
+         gfpmx_pikssp2 = GFPMX(scenario="pikssp2_fel1")
 
     You can debug data issues by creating the data object only as follows:
 
          from cobwood.gfpmx_data import GFPMXData
-         gfpmx_data_b2018 = GFPMXData(data_dir="gfpmx_8_6_2021", base_year=2018)
+         gfpmx_base_2021 = GFPMX(scenario="base_2021")
+         gfpmx_data = gfpmx_base_2021.input_data
 
     You can debug equations for the different model versions as follows:
 
          from cobwood.gfpmx_equations import world_price
-         world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround,2018)
+         gfpmx_base_2018 = GFPMX(scenario="base_2018")
+         world_price(gfpmx_base_2018.sawn, gfpmx_base_2018.indround, 2018)
 
     Run other base years and compare GFPMx Excel results with the one from the cobwood
 
          # Base 2018
-         gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018, scenario="base_2018")
+         gfpmxb2018 = GFPMX(scenario="base_2018")
          # Run and stop when the result diverges from the reference spreadsheet
          gfpmxb2018.run(compare=True)
          # Run and continue when the result diverges (just print the missmatch message)
          gfpmxb2018.run(compare=True, strict=False)
          # Just run, without comparison (default is compare=False)
-         gfpmxb2021.run()
+         gfpmxb2018.run()
          print(gfpmxb2018.indround)
          # Base 2020
-         gfpmxb2020 = GFPMX(input_dir="gfpmx_base2020", base_year=2020, scenario="base_2020")
-         gfpmxb2020.run_and_compare_to_ref() # Fails
-         gfpmxb2021 = GFPMX(input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021")
+         gfpmxb2020 = GFPMX(scenario="base_2020")
+         gfpmxb2020.run_and_compare_to_ref()
+         # Base 2021
+         gfpmxb2021 = GFPMX(scenario="base_2021")
 
-    You will then be able to load Xarray datasets with the
-    `convert_sheets_to_dataset()` method:
+    You can access Xarray datasets directly from the GFPMX object:
 
-         from cobwood.gfpmx_data import GFPMXData
-         gfpmxb2018 = GFPMX(input_dir="gfpmx_8_6_2021", base_year=2018)
-         print(gfpmxb2018.other_ref)
-         print(gfpmxb2018.indround_ref)
-         print(gfpmxb2018.sawn_ref)
-         print(gfpmxb2018.panel_ref)
-         print(gfpmxb2018.pulp_ref)
-         print(gfpmxb2018.paper_ref)
-         print(gfpmxb2018.gdp)
+         from cobwood.gfpmx import GFPMX
+         gfpmxb2021 = GFPMX(scenario="base_2021")
+         print(gfpmxb2021.other_ref)
+         print(gfpmxb2021.indround_ref)
+         print(gfpmxb2021.sawn_ref)
+         print(gfpmxb2021.panel_ref)
+         print(gfpmxb2021.pulp_ref)
+         print(gfpmxb2021.paper_ref)
+         print(gfpmxb2021.gdp)
     """
 
     def __init__(self, scenario: str, rerun: bool = False):
@@ -323,17 +328,12 @@ class GFPMX:
         Example use:
 
              from cobwood.gfpmx import GFPMX
-             gfpmx_base2021 = GFPMX(
-            ...     input_dir="gfpmx_base2021",
-            ...     base_year=2021,
-            ...     scenario="base_2021",
-            ...     rerun=False
-            ... )
-             gfpmxb2021.facet_plot("indround")
+             gfpmx_base2021 = GFPMX(scenario="base_2021")
+             gfpmx_base2021.facet_plot_by_var("indround")
              # The country argument can specify one line by country
-             gfpmxb2021.facet_plot("indround", countries=["Canada", "France", "Japan"])
+             gfpmx_base2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
              # The variable argument can specify one variable by facet
-             gfpmxb2021.facet_plot("other", variables=["area", "stock"],
+             gfpmx_base2021.facet_plot_by_var("other", variables=["area", "stock"],
                               ylabel="Area in 1000ha and stock in million m3")
 
         """
