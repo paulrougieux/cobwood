@@ -4,6 +4,7 @@ from functools import cached_property
 from typing import Union, List, Optional, Any
 import json
 import xarray
+from xarray import Dataset
 import cobwood
 import pandas
 import seaborn
@@ -83,6 +84,23 @@ class GFPMX:
          print(gfpmxb2021.gdp)
     """
 
+    # Type hints for dynamically created attributes
+    indround: Dataset
+    fuel: Dataset
+    sawn: Dataset
+    panel: Dataset
+    pulp: Dataset
+    paper: Dataset
+    other: Dataset
+    indround_ref: Dataset
+    fuel_ref: Dataset
+    sawn_ref: Dataset
+    panel_ref: Dataset
+    pulp_ref: Dataset
+    paper_ref: Dataset
+    other_ref: Dataset
+    gdp: Dataset
+
     def __init__(self, scenario: str, rerun: bool = False):
         """
         Initialize the GFPMX model with the specified scenario.
@@ -139,7 +157,7 @@ class GFPMX:
         """Input data"""
         return GFPMXData(self)
 
-    def __getitem__(self, key: str) -> Optional[Any]:
+    def __getitem__(self, key: str) -> Any:
         """Get a dataset from the data dictionary"""
         return getattr(self, key, None)
 
@@ -178,11 +196,13 @@ class GFPMX:
         except AttributeError:
             pass
 
-    def run_and_compare_to_ref(self, *args, **kwargs) -> None:
+    def run_and_compare_to_ref(
+        self, rtol: Optional[float] = None, strict: bool = True
+    ) -> None:
         """Takes a gpfmx_data object, remove data after the base year
         run the model and compare it to the reference dataset
         """
-        self.run(compare=True, *args, **kwargs)
+        self.run(compare=True, rtol=rtol, strict=strict)
 
     def run(
         self, compare: bool = False, rtol: Optional[float] = None, strict: bool = True
