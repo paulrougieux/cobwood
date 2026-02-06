@@ -37,7 +37,71 @@ Install optional development dependencies to run tests or build the documentatio
     pip install cobwood[dev]
 
 
-# Testing
+## Input data
+
+The cobwood package requires input data from the `cobwood_data` repository.
+
+### Default data location
+
+By default, cobwood looks for data at `~/repos/cobwood_data/`. Clone the repository to
+this location:
+
+    mkdir -p ~/repos
+    cd ~/repos
+    git clone https://gitlab.com/bioeconomy/cobwood/cobwood_data.git
+
+To verify the current data directory location, start python and call:
+
+    from cobwood import cobwood_data_dir
+    print(cobwood_data_dir)
+
+
+### Custom data location (COBWOOD_DATA environment variable)
+
+To use a different location for the data, set the `COBWOOD_DATA` environment variable
+before importing cobwood:
+
+Linux/Mac:
+
+    export COBWOOD_DATA="/path/to/your/cobwood_data"
+
+On windows you can set the environment variable in the system GUI, or use a command
+prompt as follows:
+
+Windows (Command Prompt):
+
+    set COBWOOD_DATA=C:\path\to\your\cobwood_data
+
+Windows (PowerShell):
+
+    $env:COBWOOD_DATA="C:\path\to\your\cobwood_data"
+
+You can also set it directly in In Python (before importing cobwood):
+
+    import os
+    os.environ["COBWOOD_DATA"] = "/path/to/your/cobwood_data"
+    from cobwood import cobwood_data_dir
+    print(cobwood_data_dir)  # Should show your custom path
+
+Then clone the data repository to your chosen location:
+
+    mkdir -p /path/to/your/cobwood_data
+    cd /path/to/your
+    git clone https://gitlab.com/bioeconomy/cobwood/cobwood_data.git
+
+The input data is based on:
+
+- A version of the GFPMx model that is no longer available online. More information in
+  the data repository https://gitlab.com/bioeconomy/cobwood/cobwood_data
+
+- The FAOSTAT forestry production and trade data set available at:
+  http://www.fao.org/faostat/en/#data/FO/visualize
+
+More details in the data repository
+https://gitlab.com/bioeconomy/cobwood/cobwood_data
+
+
+## Testing
 
 After installing the development dependencies, you can run the test suite to verify the
 installation and ensure everything works correctly.
@@ -56,35 +120,7 @@ Test coverage
     pytest --cov
 
 
-## Input data
-
-Clone the `cobwood_data` repository to create a `cobwood_data` structure at the default
-location in your user home directory. To find out where the default location is, start
-python and call:
-
-    from cobwood import cobwood_data_dir
-    print(cobwood_data_dir)
-
-Alternatively clone it at any location and set the environment variable
-`COBWOOD_DATA` to define the location of the data:
-
-    mkdir -p ~/repos
-    cd ~/repos
-    git clone https://gitlab.com/bioeconomy/cobwood/cobwood_data.git
-
-The input data is based on:
-
-- A version of the GFPMx model that is no longer available online. More information in
-  the data repository https://gitlab.com/bioeconomy/cobwood/cobwood_data
-
-- The FAOSTAT forestry production and trade data set available at:
-  http://www.fao.org/faostat/en/#data/FO/visualize
-
-More details in the data repository
-https://gitlab.com/bioeconomy/cobwood/cobwood_data
-
-
-## Optional virtual environment
+# Optional virtual environment
 
 Optionally create a virtual environment and install the `cobwood` package and
 its dependencies inside this virtual environment:
