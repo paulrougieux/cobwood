@@ -41,6 +41,7 @@ You can load Xarray datasets with the `convert_sheets_to_dataset()` method.
 
 # Built in modules
 import re
+from typing import Optional, List, Union
 
 # Third party modules
 import numpy as np
@@ -187,7 +188,9 @@ def check_variable_presence(ds: xarray.Dataset) -> None:
         raise ValueError(msg)
 
 
-def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
+def remove_after_base_year_and_copy(
+    ds: xarray.Dataset, base_year: int
+) -> xarray.Dataset:
     """Remove values after the base year and return a deep copy of the
     input dataset, i.e. the input dataset is not modified.
     This applies only to arrays which have a time dimension.
@@ -203,11 +206,11 @@ def remove_after_base_year_and_copy(ds: xarray.Dataset, base_year):
 def compare_to_ref(
     ds: xarray.Dataset,
     ds_ref: xarray.Dataset,
-    variable: [list, str],
+    variable: Union[List[str], str],
     t: int,
-    rtol: int = None,
+    rtol: Optional[float] = None,
     strict: bool = True,
-):
+) -> None:
     """Compare the computed dataset to the reference dataset for the given t
     Example use:
         compare_to_ref(sawn, sawn_ref, "price", 2019)
@@ -268,7 +271,7 @@ class GFPMXData:
     `scripts/gfpmx_spreadsheet_to_csv.py`
     """
 
-    def __getitem__(self, sheet_name):
+    def __getitem__(self, sheet_name: str) -> pandas.DataFrame:
         """Return a data frame based on the GFPMX sheet name."""
         return self.get_sheet_long(sheet_name)
 
@@ -300,7 +303,7 @@ class GFPMXData:
             "WORLD"
         }
 
-    def list_sheets(self):
+    def list_sheets(self) -> pandas.DataFrame:
         """List sheets available in the GFPMX data folder
 
         :return data frame with the sheet name, product and element
@@ -372,7 +375,7 @@ class GFPMXData:
         df.set_index("name", inplace=True)
         return df
 
-    def get_sheet_wide(self, sheet_name):
+    def get_sheet_wide(self, sheet_name: str) -> pandas.DataFrame:
         """Read a csv file into a pandas data frame
 
         Example use
@@ -386,7 +389,7 @@ class GFPMXData:
         df = pandas.read_csv(csv_file_name)
         return df
 
-    def get_sheet_long(self, sheet_name):
+    def get_sheet_long(self, sheet_name: str) -> pandas.DataFrame:
         """Read a csv file into a pandas data frame and reshape it to long format
 
         Example use
@@ -429,7 +432,12 @@ class GFPMXData:
 
         return df
 
-    def get_gdp(self, sheet_name="gdp", index=None, var_name="gdp"):
+    def get_gdp(
+        self,
+        sheet_name: str = "gdp",
+        index: Optional[List[str]] = None,
+        var_name: str = "gdp",
+    ) -> pandas.DataFrame:
         """Return a data frame of cleaned GDP values
 
         from cobwood.gfpmx_data import GFPMXData
@@ -444,7 +452,12 @@ class GFPMXData:
         df.rename(columns={"value": var_name}, inplace=True)
         return df
 
-    def get_price_lag(self, sheet_name, index=None, var_name="price"):
+    def get_price_lag(
+        self,
+        sheet_name: str,
+        index: Optional[List[str]] = None,
+        var_name: str = "price",
+    ) -> pandas.DataFrame:
         """Return a price table with prices shifted by a one year lag
 
         from cobwood.gfpmx_data import GFPMXData
@@ -463,7 +476,9 @@ class GFPMXData:
         df.reset_index(inplace=True)
         return df
 
-    def join_sheets(self, product, other_element=None):
+    def join_sheets(
+        self, product: str, other_element: Optional[List[str]] = None
+    ) -> pandas.DataFrame:
         """
         Merge all related data frames for a given product
 
@@ -535,7 +550,7 @@ class GFPMXData:
         df_all.set_index(self.index, inplace=True)
         return df_all
 
-    def get_country_rows(self, *args, **kwargs):
+    def get_country_rows(self, *args, **kwargs) -> pandas.DataFrame:
         """Get only the country rows from the joint_sheets method"""
         df = self.join_sheets(*args, **kwargs)
         selector = df.index.isin(self.country_aggregates, level="country")
@@ -544,7 +559,7 @@ class GFPMXData:
         #   Try using .loc[row_indexer,col_indexer] = value instead"
         return df[~selector].copy()
 
-    def get_agg_rows(self, *args, **kwargs):
+    def get_agg_rows(self, *args, **kwargs) -> pandas.DataFrame:
         """Get only the aggregated rows from the join_sheets method
 
         Aggregates are world and continents.
@@ -553,7 +568,7 @@ class GFPMXData:
         selector = df.index.isin(self.country_aggregates, level="country")
         return df[selector].copy()
 
-    def get_names(self):
+    def get_names(self) -> pandas.DataFrame:
         """Get the product and country names from the names sheet"""
         csv_file_name = self.input_dir / "names.csv"
         # Headers are on two columns, load them, merge them and convert to lower case
@@ -565,7 +580,7 @@ class GFPMXData:
         df.rename(columns=lambda x: re.sub(r"_\d+_", "_", str(x)).lower(), inplace=True)
         return df
 
-    def get_country_groups(self):
+    def get_country_groups(self) -> pandas.DataFrame:
         """Get the country grouping by continents"""
         df = self.get_names()
         df.rename(
@@ -581,7 +596,7 @@ class GFPMXData:
         return df
 
     def convert_sheets_to_dataset(
-        self, product: str, other_element: [list, str] = None
+        self, product: str, other_element: Optional[Union[List[str], str]] = None
     ) -> xarray.Dataset:
         """Combine 2D and 1D arrays from all sheet sheet corresponding to the given
         product into an xarray dataset

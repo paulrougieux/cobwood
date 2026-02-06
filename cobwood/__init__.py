@@ -257,7 +257,7 @@ if os.environ.get("COBWOOD_DATA"):
     data_dir = Path(os.environ["COBWOOD_DATA"])
 
 
-def create_data_dir(path: str):
+def create_data_dir(path: str) -> Path:
     """Create a sub directory of `data_dir`
 
     Example:

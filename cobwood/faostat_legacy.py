@@ -50,7 +50,7 @@ class Faostat:
     # Define a location to store data locally
     data_folder = faostat_data_folder
 
-    def download(self, file_name):
+    def download(self, file_name: str) -> None:
         """Download a compressed CSV file from the FAOSTAT API and save it in the data folder.
 
         Sample use
@@ -78,7 +78,7 @@ class Faostat:
             with open(dest_file, "wb") as f:
                 shutil.copyfileobj(response, f)
 
-    def read_csv(self, file_name):
+    def read_csv(self, file_name: str) -> pandas.DataFrame:
         """Read a compressed CSV into a pandas data frame and rename its columns to snake case.
 
         Sample use

@@ -36,7 +36,7 @@ class FAOSTAT:
         # Add the data array to the dataset
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @cached_property

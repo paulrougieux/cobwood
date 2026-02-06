@@ -52,7 +52,7 @@ from pandas.api.types import is_string_dtype
 from cobwood import cobwood_data_dir
 
 
-def reformat_eurostat(df):
+def reformat_eurostat(df: pandas.DataFrame) -> pandas.DataFrame:
     """Reformat the first columns of a eurostat tab separated value dataset
     which are actually comma separated values, reshape year in long format."""
     raw_first_col = df.columns[0]
@@ -70,14 +70,16 @@ def reformat_eurostat(df):
     return df_long
 
 
-def load_eurostat(file_name):
+def load_eurostat(file_name: str) -> pandas.DataFrame:
     """Load and reformat a Eurostat data frame"""
     df = pandas.read_table(cobwood_data_dir / "eurostat" / file_name)
     df = reformat_eurostat(df)
     return df
 
 
-def combine_hist_population_to_proj(df_hist, df_proj):
+def combine_hist_population_to_proj(
+    df_hist: pandas.DataFrame, df_proj: pandas.DataFrame
+) -> pandas.DataFrame:
     """Prepare population projection by interpolating missing years in the
     projection (which has a 5 years interval) and adding data for the
     historical period. df_hist contains the historical data, df_proj contains
@@ -108,7 +110,7 @@ def combine_hist_population_to_proj(df_hist, df_proj):
     return df
 
 
-def load_hist_population_and_proj(file_hist, file_proj):
+def load_hist_population_and_proj(file_hist: str, file_proj: str) -> pandas.DataFrame:
     """Load historical population and population projection total EU"""
     pop_hist = load_eurostat(file_hist)
     pop_proj = load_eurostat(file_proj)

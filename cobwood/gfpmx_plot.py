@@ -2,6 +2,7 @@
 
 import seaborn
 import xarray
+from typing import Optional, List
 
 
 def plot_da_by_region(
@@ -24,10 +25,10 @@ def plot_da_by_region(
 
 def facet_plot_by_var(
     ds: xarray.Dataset,
-    variables: list = None,
-    countries: list = None,
-    ylabel: str = None,
-    title: str = None,
+    variables: Optional[List[str]] = None,
+    countries: Optional[List[str]] = None,
+    ylabel: Optional[str] = None,
+    title: Optional[str] = None,
     ncol: int = 2,
 ) -> seaborn.axisgrid.FacetGrid:
     """Plot the given dataset variables with a facet for each variable and a
