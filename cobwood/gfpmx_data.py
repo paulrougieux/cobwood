@@ -171,7 +171,7 @@ def check_variable_presence(ds: xarray.Dataset) -> None:
     ]
     # TODO: add checks for fuel wood
     data_vars = list(ds.data_vars)
-    required_vars = set()
+    required_vars: List[str] = []
     if ds.attrs["product"] == "pulp":
         required_vars = common_vars
     if ds.attrs["product"] == "indround":
@@ -198,7 +198,8 @@ def remove_after_base_year_and_copy(
     """
     ds_out = ds.copy(deep=True)
     for x in ds_out.data_vars:
-        if len(ds_out[x].dims) == 2 and "tariff" not in x:
+        var_name = str(x)
+        if len(ds_out[x].dims) == 2 and "tariff" not in var_name:
             ds_out[x].loc[dict(year=ds_out.coords["year"] > base_year)] = np.nan
     return ds_out
 

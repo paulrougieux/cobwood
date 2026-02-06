@@ -119,6 +119,10 @@ Test coverage
 
     pytest --cov
 
+Type checking
+
+    mypy cobwood
+
 
 # Optional virtual environment
 

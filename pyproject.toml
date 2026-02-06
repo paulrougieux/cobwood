@@ -170,3 +170,9 @@ namespaces = true
 filterwarnings = [
     "ignore:numpy.ndarray size changed:RuntimeWarning",
 ]
+
+[tool.mypy]
+exclude = [
+    "cobwood/faostat_legacy.py",
+    "cobwood/faostat/__init__.py",
+]

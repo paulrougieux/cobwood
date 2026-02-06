@@ -71,8 +71,8 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path: Union[str, Path]) -> None:
 
     """
     # Convert the input file name to snake case. Use this as the output directory name.
-    gfpmx_data_dir = re.sub(r"\W+", "_", Path(spreadsheet_path).stem).lower()
-    gfpmx_data_dir = cobwood.data_dir / "gfpmx_input" / gfpmx_data_dir
+    gfpmx_data_dir_name = re.sub(r"\W+", "_", Path(spreadsheet_path).stem).lower()
+    gfpmx_data_dir = cobwood.data_dir / "gfpmx_input" / gfpmx_data_dir_name
     if not gfpmx_data_dir.exists():
         gfpmx_data_dir.mkdir(parents=True)
     print(f"\nLoad the Excel file {spreadsheet_path} in a dictionary of data frames.")
@@ -147,13 +147,13 @@ def gfpmx_spreadsheet_to_csv(spreadsheet_path: Union[str, Path]) -> None:
 
         # Further renaming for the purpose of libcbm usage
         if key in ["FuelProd", "IndroundProd"]:
-            df.faostat_name = df.faostat_name.ffill()
-            df.element = df.element.ffill()
-            df.unit = df.unit.ffill()
+            df["faostat_name"] = df["faostat_name"].ffill()
+            df["element"] = df["element"].ffill()
+            df["unit"] = df["unit"].ffill()
         # Write the csv file
-        csv_file_name = re.sub(r"\$", r"_usd", key).lower() + ".csv"
-        csv_file_name = Path(gfpmx_data_dir) / csv_file_name
-        df.to_csv(csv_file_name, index=False)
+        csv_file_name_str = re.sub(r"\$", r"_usd", key).lower() + ".csv"
+        csv_file_path = gfpmx_data_dir / csv_file_name_str
+        df.to_csv(csv_file_path, index=False)
 
 
 if __name__ == "__main__":
