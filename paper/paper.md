@@ -72,14 +72,16 @@ questions.
 
 # Input, output
 
-A yaml file in the `cobwood_data/scenario` directory defines the particular input data
-used for a given scenario. Cobwood can load input data from any tabular source that
-pandas support. For instance, the GFPMx data is stored inside a single Excel
-spreadsheet containing many sheets for consumption, production, import, export, and
-prices of major forest products. A script first converts sheets to CSV files, which the
-`GFPMXData.convert_sheets_to_dataset` then transforms into an Xarray data structure.
-Other methods make it possible to load forest products market data from the FAOSTAT API
-and to transform them into xarray datasets.
+Scenario configuration files stored as yaml in the `cobwood_data/scenario` directory
+enable users to define different input parameters and input data files for each modeling
+scenario. By tracking all assumptions in a single location, these configuration
+files ensure simulation reproducibility. Cobwood can load data
+from any tabular source that pandas supports. For instance, the GFPMx data is stored
+inside a single Excel spreadsheet containing many sheets for consumption, production,
+import, export, and prices of major forest products. A script first converts these
+sheets to CSV files, which the `GFPMXData.convert_sheets_to_dataset` method then
+transforms into an Xarray data structure. Other methods make it possible to load forest
+products market data from the FAOSTAT API and transform them into xarray datasets.
 
 The `write_datasets_to_netcdf` combines many products 2D datasets into one larger 3D
 dataset, by adding a third coordinate called "`product`" before saving the model output
