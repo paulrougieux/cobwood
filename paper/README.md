@@ -26,6 +26,7 @@ This directory contains the draft of a JOSS paper:
 
 - Compile the paper with the docker inara image
 
+    cd ~/rp/cobwood/paper
     docker run --rm -v "$PWD":/data openjournals/inara -p -o pdf paper.md
 
 - Extract documentation from the package docstrings with pdoc
@@ -37,18 +38,43 @@ This directory contains the draft of a JOSS paper:
 
 Save plots as images to be inserted in the paper
 
+    %autoindent off
     from cobwood import data_dir
     from cobwood.gfpmx import GFPMX
+    # Import the function directly to plot in million m3
+    from cobwood.gfpmx_plot import facet_plot_by_var
     plot_dir = data_dir.parent / "cobwood/paper/fig"
     gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
 
-    # Draw the default plot with one line by continent
-    g = gfpmxb2021.facet_plot_by_var("indround")
+Change the value and unit of variables that are in 1000 m3 to million m3
+
+    ds = gfpmxb2021.indround.copy()
+    for var in ["cons", "imp", "exp", "prod", "price"]:
+        print(ds[var].unit)
+    for var in ["cons", "imp", "exp", "prod"]:
+        ds[var] = ds[var] / 1000
+        ds[var].attrs["unit"] = "Million m3"
+
+Draw the default plot with one line by continent
+
+    # Old plot instruction in 1000 m3 default
+    # g = gfpmxb2021.facet_plot_by_var("indround")
+    # New plot instruction in million m3
+    g = facet_plot_by_var(ds)
     g.savefig(plot_dir / "indround_by_continent.png")
 
-    # Use the countries argument to specify one line by country
+Draw one line by country
+
+    # Old plot instruction in 1000 m3 default
     g = gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
+    # New plot instruction in million m3
+    g = facet_plot_by_var(ds, countries=["Canada", "France", "Japan"])
     g.savefig(plot_dir / "indround_by_country.png")
+
+Plot sawnwood consumption GDP elasticities
+
+    gfpmxb2021["sawn"]["cons_gdp_elasticity"]
+
 
 Recompute aggregates not necessary
 

@@ -48,6 +48,16 @@ def facet_plot_by_var(
         facet_plot_by_var(gfpmxb2021.other, ["area", "stock"],
                       ylabel="Area in 1000ha and stock in million m3")
 
+    Change the value and unit of variables that are in 1000 m3 to million m3
+
+        ds = gfpmxb2021.indround.copy()
+        for var in ["cons", "imp", "exp", "prod", "price"]:
+            print(ds[var].unit)
+        for var in ["cons", "imp", "exp", "prod"]:
+            ds[var] = ds[var] / 1000
+            ds[var].attrs["unit"] = "Million m3"
+        facet_plot_by_var(ds)
+
     """
     if variables is None:
         variables = ["cons", "imp", "exp", "prod", "price"]
@@ -63,6 +73,8 @@ def facet_plot_by_var(
         # Select countries
         df = ds.loc[{"country": countries}][variables].to_dataframe()
     df = df.reset_index().melt(id_vars=["country", "year"])
+    # Get units for each variable
+    units = {var: str(ds[var].unit) for var in variables}
     g = seaborn.relplot(
         data=df,
         x="year",
@@ -75,8 +87,9 @@ def facet_plot_by_var(
         facet_kws={"sharey": False, "sharex": False},
     )
     g.set(ylim=(0, None))
-    g.set_ylabels("")
-    g.fig.supylabel(ylabel)
+    # Set individual y-labels with units
+    for ax, var in zip(g.axes.flat, variables):
+        ax.set_ylabel(units[var])
     g.fig.suptitle(title)
     g.fig.subplots_adjust(left=0.15, top=0.85)
     # Use scientific notation on y-axis
