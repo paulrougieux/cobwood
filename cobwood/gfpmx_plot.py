@@ -12,12 +12,13 @@ def plot_da_by_region(
 
     Example:
 
-         from cobwood.gfpmx import GFPMX
-         from cobwood.gfpmx_plot import plot_da_by_region
-         gfpmxb2021 = GFPMX(
-        ...     input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=False
-        ... )
-         plot_da_by_region(gfpmxb2021["indround"], "prod")
+        from cobwood.gfpmx import GFPMX
+        from cobwood.gfpmx_plot import plot_da_by_region
+        gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
+        plot_da_by_region(gfpmxb2021["indround"], "prod")
+
+    Note that this plotting function is also available as a method of the GFPMX
+    object.
 
     """
     return ds[da_name].loc[~ds.c].plot(col="country", col_wrap=4)
@@ -36,18 +37,16 @@ def facet_plot_by_var(
 
     Example:
 
-         from cobwood.gfpmx import GFPMX
-         from cobwood.gfpmx_plot import facet_plot_by_var
-         gfpmxb2021 = GFPMX(
-             input_dir="gfpmx_base2021", base_year=2021, scenario="base_2021", rerun=False
-         )
-         # By default plot one line by continent
-         facet_plot_by_var(gfpmxb2021.indround)
-         # The country argument can specify one line by country
-         facet_plot_by_var(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
-         # Plot Forest area and forest stock
-         facet_plot_by_var(gfpmxb2021.other, ["area", "stock"],
-                          ylabel="Area in 1000ha and stock in million m3")
+        from cobwood.gfpmx import GFPMX
+        from cobwood.gfpmx_plot import facet_plot_by_var
+        gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
+        # By default plot one line by continent
+        facet_plot_by_var(gfpmxb2021.indround)
+        # The country argument can specify one line by country
+        facet_plot_by_var(gfpmxb2021.indround, countries=["Canada", "France", "Japan"])
+        # Plot Forest area and forest stock
+        facet_plot_by_var(gfpmxb2021.other, ["area", "stock"],
+                      ylabel="Area in 1000ha and stock in million m3")
 
     """
     if variables is None:
