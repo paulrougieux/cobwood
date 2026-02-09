@@ -20,9 +20,13 @@ This directory contains the draft of a JOSS paper:
 
 - Compile this paper to a pdf document with the script specified in .gitlab-ci.yml. JOSS
   uses the openjournals/inara docker image and compiles the document with the following
-script:
+  script:
 
         inara -p -o pdf paper/paper.md
+
+- Compile the paper with the docker inara image
+
+    docker run --rm -v "$PWD":/data openjournals/inara -p -o pdf paper.md
 
 - Extract documentation from the package docstrings with pdoc
 

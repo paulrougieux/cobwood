@@ -10,8 +10,10 @@ authors:
     affiliation: "1"
     corresponding: true
 affiliations:
- - name: European Commission, Joint Research Centre, Ispra, Italy
-   index: 1
+- name: Eichen Lernen Data Science Consulting, Backnang, Germany
+  index: 1
+# - name: European Commission, Joint Research Centre, Ispra, Italy
+#   index: 1
 date: 2025
 bibliography: paper.bib
 ---
@@ -172,6 +174,12 @@ saved to NetCDF files, which preserve dimensions and metadata. This data structu
 be reused to implement many other forest sector models. Ultimately, the goal is to
 facilitate the integration of forest sector models as components of interdisciplinary
 modelling tool chains.
+
+
+# Acknowledgements
+
+This work was made possible by funding from the Administrative Agreement between DG RTD
+and JRC, 'KCB SUPPORT 2', N° 35895.
 
 
 # References
