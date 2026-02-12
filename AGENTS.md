@@ -78,5 +78,10 @@ this list.
 12. **Modified `cobwood/faostat/__init__.py`**: Added type hints to the
     `forestry_production_df` method (returning `pd.DataFrame`) and `foresty_production_ds`
     method (returning `xr.Dataset`), including necessary imports for pandas and xarray.
-
 15. **Modified `cobwood/tests/test_gfpmx_equations.py`**: test the `export_supply` equation with expected results.
+16. **Modified `paper/paper.md`**: Corrected grammar by changing "softwares" to "software" in the sentence about existing modelling software.
+16. **Modified `paper/paper.md`**: Corrected grammar by changing "softwares" to "software" in the sentence about existing modelling software.
+17. **Modified `paper/paper.md`**: Introduced a new line before (e.g., `model["sawn"].variables`).
+18. **Modified `paper/paper.bib`**: Added new @inbook entry for the chapter "EU Forest sink: scenario analysis" by Rougieux et al.
+
+19. **Modified `paper/paper.md`**: Replaced citation @mubareka2025 with @rougieux2025.

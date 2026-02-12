@@ -56,11 +56,11 @@ multi-dimensional arrays with explicit country, product, and year dimensions. Me
 and dimension names are stored directly within datasets (both in memory and on disk),
 making model inputs and outputs easier to interpret and share.
 
-Existing modelling softwares typically rely on ad-hoc input file management to
+Existing modelling software typically relies on ad-hoc input file management to
 distinguish scenarios, with scenario assumptions scattered across multiple data files,
 in the input file name itself , or in separate Excel sheets. Cobwood uses explicit
 scenario configuration files, improving reproducibility and enabling transparent version
-control of modeling assumptions.
+control of modeling assumptions."
 
 By standardizing data representation and exposing model internals, cobwood facilitates
 collaboration beyond forest economics. Adjacent fields such as forest management,
@@ -102,16 +102,21 @@ Figure \ref{fig:structure} illustrates the data structure:
   two-dimensional arrays with country and year coordinates (e.g.,
   `model["sawn"]["cons"]` for consumption)
 
-To explore available variables, users can access the `variables` property (e.g.,
-`model["sawn"].variables`). Array properties are used to store metadata, the example
-below displays the roundwood production unit :
+- To explore available variables, users can access the `variables` property
 
-```
-model["indround"]["prod"].unit
-# '1000m3'
-```
+    ```
+    model["sawn"].variables
+    ```
 
-The cobwood model has been used to produce scenario analysis @mubareka2025 and
+- Array properties are used to store metadata, the example below displays the roundwood
+  production unit :
+
+    ```
+    model["indround"]["prod"].unit
+    # '1000m3'
+    ```
+
+The cobwood model has been used to produce scenario analysis @rougieux2025 and
 @rougieux2024. The first model programmed inside cobwood is a reimplementation of a
 simple forest sector model called GFPMx [@buongiorno2021gfpmx]. Labelled data arrays
 allow developers to write Python functions that closely mirror the mathematical
