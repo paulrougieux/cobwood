@@ -10,9 +10,9 @@ authors:
     affiliation: "1"
     corresponding: true
 affiliations:
-- name: Eichen Lernen Data Science Consulting, Backnang, Germany
+- name: European Commission, Joint Research Centre, Ispra, Italy
   index: 1
-# - name: European Commission, Joint Research Centre, Ispra, Italy
+# - name: Eichen Lernen Data Science Consulting, Backnang, Germany
 #   index: 1
 date: 2025
 bibliography: paper.bib
