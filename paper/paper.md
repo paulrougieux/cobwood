@@ -56,11 +56,11 @@ multi-dimensional arrays with explicit country, product, and year dimensions. Me
 and dimension names are stored directly within datasets (both in memory and on disk),
 making model inputs and outputs easier to interpret and share.
 
-Existing modelling softwares typically relies on ad-hoc input file management to
+Existing modelling softwares typically rely on ad-hoc input file management to
 distinguish scenarios, with scenario assumptions scattered across multiple data files,
 in the input file name itself , or in separate Excel sheets. Cobwood uses explicit
 scenario configuration files, improving reproducibility and enabling transparent version
-control of modeling assumptions."
+control of modeling assumptions.
 
 By standardizing data representation and exposing model internals, cobwood facilitates
 collaboration beyond forest economics. Adjacent fields such as forest management,
