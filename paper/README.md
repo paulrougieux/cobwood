@@ -55,14 +55,6 @@ Change the value and unit of variables that are in 1000 m3 to million m3
         ds[var] = ds[var] / 1000
         ds[var].attrs["unit"] = "Million m3"
 
-Draw the default plot with one line by continent
-
-    # Old plot instruction in 1000 m3 default
-    # g = gfpmxb2021.facet_plot_by_var("indround")
-    # New plot instruction in million m3
-    g = facet_plot_by_var(ds)
-    g.savefig(plot_dir / "indround_by_continent.png")
-
 Draw one line by country
 
     # Old plot instruction in 1000 m3 default
@@ -71,10 +63,27 @@ Draw one line by country
     g = facet_plot_by_var(ds, countries=["Canada", "France", "Japan"])
     g.savefig(plot_dir / "indround_by_country.png")
 
+Trade balance heat map
+
+    from cobwood.gfpmx import GFPMX
+    gfpmxb2021 = GFPMX(scenario="base_2021")
+    fig = gfpmxb2021.trade_balance_heatmap(year=2021, top_n=20)
+    fig.savefig(plot_dir / "trade_balance_heatmap.png", bbox_inches="tight")
+
+
+### Old plot instructions
+
+Draw the default plot with one line by continent
+
+    # Old plot instruction in 1000 m3 default
+    # g = gfpmxb2021.facet_plot_by_var("indround")
+    # New plot instruction in million m3
+    g = facet_plot_by_var(ds)
+    g.savefig(plot_dir / "indround_by_continent.png")
+
 Plot sawnwood consumption GDP elasticities
 
     gfpmxb2021["sawn"]["cons_gdp_elasticity"]
-
 
 Recompute aggregates not necessary
 

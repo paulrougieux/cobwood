@@ -167,6 +167,8 @@ trade, for all products.
 gfpmxb2021.trade_balance_heatmap(year=2021, top_n=20)
 ```
 
+![Trade balance for the major countries](fig/trade_balance_heatmap.png "Trade balance
+plot")
 
 
 

@@ -95,13 +95,17 @@ def trade_balance_heatmap(
     # largest net importers at the bottom (descending total signed net trade)
     total_signed = df.sum(axis=1)
     df = df.loc[total_signed.sort_values(ascending=False).index]
+    # Temporary fix long UK Name
+    df.index = df.index.str.replace(
+        "United Kingdom of Great Britain and Northern Ireland", "UK"
+    )
 
     # Fill remaining NaN with 0 for display purposes only
     df_plot = df.fillna(0)
 
     if unit in ("1000 m3", "1000m3"):
         df_plot = to_million_m3(df_plot)
-        unit = "million m3"
+        unit = "million m3 for wood products or million tons for pulp and paper"
 
     # Determine a symmetric colour scale so that 0 maps to white
     abs_max = df_plot.abs().max().max()
@@ -133,7 +137,7 @@ def trade_balance_heatmap(
 
     period_label = "Historical" if year <= 2021 else "Projected"
     ax.set_title(
-        f"Trade Balance Matrix — {period_label} {year}\n"
+        f"Trade Balance {period_label} {year}\n"
         f"(Top {n_countries} countries by absolute net trade; "
         f"blue = net exporter, red = net importer)",
         pad=14,
