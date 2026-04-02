@@ -7,6 +7,7 @@ import xarray
 from xarray import Dataset
 import cobwood
 import pandas
+import matplotlib.figure
 import seaborn
 
 from cobwood.gfpmx_data import GFPMXData
@@ -15,6 +16,7 @@ from cobwood.gfpmx_data import convert_to_2d_array
 from cobwood.gfpmx_data import remove_after_base_year_and_copy
 from cobwood.gfpmx_equations import compute_one_time_step
 from cobwood.gfpmx_plot import facet_plot_by_var
+from cobwood.plot.trade_balance import trade_balance_matrix as _trade_balance_matrix
 from cobwood.scenario import parse_scenario_yaml
 
 
@@ -362,6 +364,21 @@ class GFPMX:
             raise ValueError(f"Product {product} not in {accepted_products}")
         g = facet_plot_by_var(self[product], *args, **kwargs)
         return g
+
+    def trade_balance_matrix(
+        self, year: int = 2021, top_n: int = 40
+    ) -> "matplotlib.figure.Figure":
+        """Plot a heatmap of net trade by country (rows) and product (columns).
+
+        Example use:
+
+             from cobwood.gfpmx import GFPMX
+             gfpmxb2021 = GFPMX(scenario="base_2021")
+             fig = gfpmxb2021.trade_balance_matrix(year=2021, top_n=20)
+             fig.savefig(gfpmxb2021.plot_dir / "trade_balance_matrix.png", bbox_inches="tight")
+
+        """
+        return _trade_balance_matrix(self, year=year, top_n=top_n)
 
     def get_df(
         self, product: Union[str, List[str]], var: Union[str, List[str]]

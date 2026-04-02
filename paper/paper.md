@@ -149,17 +149,7 @@ the output data without the need to run the model.
 # Visualisation
 
 The following python code draws a faceted plot of industrial roundwood consumption,
-import, export, production and price with one line by continent.
-
-```
-gfpmxb2021.facet_plot_by_var("indround")
-```
-
-![Industrial roundwood consumption, import, export, production and prices by
-continent](fig/indround_by_continent.png "Plot of industrial roundwood variables by
-continent")
-
-Specify the country argument to get one line by country
+import, export, production and price with one line by country.
 
 ```
 gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"])
@@ -168,6 +158,16 @@ gfpmxb2021.facet_plot_by_var("indround", countries=["Canada", "France", "Japan"]
 ![Industrial roundwood consumption, import, export, production and prices by
 country](fig/indround_by_country.png "Plot of industrial roundwood variables by
 country")
+
+The following code draws a heat map of net trade for the 20 countries by absolute net
+trade, for all products.
+
+
+```
+gfpmxb2021.trade_balance_matrix(year=2021, top_n=20)
+```
+
+
 
 
 # Conclusion
