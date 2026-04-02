@@ -164,7 +164,7 @@ trade, for all products.
 
 
 ```
-gfpmxb2021.trade_balance_matrix(year=2021, top_n=20)
+gfpmxb2021.trade_balance_heatmap(year=2021, top_n=20)
 ```
 
 

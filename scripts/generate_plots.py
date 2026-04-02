@@ -22,7 +22,7 @@ from cobwood.plot import (
     scatter_matrix,
     sparklines,
     stacked_area,
-    trade_balance_matrix,
+    trade_balance_heatmap,
 )
 
 matplotlib.use("Agg")
@@ -68,6 +68,8 @@ save(
 )
 
 print("Generating trade balance matrix (all products)...")
-save(trade_balance_matrix(gfpmxb2021, year=2021, top_n=40), "trade_balance_matrix.png")
+save(
+    trade_balance_heatmap(gfpmxb2021, year=2021, top_n=40), "trade_balance_heatmap.png"
+)
 
 print(f"\nDone — plots written to {gfpmxb2021.plot_dir}/")

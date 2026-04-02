@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 from cobwood.plot import to_million_m3
 
 
-def trade_balance_matrix(
+def trade_balance_heatmap(
     model: GFPMX,
     year: int = 2021,
     top_n: int = 40,
@@ -53,10 +53,10 @@ def trade_balance_matrix(
     Example
     -------
     >>> from cobwood.gfpmx import GFPMX
-    >>> from cobwood.plot import trade_balance_matrix
+    >>> from cobwood.plot import trade_balance_heatmap
     >>> gfpmxb2021 = GFPMX(scenario="base_2021", rerun=False)
-    >>> fig = trade_balance_matrix(gfpmxb2021, year=2021, top_n=40)
-    >>> fig.savefig(gfpmxb2021.plot_dir / "trade_balance_matrix.png", bbox_inches="tight")
+    >>> fig = trade_balance_heatmap(gfpmxb2021, year=2021, top_n=40)
+    >>> fig.savefig(gfpmxb2021.plot_dir / "trade_balance_heatmap.png", bbox_inches="tight")
     """
     # Collect one series per product: index = country name, value = nettrade
     series_list = []
