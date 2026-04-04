@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import matplotlib.colors
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import pandas
@@ -18,6 +19,7 @@ def trade_balance_heatmap(
     model: GFPMX,
     year: int = 2021,
     top_n: int = 40,
+    log_scale: bool = False,
 ) -> matplotlib.figure.Figure:
     """Plot a heatmap of net trade by country (rows) and product (columns).
 
@@ -44,6 +46,11 @@ def trade_balance_heatmap(
     top_n : int, optional
         Maximum number of countries to display, selected by descending total
         absolute net trade across all products.  Default is ``40``.
+    log_scale : bool, optional
+        If ``True``, apply a symmetric log colour scale
+        (``matplotlib.colors.SymLogNorm``) so that small differences near zero
+        are still visible despite a few very large outlier values.  The linear
+        threshold is set to 1 (same unit as the data).  Default is ``False``.
 
     Returns
     -------
@@ -112,6 +119,13 @@ def trade_balance_heatmap(
     if abs_max == 0:
         abs_max = 1  # avoid degenerate scale
 
+    if log_scale:
+        norm = matplotlib.colors.SymLogNorm(
+            linthresh=1, linscale=0.5, vmin=-abs_max, vmax=abs_max
+        )
+    else:
+        norm = None
+
     # Figure dimensions: grow with number of countries
     n_countries = len(df_plot)
     n_products = len(model.products)
@@ -120,20 +134,31 @@ def trade_balance_heatmap(
 
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
 
-    seaborn.heatmap(
-        df_plot,
+    heatmap_kws = dict(
         ax=ax,
         cmap="RdBu",
-        center=0,
-        vmin=-abs_max,
-        vmax=abs_max,
         linewidths=0.3,
         linecolor="white",
-        cbar_kws={
-            "shrink": 0.6,
-            "label": f"Net Trade ({unit})",
-        },
+        cbar_kws={"shrink": 0.6, "label": f"Net Trade ({unit})"},
     )
+    if norm is not None:
+        heatmap_kws["norm"] = norm
+    else:
+        heatmap_kws["center"] = 0
+        heatmap_kws["vmin"] = -abs_max
+        heatmap_kws["vmax"] = abs_max
+
+    seaborn.heatmap(df_plot, **heatmap_kws)
+
+    if log_scale:
+        # Replace default 10^n tick labels with plain human-readable integers.
+        # Candidates follow a 1-2-5 sequence; filter to those within the data range.
+        candidates = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
+        pos_ticks = [v for v in candidates if v <= abs_max]
+        ticks = [-v for v in reversed(pos_ticks)] + [0] + pos_ticks
+        cbar = ax.collections[0].colorbar
+        cbar.set_ticks(ticks)
+        cbar.set_ticklabels([str(t) for t in ticks])
 
     period_label = "Historical" if year <= 2021 else "Projected"
     ax.set_title(

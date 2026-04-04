@@ -65,8 +65,6 @@ Draw one line by country
 
 Trade balance heat map
 
-    from cobwood.gfpmx import GFPMX
-    gfpmxb2021 = GFPMX(scenario="base_2021")
     fig = gfpmxb2021.trade_balance_heatmap(year=2021, top_n=20)
     fig.savefig(plot_dir / "trade_balance_heatmap.png", bbox_inches="tight")
 
@@ -223,6 +221,20 @@ from a given start year:
 
 - We don't need to re-run the model this time since we can simply reload the model's
   output data from the previous run above.
+
+### Comments on the Trade balance heatmap
+
+> Russia/Canada as dominant roundwood exporters
+
+> China as the largest net importer across multiple products
+
+> European countries as sawn/paper exporters
+
+> European countries (Sweden, Finland, Germany, Austria, Czechia) clustered as net
+> exporters, relevant to EU biomass supply discussions
+
+> The "fuel" column is mostly blank, suggesting fuelwood trade is less globalized than
+> processed products
 
 
 ## Conclusion

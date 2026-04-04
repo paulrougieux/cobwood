@@ -368,7 +368,7 @@ class GFPMX:
         return g
 
     def trade_balance_heatmap(
-        self, year: int = 2021, top_n: int = 40
+        self, year: int = 2021, top_n: int = 40, log_scale: bool = True
     ) -> "matplotlib.figure.Figure":
         """Plot a heatmap of net trade by country (rows) and product (columns).
 
@@ -380,7 +380,7 @@ class GFPMX:
              fig.savefig(gfpmxb2021.plot_dir / "trade_balance_heatmap.png", bbox_inches="tight")
 
         """
-        return _trade_balance_heatmap(self, year=year, top_n=top_n)
+        return _trade_balance_heatmap(self, year=year, top_n=top_n, log_scale=log_scale)
 
     def get_df(
         self, product: Union[str, List[str]], var: Union[str, List[str]]
